@@ -26,106 +26,47 @@ function generateId() {
   return uuidv4();
 }
 
+import { MatchingEngine } from "./engine/engine";
+import { getCachedItinerary, cacheItinerary, getVibeDescription } from "./engine/architect";
+
 export async function generateItineraryAction(prefs: UserPreferences): Promise<Itinerary> {
-  // Try lookup by ID first, then by Slug
-  let city = await db.select().from(cities).where(eq(cities.id, prefs.cityId)).get();
-  if (!city) {
-    city = await db.select().from(cities).where(eq(cities.slug, prefs.cityId)).get();
+  // 1. Check full itinerary cache
+  const cached = await getCachedItinerary(prefs.cityId, prefs);
+  if (cached) {
+    return JSON.parse(cached.data);
   }
 
-  if (!city) throw new Error(`City not found: ${prefs.cityId}`);
+  // 2. Run Matching Engine
+  const engine = new MatchingEngine(prefs);
+  const itinerary = await engine.generate();
 
-  // 1. Get liked archetypes
-  const likedArchs = await db.select().from(archetypes).where(inArray(archetypes.id, prefs.likedVibes)).all();
+  // 3. Enrich with AI Descriptive Layer (and cache descriptions)
+  for (const day of itinerary.days) {
+    for (const activity of day.activities) {
+      // Find the vibe that matched this place (naive: just use first liked vibe for now)
+      // In a real app, the engine would pass which vibe matched which place.
+      const matchedVibeId = prefs.likedVibes[0];
+      const vibe = await db.select().from(archetypes).where(eq(archetypes.id, matchedVibeId)).get();
 
-  // 2. Fetch associated places for these archetypes in this city
-  // This is where "The Architect" happens.
-  // For now, we fetch the mapped places. In a real app, this would trigger an API search if cache is cold.
+      const vibeDesc = await getVibeDescription(
+        matchedVibeId,
+        activity.vibe.id,
+        activity.vibe.title,
+        vibe?.title || "Great vibe"
+      );
 
-  const placesWithArchs = await db
-    .select({
-      place: places,
-      archetypeId: archetypesToPlaces.archetypeId,
-    })
-    .from(places)
-    .innerJoin(archetypesToPlaces, eq(places.id, archetypesToPlaces.placeId))
-    .where(sql`${places.cityId} = ${city.id} AND ${archetypesToPlaces.archetypeId} IN ${likedArchs.map((a) => a.id)}`)
-    .all();
-
-  const candidates = placesWithArchs.map((p) => ({
-    ...p.place,
-    metadata: JSON.parse(p.place.metadata || "{}"),
-  }));
-
-  // Simple slotting logic (Architect 2.0)
-  const days: DayPlan[] = [];
-  const startDate = new Date(prefs.startDate);
-  const endDate = new Date(prefs.endDate);
-  const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-  let candidateIdx = 0;
-
-  for (let i = 0; i < dayCount; i++) {
-    const currentDate = new Date(startDate);
-    currentDate.setDate(startDate.getDate() + i);
-
-    const activities: TripActivity[] = [];
-
-    // Morning
-    if (candidateIdx < candidates.length) {
-      activities.push({
-        id: generateId(),
-        vibe: {
-          id: candidates[candidateIdx].id,
-          title: candidates[candidateIdx].name,
-          description: candidates[candidateIdx].address || "Local gem",
-          imageUrl: candidates[candidateIdx].imageUrl || "",
-          category: "culture",
-          tags: [],
-          cityId: city.id,
-        },
-        startTime: "10:00",
-        endTime: "12:00",
-        note: "Start your day with some vibe.",
-        isAlternative: false,
-      });
-      candidateIdx++;
+      activity.note = vibeDesc.note;
+      if (vibeDesc.alternativeNote) {
+        activity.alternative = {
+          title: "Alternative Option",
+          note: vibeDesc.alternativeNote,
+        };
+      }
     }
-
-    // Afternoon
-    if (candidateIdx < candidates.length) {
-      activities.push({
-        id: generateId(),
-        vibe: {
-          id: candidates[candidateIdx].id,
-          title: candidates[candidateIdx].name,
-          description: candidates[candidateIdx].address || "Exploring...",
-          imageUrl: candidates[candidateIdx].imageUrl || "",
-          category: "culture",
-          tags: [],
-          cityId: city.id,
-        },
-        startTime: "14:00",
-        endTime: "16:30",
-        note: "The afternoon exploration.",
-        isAlternative: false,
-      });
-      candidateIdx++;
-    }
-
-    days.push({
-      id: generateId(),
-      dayNumber: i + 1,
-      date: currentDate.toISOString().split("T")[0],
-      activities,
-      neighborhood: activities[0]?.vibe.neighborhood || "Central",
-    });
   }
 
-  return {
-    id: generateId(),
-    cityId: city.id,
-    days,
-    createdAt: new Date().toISOString(),
-  };
+  // 4. Cache full itinerary
+  await cacheItinerary(prefs.cityId, prefs, itinerary);
+
+  return itinerary;
 }

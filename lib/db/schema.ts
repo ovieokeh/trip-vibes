@@ -27,7 +27,8 @@ export const places = sqliteTable("places", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  externalId: text("external_id"),
+  foursquareId: text("foursquare_id"),
+  googlePlacesId: text("google_places_id"),
   name: text("name").notNull(),
   address: text("address"),
   lat: real("lat").notNull(),
@@ -35,6 +36,10 @@ export const places = sqliteTable("places", {
   imageUrl: text("image_url"),
   rating: real("rating"),
   priceLevel: integer("price_level").default(1),
+  website: text("website"),
+  phone: text("phone"),
+  openingHours: text("opening_hours"), // JSON stringified
+  photoUrls: text("photo_urls"), // JSON stringified array
   cityId: text("city_id")
     .notNull()
     .references(() => cities.id),
@@ -84,3 +89,26 @@ export const archetypesToPlacesRelations = relations(archetypesToPlaces, ({ one 
     references: [places.id],
   }),
 }));
+
+export const itineraries = sqliteTable("itineraries", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  cityId: text("city_id")
+    .notNull()
+    .references(() => cities.id),
+  preferencesHash: text("preferences_hash").notNull(), // Hash of likedVibes, dates, budget
+  data: text("data").notNull(), // JSON stringified Itinerary
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+export const vibeDescriptionsCache = sqliteTable("vibe_descriptions_cache", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  vibeId: text("vibe_id").notNull(),
+  placeId: text("place_id").notNull(),
+  note: text("note").notNull(),
+  alternativeNote: text("alternative_note"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
