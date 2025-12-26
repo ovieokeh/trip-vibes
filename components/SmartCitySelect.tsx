@@ -1,9 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { Command } from "cmdk";
 import { clsx } from "clsx";
+import { searchCitiesAction, getCityById } from "@/lib/db-actions";
+
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface City {
   id: string;
@@ -12,26 +15,71 @@ interface City {
 }
 
 interface SmartCitySelectProps {
-  cities: City[];
   selectedCityId: string;
   onSelect: (cityId: string) => void;
   disabled?: boolean;
 }
 
-export function SmartCitySelect({ cities, selectedCityId, onSelect, disabled }: SmartCitySelectProps) {
+export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCitySelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+  const [results, setResults] = useState<City[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const selectedCity = useMemo(() => cities.find((city) => city.id === selectedCityId), [cities, selectedCityId]);
+  // To show the selected name even if not in search results
+  const [selectedCityData, setSelectedCityData] = useState<City | null>(null);
 
-  const filteredCities = useMemo(() => {
-    if (!search) return cities;
-    return cities.filter(
-      (city) =>
-        city.name.toLowerCase().includes(search.toLowerCase()) ||
-        city.country.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [cities, search]);
+  // 1. Fetch details of selected city if we have an ID but no data (or mismatch)
+  useEffect(() => {
+    async function fetchSelected() {
+      if (!selectedCityId) {
+        setSelectedCityData(null);
+        return;
+      }
+
+      // If we already have the data locally in results, use it
+      const inResults = results.find((c) => c.id === selectedCityId);
+      if (inResults) {
+        setSelectedCityData(inResults);
+        return;
+      }
+
+      // Otherwise fetch from server
+      try {
+        const city = await getCityById(selectedCityId);
+        if (city) setSelectedCityData(city);
+      } catch (err) {
+        console.error("Failed to fetch selected city", err);
+      }
+    }
+    fetchSelected();
+  }, [selectedCityId]);
+
+  // 2. Search Effect
+  useEffect(() => {
+    async function performSearch() {
+      setIsLoading(true);
+      try {
+        const query = debouncedSearch.trim();
+        // If query is short, we can choose to load suggestions or empty
+        if (query.length < 2) {
+          // We could show popular cities here, or just empty
+          // For now, let's just clear results to be clean
+          setResults([]);
+        } else {
+          const data = await searchCitiesAction(query);
+          setResults(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    performSearch();
+  }, [debouncedSearch]);
 
   return (
     <div className="relative w-full group">
@@ -40,11 +88,11 @@ export function SmartCitySelect({ cities, selectedCityId, onSelect, disabled }: 
         onClick={() => !disabled && setOpen(!open)}
         className={clsx(
           "btn btn-outline w-full justify-between font-normal text-lg h-12",
-          !selectedCity && "text-base-content/50"
+          !selectedCityData && "text-base-content/50"
         )}
         disabled={disabled}
       >
-        {selectedCity ? `${selectedCity.name}, ${selectedCity.country}` : "Select a city..."}
+        {selectedCityData ? `${selectedCityData.name}, ${selectedCityData.country}` : "Select a city..."}
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </button>
 
@@ -54,20 +102,24 @@ export function SmartCitySelect({ cities, selectedCityId, onSelect, disabled }: 
           <div className="absolute top-full mt-2 w-full z-20 p-1 bg-base-100 rounded-box border border-base-300 shadow-xl overflow-hidden">
             <Command label="Search cities" shouldFilter={false}>
               <div className="flex items-center border-b border-base-200 px-3">
-                {/* Search Icon */}
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-base-content/50"
-                  placeholder="Search city..."
+                  placeholder="Search city (e.g. Tokyo, London)..."
                   autoFocus
                 />
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
               </div>
 
               <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-1">
-                <Command.Empty className="py-6 text-center text-sm text-base-content/50">No city found.</Command.Empty>
+                {!isLoading && results.length === 0 && (
+                  <Command.Empty className="py-6 text-center text-sm text-base-content/50">
+                    {search.length < 2 ? "Type to search..." : "No city found."}
+                  </Command.Empty>
+                )}
 
-                {filteredCities.map((city) => (
+                {results.map((city) => (
                   <Command.Item
                     key={city.id}
                     value={city.id}

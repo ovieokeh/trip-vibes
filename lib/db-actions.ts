@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "./db";
 import { archetypes, cities, places, archetypesToPlaces, itineraries } from "./db/schema";
-import { eq, inArray, sql, desc, and } from "drizzle-orm";
+import { eq, inArray, sql, desc, and, like, or } from "drizzle-orm";
 import { UserPreferences, Itinerary, DayPlan, TripActivity } from "./types";
 import { v4 as uuidv4 } from "uuid";
+import { searchGoogleCities, getGooglePlaceDetails } from "./google-places";
 
 export async function getVibeArchetypes() {
   return await db.select().from(archetypes).all();
@@ -22,6 +23,78 @@ export async function getCityById(id: string) {
 
 export async function getCityBySlug(slug: string) {
   return await db.select().from(cities).where(eq(cities.slug, slug)).get();
+}
+
+export async function searchCitiesAction(query: string) {
+  if (!query || query.length < 2) return [];
+
+  // 1. Search DB
+  const dbResults = await db
+    .select()
+    .from(cities)
+    .where(or(like(cities.name, `%${query}%`), like(cities.country, `%${query}%`)))
+    .limit(10)
+    .all();
+
+  // 2. If we have good matches (exact start match or enough results), return them
+  const hasExactMatch = dbResults.some((c) => c.name.toLowerCase() === query.toLowerCase());
+  if (dbResults.length >= 5 || hasExactMatch) {
+    return dbResults;
+  }
+
+  // 3. Fallback to Google Places
+  const googleResults = await searchGoogleCities(query);
+
+  if (!googleResults.length) return dbResults;
+
+  // 4. Ingest new cities
+  for (const prediction of googleResults) {
+    // Only process if it looks like a city (google usually filters well with (cities) type)
+    const existing = await db
+      .select()
+      .from(cities)
+      .where(sql`lower(${cities.name}) = ${prediction.structured_formatting.main_text.toLowerCase()}`)
+      .get();
+
+    if (!existing) {
+      // Fetch details to get country
+      const details = await getGooglePlaceDetails(prediction.place_id);
+      if (details) {
+        // Extract country
+        const countryComponent = details.address_components.find((c: any) => c.types.includes("country"));
+        const country = countryComponent ? countryComponent.long_name : "Unknown";
+        const name = details.name;
+
+        // Generate slug
+        let slug = name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+
+        // Ensure slug uniqueness (simple check)
+        const slugExists = await db.select().from(cities).where(eq(cities.slug, slug)).get();
+        if (slugExists) {
+          slug = `${slug}-${uuidv4().slice(0, 4)}`;
+        }
+
+        await db.insert(cities).values({
+          slug,
+          name,
+          country,
+        });
+      }
+    }
+  }
+
+  // 5. Re-fetch from DB to get the newly added ones
+  const finalResults = await db
+    .select()
+    .from(cities)
+    .where(or(like(cities.name, `%${query}%`), like(cities.country, `%${query}%`)))
+    .limit(20)
+    .all();
+
+  return finalResults;
 }
 
 function generateId() {
