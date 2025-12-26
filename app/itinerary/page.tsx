@@ -357,7 +357,7 @@ export default function ItineraryPage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto px-4">
       <AlertModal
         isOpen={alert.isOpen}
         title={alert.title}

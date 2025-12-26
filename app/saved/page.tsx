@@ -6,7 +6,7 @@ export default async function SavedTripsPage() {
   const savedTrips = await getSavedItinerariesAction();
 
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-xl mx-auto px-4">
       <h1 className="text-3xl font-black mb-8 px-2">Saved Trips</h1>
 
       {savedTrips.length === 0 ? (

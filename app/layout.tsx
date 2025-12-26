@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 import { getSavedItinerariesAction } from "@/lib/db-actions";
 
@@ -35,9 +36,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" data-theme="autumn">
-      <body className="font-sans antialiased min-h-screen bg-base-100 text-base-content pb-24">
+      <body className="font-sans antialiased min-h-screen flex flex-col bg-base-100 text-base-content">
         <Navbar savedCount={saved.length} />
-        <main className="container mx-auto max-w-2xl px-4 py-8">{children}</main>
+        <main className="container mx-auto max-w-2xl md:px-4 py-8 flex-grow">{children}</main>
+        <Footer />
       </body>
     </html>
   );

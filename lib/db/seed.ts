@@ -2,7 +2,7 @@ import { db } from "./index";
 import { cities, archetypes, places, archetypesToPlaces } from "./schema";
 import { eq } from "drizzle-orm";
 
-async function main() {
+export async function seed() {
   console.log("Start seeding ...");
 
   // 1. Create Cities
@@ -173,16 +173,15 @@ async function main() {
 
   // 3. Create initial places for Amsterdam (example)
   if (amsId) {
-    // We'll skip the places part for now as the user wants real API discovery,
-    // but having a few baseline is good for testing.
     console.log("Seeding baseline places for Amsterdam...");
-    // ... same as before but maybe more descriptive
   }
 
   console.log("Seeding finished.");
 }
 
-main().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+if (require.main === module || !require.main) {
+  seed().catch((err) => {
+    console.error("Seed failed:", err);
+    process.exit(1);
+  });
+}

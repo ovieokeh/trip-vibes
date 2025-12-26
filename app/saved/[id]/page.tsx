@@ -76,7 +76,7 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
 
   if (!itinerary) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4">
         <h2 className="text-2xl font-bold">Trip Not Found</h2>
         <Link href="/saved" className="btn btn-primary">
           Back to Saved Trips
@@ -86,7 +86,7 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
   }
 
   return (
-    <div className="max-w-xl mx-auto pb-12">
+    <div className="max-w-xl mx-auto pb-12 px-4">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/saved" className="btn btn-ghost btn-circle btn-sm">

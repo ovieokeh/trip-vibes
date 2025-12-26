@@ -70,7 +70,7 @@ export default function VibesPage() {
   if (!cityId) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden">
       {!loading && cards.length > 0 ? (
         <div className="relative w-full max-w-sm h-[60vh]">
           <AnimatePresence>
