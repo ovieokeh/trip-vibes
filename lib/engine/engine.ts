@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { places, archetypesToPlaces, cities } from "../db/schema";
+import { places, archetypesToPlaces, cities, archetypes } from "../db/schema";
 import { eq, inArray, sql } from "drizzle-orm";
 import { UserPreferences, Itinerary, DayPlan, TripActivity, Vibe } from "../types";
 import { v4 as uuidv4 } from "uuid";
@@ -25,21 +25,27 @@ export class MatchingEngine {
       this.prefs.cityId = cityBySlug.id;
     }
 
-    // 1. Discovery Phase: Find places matching liked vibes
-    let candidates = await this.discoverPlaces();
+    // 1. Discovery Phase: Find places matching liked vibes in current DB
+    let candidates = await this.discoverPlacesInDB();
 
-    // 2. Data Enrichment: If we have few candidates, hit the external APIs
+    // 2. Data Enrichment: If we have few candidates, hit Foursquare
     if (candidates.length < 5) {
-      // Lower threshold for testing
-      await this.enrichFromExternalAPIs(city!);
-      candidates = await this.discoverPlaces();
+      await this.enrichFromFoursquare(city!);
+      candidates = await this.discoverPlacesInDB();
     }
 
-    // 3. Optimization Phase: Geographic clustering and Time slotting
+    // 3. Deep Enrichment: For each candidate, get Google Places details if missing
+    for (const p of candidates) {
+      if (!p.website || !p.openingHours) {
+        await this.enrichFromGoogle(p);
+      }
+    }
+
+    // 4. Optimization Phase: Geographic clustering and Time slotting
     return this.assembleItinerary(candidates);
   }
 
-  private async discoverPlaces() {
+  private async discoverPlacesInDB() {
     if (!this.prefs.likedVibes.length) return [];
 
     const results = await db
@@ -56,12 +62,140 @@ export class MatchingEngine {
     return results.map((r) => ({
       ...r.place,
       metadata: JSON.parse(r.place.metadata || "{}"),
+      openingHours: r.place.openingHours ? JSON.parse(r.place.openingHours) : null,
+      photoUrls: r.place.photoUrls ? JSON.parse(r.place.photoUrls) : [],
     }));
   }
 
-  private async enrichFromExternalAPIs(city: any) {
-    console.log("Enriching data from external APIs...");
-    // Logic to call Foursquare/Google would go here and populate DB
+  private async enrichFromFoursquare(city: any) {
+    if (!FOURSQUARE_API_KEY) {
+      console.warn("FOURSQUARE_API_KEY missing. Skipping discovery.");
+      return;
+    }
+
+    // Get the tags from liked archetypes
+    const likedArchs = await db.select().from(archetypes).where(inArray(archetypes.id, this.prefs.likedVibes)).all();
+    const searchTerms = likedArchs.flatMap((a) => a.searchTags.split(","));
+
+    for (const term of searchTerms.slice(0, 5)) {
+      // Limit to avoid hitting limits too hard
+      try {
+        const response = await axios.get("https://places-api.foursquare.com/places/search", {
+          params: {
+            query: term,
+            near: city.name,
+            limit: 10,
+          },
+          headers: {
+            Authorization: `Bearer ${FOURSQUARE_API_KEY}`,
+            Accept: "application/json",
+            "x-places-api-version": "2025-06-17",
+          },
+        });
+
+        for (const fsqPlace of response.data.results) {
+          // Upsert to DB
+          const fsqId = fsqPlace.fsq_id || fsqPlace.fsq_place_id;
+          if (!fsqId) continue;
+
+          // Coordinate handling: Top-level lat/lng in this endpoint response
+          let lat = fsqPlace.latitude;
+          let lng = fsqPlace.longitude;
+
+          // Fallback to geocodes.main if top-level is missing
+          if (lat === undefined || lng === undefined) {
+            lat = fsqPlace.geocodes?.main?.latitude;
+            lng = fsqPlace.geocodes?.main?.longitude;
+          }
+
+          const existing = await db.select().from(places).where(eq(places.foursquareId, fsqId)).get();
+          if (!existing) {
+            const placeId = uuidv4();
+            await db.insert(places).values({
+              id: placeId,
+              foursquareId: fsqId,
+              name: fsqPlace.name,
+              address: fsqPlace.location?.formatted_address,
+              lat: lat ?? 0,
+              lng: lng ?? 0,
+              rating: null, // Rating causes 429
+              priceLevel: 1, // Price causes 429
+              cityId: city.id,
+              imageUrl: null, // Photos cause 429/not present in default
+              metadata: JSON.stringify({
+                categories: fsqPlace.categories?.map((c: any) => c.name) || [],
+                source: "foursquare",
+                website: fsqPlace.website,
+                phone: fsqPlace.tel,
+              }),
+            });
+
+            // Map to current archetypes (simple keyword matching)
+            for (const arch of likedArchs) {
+              if (arch.searchTags.toLowerCase().includes(term.toLowerCase())) {
+                await db.insert(archetypesToPlaces).values({
+                  archetypeId: arch.id,
+                  placeId: placeId,
+                });
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`Foursquare error for term ${term}:`, error);
+      }
+    }
+  }
+
+  private async enrichFromGoogle(place: any) {
+    if (!GOOGLE_PLACES_API_KEY) return;
+
+    try {
+      // 1. Text Search or Find Place to get Google ID if missing
+      let googleId = place.googlePlacesId;
+      if (!googleId) {
+        const searchRes = await axios.get("https://maps.googleapis.com/maps/api/place/findplacefromtext/json", {
+          params: {
+            input: place.name,
+            inputtype: "textquery",
+            locationbias: `point:${place.lat},${place.lng}`,
+            fields: "place_id",
+            key: GOOGLE_PLACES_API_KEY,
+          },
+        });
+        googleId = searchRes.data.candidates?.[0]?.place_id;
+      }
+
+      if (googleId) {
+        const detailsRes = await axios.get("https://maps.googleapis.com/maps/api/place/details/json", {
+          params: {
+            place_id: googleId,
+            fields: "opening_hours,website,formatted_phone_number,photos,rating",
+            key: GOOGLE_PLACES_API_KEY,
+          },
+        });
+
+        const details = detailsRes.data.result;
+        await db
+          .update(places)
+          .set({
+            googlePlacesId: googleId,
+            website: details.website || null,
+            phone: details.formatted_phone_number || null,
+            openingHours: details.opening_hours ? JSON.stringify(details.opening_hours) : null,
+            photoUrls: details.photos ? JSON.stringify(details.photos.map((p: any) => p.photo_reference)) : null,
+            rating: details.rating || place.rating,
+          })
+          .where(eq(places.id, place.id));
+
+        // Update the local object for immediate use in assembleItinerary
+        place.website = details.website;
+        place.phone = details.formatted_phone_number;
+        place.openingHours = details.opening_hours;
+      }
+    } catch (error) {
+      console.error(`Google Places error for ${place.name}:`, error);
+    }
   }
 
   private assembleItinerary(candidates: any[]): Itinerary {
@@ -78,7 +212,12 @@ export class MatchingEngine {
 
       const dayActivities: TripActivity[] = [];
 
-      const slots = ["Morning", "Afternoon", "Evening"];
+      const slots = [
+        { name: "Morning", start: "10:00", end: "12:00" },
+        { name: "Afternoon", start: "14:00", end: "16:30" },
+        { name: "Evening", start: "19:00", end: "21:30" },
+      ];
+
       for (const slot of slots) {
         if (candidateIdx < candidates.length) {
           const p = candidates[candidateIdx];
@@ -89,18 +228,21 @@ export class MatchingEngine {
               title: p.name,
               description: p.address || "Local discovery",
               imageUrl: p.imageUrl || "",
-              category: "culture",
+              category: p.metadata.categories?.[0] || "culture",
               cityId: p.cityId,
               tags: [],
               lat: p.lat,
               lng: p.lng,
               neighborhood: p.metadata.neighborhood,
-            },
-            startTime: slot === "Morning" ? "10:00" : slot === "Afternoon" ? "14:00" : "19:00",
-            endTime: slot === "Morning" ? "12:00" : slot === "Afternoon" ? "16:30" : "21:30",
+              website: p.website,
+              phone: p.phone,
+              openingHours: p.openingHours,
+            } as any, // Cast to any to handle extra fields for now
+            startTime: slot.start,
+            endTime: slot.end,
             note: "",
             isAlternative: false,
-            transitNote: "15 min walk", // Dummy transit buffer
+            transitNote: "15 min walk",
           });
           candidateIdx++;
         }

@@ -99,6 +99,10 @@ export const itineraries = sqliteTable("itineraries", {
     .references(() => cities.id),
   preferencesHash: text("preferences_hash").notNull(), // Hash of likedVibes, dates, budget
   data: text("data").notNull(), // JSON stringified Itinerary
+  isSaved: integer("is_saved", { mode: "boolean" }).default(false),
+  name: text("name"),
+  startDate: text("start_date"),
+  endDate: text("end_date"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 

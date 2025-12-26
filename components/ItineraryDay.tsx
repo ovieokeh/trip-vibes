@@ -53,7 +53,63 @@ export default function ItineraryDay({ day }: { day: DayPlan }) {
                       </svg>
                     </button>
                   </div>
-                  <p className="text-xs mt-1 text-base-content/80 line-clamp-2">{act.note}</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {act.vibe.website && (
+                      <a
+                        href={act.vibe.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-xs btn-ghost gap-1 opacity-70 hover:opacity-100"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
+                        Website
+                      </a>
+                    )}
+                    {act.vibe.phone && (
+                      <a
+                        href={`tel:${act.vibe.phone}`}
+                        className="btn btn-xs btn-ghost gap-1 opacity-70 hover:opacity-100"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                          />
+                        </svg>
+                        Call
+                      </a>
+                    )}
+                    {act.vibe.openingHours?.open_now !== undefined && (
+                      <span
+                        className={`badge badge-sm border-none font-bold px-2 py-0 h-4 text-[9px] uppercase ${
+                          act.vibe.openingHours.open_now ? "bg-success/20 text-success" : "bg-error/20 text-error"
+                        }`}
+                      >
+                        {act.vibe.openingHours.open_now ? "Open Now" : "Closed Now"}
+                      </span>
+                    )}
+                  </div>
 
                   {act.alternative && (
                     <div className="mt-2 pt-2 border-t border-dashed border-base-300">

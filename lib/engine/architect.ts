@@ -70,6 +70,8 @@ export async function cacheItinerary(cityId: string, prefs: UserPreferences, iti
     cityId,
     preferencesHash: prefsHash,
     data: JSON.stringify(itinerary),
+    startDate: prefs.startDate,
+    endDate: prefs.endDate,
   });
 }
 

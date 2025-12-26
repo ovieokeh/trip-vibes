@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "./db";
-import { archetypes, cities, places, archetypesToPlaces } from "./db/schema";
-import { eq, inArray, sql } from "drizzle-orm";
+import { archetypes, cities, places, archetypesToPlaces, itineraries } from "./db/schema";
+import { eq, inArray, sql, desc, and } from "drizzle-orm";
 import { UserPreferences, Itinerary, DayPlan, TripActivity } from "./types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -69,4 +69,40 @@ export async function generateItineraryAction(prefs: UserPreferences): Promise<I
   await cacheItinerary(prefs.cityId, prefs, itinerary);
 
   return itinerary;
+}
+
+export async function saveItineraryAction(id: string, name?: string) {
+  await db
+    .update(itineraries)
+    .set({ isSaved: true, name: name || "My Trip" })
+    .where(eq(itineraries.id, id));
+}
+
+export async function getSavedItinerariesAction() {
+  const saved = await db
+    .select({
+      id: itineraries.id,
+      cityId: itineraries.cityId,
+      name: itineraries.name,
+      startDate: itineraries.startDate,
+      endDate: itineraries.endDate,
+      createdAt: itineraries.createdAt,
+      city: cities.name,
+      country: cities.country,
+    })
+    .from(itineraries)
+    .leftJoin(cities, eq(itineraries.cityId, cities.id))
+    .where(eq(itineraries.isSaved, true))
+    .orderBy(desc(itineraries.createdAt))
+    .all();
+
+  return saved;
+}
+
+export async function getItineraryByIdAction(id: string): Promise<Itinerary | null> {
+  const record = await db.select().from(itineraries).where(eq(itineraries.id, id)).get();
+  if (record) {
+    return JSON.parse(record.data);
+  }
+  return null;
 }

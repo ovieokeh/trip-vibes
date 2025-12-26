@@ -24,6 +24,10 @@ export interface Vibe {
   priceLevel?: number; // 1-4
   lat?: number;
   lng?: number;
+  website?: string;
+  phone?: string;
+  openingHours?: any;
+  photoUrls?: string[];
 }
 
 export interface TripActivity {
