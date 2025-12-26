@@ -3,10 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
-import { generateItineraryAction, saveItineraryAction, getFallbackImageAction } from "@/lib/db-actions";
+import {
+  generateItineraryAction,
+  saveItineraryAction,
+  getFallbackImageAction,
+  getActivitySuggestionsAction,
+} from "@/lib/db-actions";
 import { Itinerary, TripActivity, Vibe } from "@/lib/types";
 import ItineraryDay from "@/components/ItineraryDay";
 import AlertModal from "@/components/AlertModal";
+import AddActivityModal from "@/components/AddActivityModal";
 import { getTransitNote } from "@/lib/geo";
 
 export default function ItineraryPage() {
@@ -15,6 +21,19 @@ export default function ItineraryPage() {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
+
+  // Add Activity Modal State
+  const [addModal, setAddModal] = useState<{
+    isOpen: boolean;
+    dayId: string | null;
+    suggestions: Vibe[];
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    dayId: null,
+    suggestions: [],
+    isLoading: false,
+  });
 
   const [alert, setAlert] = useState<{
     isOpen: boolean;
@@ -179,36 +198,94 @@ export default function ItineraryPage() {
     setItinerary({ ...itinerary, days: newDays });
   };
 
-  const handleAdd = async (dayId: string) => {
+  const handleOpenAddModal = async (dayId: string) => {
+    // Open modal immediately with loading state
+    setAddModal({
+      isOpen: true,
+      dayId,
+      suggestions: [],
+      isLoading: true,
+    });
+
     if (!itinerary) return;
 
-    // Fetch generic image
-    const imageUrl = await getFallbackImageAction("travel");
+    // Fetch suggestions
+    try {
+      const suggestions = await getActivitySuggestionsAction(prefs.cityId, itinerary, dayId);
+      setAddModal((prev) => ({
+        ...prev,
+        suggestions,
+        isLoading: false,
+      }));
+    } catch (e) {
+      console.error(e);
+      setAddModal((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
 
-    const newDays = itinerary.days.map((day) => {
-      if (day.id !== dayId) return day;
-      const newActivity = {
-        id: crypto.randomUUID(),
-        vibe: {
-          id: "custom",
-          title: "New Activity",
-          description: "Description",
-          imageUrl: imageUrl, // Use fetched image
-          category: "custom",
-          cityId: process.env.NEXT_PUBLIC_DEFAULT_CITY_ID || "",
-          tags: [],
-        } as any,
-        startTime: "12:00",
-        endTime: "13:00",
-        note: "Added manually",
-        isAlternative: false,
-      };
+  const handleAddActivity = async (vibe: Vibe) => {
+    if (!itinerary || !addModal.dayId) return;
+
+    const dayId = addModal.dayId;
+
+    // Infer time from last activity or default
+    const day = itinerary.days.find((d) => d.id === dayId);
+    let startTime = "12:00";
+    let endTime = "13:30";
+
+    if (day && day.activities.length > 0) {
+      const lastAct = day.activities[day.activities.length - 1];
+      // Simple time math: Add 30 mins travel + 90 mins duration
+      const [h, m] = lastAct.endTime.split(":").map(Number);
+      let newH = h + 1; // Basic increment
+      let newM = m + 30; // Travel buffer
+      if (newM >= 60) {
+        newH++;
+        newM -= 60;
+      }
+      startTime = `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
+
+      // End time + 1.5h
+      let endH = newH + 1;
+      let endM = newM + 30;
+      if (endM >= 60) {
+        endH++;
+        endM -= 60;
+      }
+      endTime = `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}`;
+    }
+
+    // Create Activity
+    const newActivity: TripActivity = {
+      id: crypto.randomUUID(),
+      vibe: vibe,
+      startTime,
+      endTime,
+      note: vibe.description, // Or "Added manually"
+      isAlternative: false,
+      transitNote: "", // Will calculate below
+    };
+
+    // Calculate transit from previous
+    if (day && day.activities.length > 0) {
+      const lastAct = day.activities[day.activities.length - 1];
+      if (lastAct.vibe.lat && lastAct.vibe.lng && vibe.lat && vibe.lng) {
+        newActivity.transitNote = getTransitNote(lastAct.vibe.lat, lastAct.vibe.lng, vibe.lat, vibe.lng);
+      }
+    } else {
+      newActivity.transitNote = "Start of day";
+    }
+
+    const newDays = itinerary.days.map((d) => {
+      if (d.id !== dayId) return d;
       return {
-        ...day,
-        activities: [...day.activities, newActivity],
+        ...d,
+        activities: [...d.activities, newActivity],
       };
     });
+
     setItinerary({ ...itinerary, days: newDays });
+    setAddModal({ ...addModal, isOpen: false });
   };
 
   const handleActivityUpdate = (dayId: string, activityId: string, updates: any) => {
@@ -238,6 +315,14 @@ export default function ItineraryPage() {
         onClose={() => setAlert({ ...alert, isOpen: false })}
       />
 
+      <AddActivityModal
+        isOpen={addModal.isOpen}
+        onClose={() => setAddModal({ ...addModal, isOpen: false })}
+        onSelect={handleAddActivity}
+        suggestions={addModal.suggestions}
+        isLoading={addModal.isLoading}
+      />
+
       <div className="text-center mb-8">
         <h1 className="text-3xl font-black mb-2">Your Vibe Itinerary</h1>
         <p className="text-base-content/70">Optimized for {prefs.budget} budget</p>
@@ -250,7 +335,7 @@ export default function ItineraryPage() {
             day={day}
             onSwap={(actId) => handleSwap(day.id, actId)}
             onRemove={(actId) => handleRemove(day.id, actId)}
-            onAdd={() => handleAdd(day.id)}
+            onAdd={() => handleOpenAddModal(day.id)}
             onUpdate={(actId, updates) => handleActivityUpdate(day.id, actId, updates)}
           />
         ))}
@@ -269,13 +354,7 @@ export default function ItineraryPage() {
               try {
                 // Persist the current state of the itinerary including edits
                 await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
-                setHasSaved(true);
-                setAlert({
-                  isOpen: true,
-                  title: "Saved!",
-                  message: "Your trip has been saved successfully.",
-                  type: "success",
-                });
+                router.push(`/saved/${itinerary.id}`);
               } catch (e) {
                 setAlert({
                   isOpen: true,
@@ -283,8 +362,8 @@ export default function ItineraryPage() {
                   message: "Could not save your trip. Please try again.",
                   type: "error",
                 });
+                setIsSaving(false);
               }
-              setIsSaving(false);
             }}
           >
             {isSaving ? "Saving..." : "Save Trip"}

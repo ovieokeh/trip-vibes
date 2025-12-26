@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getItineraryByIdAction, getCityById } from "@/lib/db-actions";
-import ItineraryDay from "@/components/ItineraryDay";
 import { ChevronLeft } from "lucide-react";
 import TripControls from "./TripControls";
+import ItineraryEditor from "@/components/ItineraryEditor";
 
 export default async function SavedTripDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -50,11 +50,7 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
         </p>
       </div>
 
-      <div>
-        {itinerary.days.map((day) => (
-          <ItineraryDay key={day.id} day={day} />
-        ))}
-      </div>
+      <ItineraryEditor initialItinerary={itinerary} cityId={itinerary.cityId} isSavedMode={true} />
     </div>
   );
 }

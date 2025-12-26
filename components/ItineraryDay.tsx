@@ -97,7 +97,7 @@ function TransitIndicator({ activity, onUpdate }: { activity: any; onUpdate?: (a
             <circle cx="5" cy="19" r="2" />
             <circle cx="19" cy="19" r="2" />
             <path d="M2 12h3" />
-            <path d="M2 12h1x" />
+            <path d="M2 12h1" />
           </svg>
         );
       case "transit":
@@ -178,14 +178,18 @@ export default function ItineraryDay({
   onUpdate?: (actId: string, updates: any) => void;
 }) {
   // Get day name for opening hours lookup, e.g. "Monday"
-  const dateObj = new Date(day.date);
+  // Parse date securely to avoid timezone shifts (YYYY-MM-DD to local time)
+  const [year, month, d] = day.date.split("-").map(Number);
+  const dateObj = new Date(year, month - 1, d);
+
   const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
+  const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
   return (
     <div className="mb-8 pl-4 border-l-2 border-base-300 relative">
       <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary ring-4 ring-base-100"></div>
       <h3 className="text-xl font-bold mb-4">
-        {day.date}{" "}
+        {formattedDate}{" "}
         <span className="text-sm opacity-50 font-normal ml-2">
           {dayName}, Day {day.dayNumber}
         </span>
