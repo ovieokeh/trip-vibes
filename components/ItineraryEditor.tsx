@@ -249,7 +249,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
       </div>
 
       {isSavedMode && (
-        <div className="flex justify-center mt-8 pb-8">
+        <div className="flex justify-center mt-8 pb-8 fixed bottom-4 right-8">
           <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? "Saving..." : "Save Changes"}
           </button>
