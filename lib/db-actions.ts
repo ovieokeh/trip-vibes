@@ -8,6 +8,7 @@ import { eq, inArray, sql, desc, and, like, or } from "drizzle-orm";
 import { UserPreferences, Itinerary, DayPlan, TripActivity } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { searchGoogleCities, getGooglePlaceDetails } from "./google-places";
+import { generateDefaultTripName } from "./formatting";
 
 export async function getVibeArchetypes() {
   return await db.select().from(archetypes).all();
@@ -147,11 +148,23 @@ export async function generateItineraryAction(prefs: UserPreferences): Promise<I
 }
 
 export async function saveItineraryAction(id: string, name?: string, itineraryData?: Itinerary) {
+  let finalName = name;
+
+  // Generate default name if missing
+  if (!finalName && itineraryData) {
+    const city = await db.select().from(cities).where(eq(cities.id, itineraryData.cityId)).get();
+    if (city) {
+      finalName = generateDefaultTripName(city.name, itineraryData.startDate || "", itineraryData.endDate || "");
+    } else {
+      finalName = "My Trip";
+    }
+  }
+
   await db
     .update(itineraries)
     .set({
       isSaved: true,
-      name: name || "My Trip",
+      name: finalName || "My Trip",
       ...(itineraryData ? { data: JSON.stringify(itineraryData) } : {}),
     })
     .where(eq(itineraries.id, id));

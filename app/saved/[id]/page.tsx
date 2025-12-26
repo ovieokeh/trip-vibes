@@ -3,6 +3,61 @@ import { getItineraryByIdAction, getCityById } from "@/lib/db-actions";
 import { ChevronLeft } from "lucide-react";
 import TripControls from "./TripControls";
 import ItineraryEditor from "@/components/ItineraryEditor";
+import { Metadata } from "next";
+
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const itinerary = await getItineraryByIdAction(id);
+
+  if (!itinerary) {
+    return {
+      title: "Trip Not Found",
+    };
+  }
+
+  const city = await getCityById(itinerary.cityId);
+  const cityName = city?.name || "Unknown City";
+  const title = itinerary.name || `Trip to ${cityName}`;
+  const description = `Check out this trip to ${cityName} on TripVibes!`;
+  const firstImage = itinerary.days.find((day) => day.activities.length > 0)?.activities[0].vibe.imageUrl;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      images: firstImage
+        ? [
+            {
+              url: firstImage,
+              width: 1200,
+              height: 630,
+            },
+          ]
+        : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: firstImage
+        ? [
+            {
+              url: firstImage,
+              width: 1200,
+              height: 630,
+            },
+          ]
+        : [],
+    },
+  };
+}
 
 export default async function SavedTripDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

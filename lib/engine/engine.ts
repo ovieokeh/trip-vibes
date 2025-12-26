@@ -210,7 +210,8 @@ export class MatchingEngine {
         // Construct Image URL if photos exist for immediate display usage
         if (richPhotos?.length > 0) {
           const ref = richPhotos[0].photo_reference;
-          place.imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${GOOGLE_PLACES_API_KEY}`;
+          // Use local proxy
+          place.imageUrl = `/api/places/photo?maxwidth=800&ref=${ref}`;
           // Also update DB
           await db.update(places).set({ imageUrl: place.imageUrl }).where(eq(places.id, place.id));
         }
@@ -382,7 +383,8 @@ export class MatchingEngine {
       photos:
         p.photos?.map((photo: any) => ({
           ...photo,
-          url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${GOOGLE_PLACES_API_KEY}`,
+          // Use local proxy
+          url: `/api/places/photo?maxwidth=400&ref=${photo.photo_reference}`,
         })) || [],
       rating: p.rating,
       address: p.address,

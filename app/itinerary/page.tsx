@@ -15,6 +15,11 @@ import AlertModal from "@/components/AlertModal";
 import AddActivityModal from "@/components/AddActivityModal";
 import { getTransitNote } from "@/lib/geo";
 
+// Note: Metadata cannot be exported from a "use client" component.
+// Since this page relies on client-side state (Zustand) for the unsaved itinerary,
+// we cannot generate server-side metadata for the specific city here.
+// The saved page (app/saved/[id]) handles the shareable metadata.
+
 export default function ItineraryPage() {
   const router = useRouter();
   const prefs = useStore();
