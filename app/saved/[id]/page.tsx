@@ -1,10 +1,23 @@
 import Link from "next/link";
-import { getItineraryByIdAction } from "@/lib/db-actions";
+import { getItineraryByIdAction, getCityById } from "@/lib/db-actions";
 import ItineraryDay from "@/components/ItineraryDay";
 import { ChevronLeft } from "lucide-react";
+import TripControls from "./TripControls";
 
-export default async function SavedTripDetailsPage({ params }: { params: { id: string } }) {
-  const itinerary = await getItineraryByIdAction(params.id);
+export default async function SavedTripDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const itinerary = await getItineraryByIdAction(id);
+  const city = await getCityById(itinerary?.cityId || "");
+  const cityName = city?.name || itinerary?.cityId || "Unknown City";
+
+  // Format dates
+  const startDate = itinerary?.startDate
+    ? new Date(itinerary.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    : "";
+  const endDate = itinerary?.endDate
+    ? new Date(itinerary.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    : "";
+  const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : "";
 
   if (!itinerary) {
     return (
@@ -19,16 +32,22 @@ export default async function SavedTripDetailsPage({ params }: { params: { id: s
 
   return (
     <div className="max-w-xl mx-auto pb-12">
-      <div className="mb-6 flex items-center gap-2">
-        <Link href="/saved" className="btn btn-ghost btn-circle btn-sm">
-          <ChevronLeft className="w-5 h-5" />
-        </Link>
-        <h1 className="text-xl font-bold">Saved Trip</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Link href="/saved" className="btn btn-ghost btn-circle btn-sm">
+            <ChevronLeft className="w-5 h-5" />
+          </Link>
+          <h1 className="text-sm font-bold opacity-60 uppercase tracking-widest">SAVED TRIP</h1>
+        </div>
+        <TripControls id={id} initialName={itinerary.name || `${cityName} Trip`} />
       </div>
 
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-black mb-2 opacity-90">Trip to {itinerary.cityId}</h2>{" "}
-        {/* cityId is often just the ID, ideally we'd join city name but schema is localized. Itinerary object doesn't have city name directly usually, checking type... Itinerary has cityId. We will stick with this or enrich later if needed. */}
+        <h2 className="text-3xl font-black mb-1">{itinerary.name || `Trip to ${cityName}`}</h2>
+        <p className="opacity-60 font-medium">
+          {cityName}
+          {dateRange ? ` • ${dateRange}` : ""}
+        </p>
       </div>
 
       <div>

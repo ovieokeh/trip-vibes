@@ -56,11 +56,10 @@ export async function generateItineraryAction(prefs: UserPreferences): Promise<I
       );
 
       activity.note = vibeDesc.note;
-      if (vibeDesc.alternativeNote) {
-        activity.alternative = {
-          title: "Alternative Option",
-          note: vibeDesc.alternativeNote,
-        };
+      // If there is an alternative (set by engine), we could potentially enrich its note too, but for now let's leave it.
+      if (activity.alternative && vibeDesc.alternativeNote) {
+        // Optionally append the AI note to the alternative's description or just ignore
+        // activity.alternative.description = vibeDesc.alternativeNote;
       }
     }
   }
@@ -71,10 +70,14 @@ export async function generateItineraryAction(prefs: UserPreferences): Promise<I
   return itinerary;
 }
 
-export async function saveItineraryAction(id: string, name?: string) {
+export async function saveItineraryAction(id: string, name?: string, itineraryData?: Itinerary) {
   await db
     .update(itineraries)
-    .set({ isSaved: true, name: name || "My Trip" })
+    .set({
+      isSaved: true,
+      name: name || "My Trip",
+      ...(itineraryData ? { data: JSON.stringify(itineraryData) } : {}),
+    })
     .where(eq(itineraries.id, id));
 }
 
@@ -102,7 +105,21 @@ export async function getSavedItinerariesAction() {
 export async function getItineraryByIdAction(id: string): Promise<Itinerary | null> {
   const record = await db.select().from(itineraries).where(eq(itineraries.id, id)).get();
   if (record) {
-    return JSON.parse(record.data);
+    const data = JSON.parse(record.data);
+    return {
+      ...data,
+      name: record.name,
+      startDate: record.startDate,
+      endDate: record.endDate,
+    };
   }
   return null;
+}
+
+export async function renameItineraryAction(id: string, name: string) {
+  await db.update(itineraries).set({ name }).where(eq(itineraries.id, id));
+}
+
+export async function deleteItineraryAction(id: string) {
+  await db.delete(itineraries).where(eq(itineraries.id, id));
 }

@@ -26,8 +26,24 @@ export interface Vibe {
   lng?: number;
   website?: string;
   phone?: string;
-  openingHours?: any;
-  photoUrls?: string[];
+  openingHours?: {
+    open_now: boolean;
+    periods: Array<{
+      close: { day: number; time: string };
+      open: { day: number; time: string };
+    }>;
+    weekday_text: string[];
+  };
+  photoUrls?: string[]; // Kept for backward compat or quick access
+  photos?: Array<{
+    height: number;
+    width: number;
+    html_attributions: string[];
+    photo_reference: string;
+    url?: string;
+  }>;
+  rating?: number;
+  address?: string;
 }
 
 export interface TripActivity {
@@ -38,10 +54,7 @@ export interface TripActivity {
   note: string; // "Walk 15 mins along the canal"
   isAlternative: boolean;
   transitNote?: string; // e.g., "15 min walk"
-  alternative?: {
-    title: string;
-    note: string;
-  };
+  alternative?: Vibe;
 }
 
 export interface DayPlan {
@@ -57,6 +70,9 @@ export interface Itinerary {
   cityId: string;
   days: DayPlan[];
   createdAt: string;
+  name?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface UserPreferences {

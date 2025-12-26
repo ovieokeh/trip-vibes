@@ -4,30 +4,70 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import { getCities } from "@/lib/db-actions";
+import { SmartCitySelect } from "./SmartCitySelect";
+import { DateRangePicker } from "./DateRangePicker";
 
 export default function SetupForm() {
   const router = useRouter();
-  const { setCity, setDates, setBudget } = useStore();
+
+  // Get state and actions from store
+  const {
+    cityId,
+    startDate: storeStart,
+    endDate: storeEnd,
+    budget: storeBudget,
+    setCity,
+    setDates,
+    setBudget,
+  } = useStore();
 
   const [dbCities, setDbCities] = useState<any[]>([]);
-  const [selectedCity, setSelectedCity] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [budget, setBudgetState] = useState<"low" | "medium" | "high">("medium");
+
+  // Initialize local state from store values (persistence)
+  const [selectedCity, setSelectedCity] = useState(cityId);
+  const [startDate, setStartDate] = useState(storeStart);
+  const [endDate, setEndDate] = useState(storeEnd);
+  const [budget, setBudgetState] = useState<"low" | "medium" | "high">(storeBudget || "medium");
 
   useEffect(() => {
     async function fetchCities() {
       const data = await getCities();
+      console.log("Fetched cities:", data);
       setDbCities(data);
-      if (data.length > 0) {
-        setSelectedCity(data[0].id);
+
+      // Only default to first city if NO city is selected (and not in store)
+      // But actually, we want to respect the empty state if user hasn't chosen one.
+      // So we don't force select the first one unless we really want to.
+      // The previous code did: if (data.length > 0) setSelectedCity(data[0].id) inside useEffect.
+      // This would override store state if we are not careful.
+      // Let's only do it if !selectedCity.
+      if (data.length > 0 && !selectedCity) {
+        // Optionally pre-select first city, or just leave empty.
+        // Let's leave it empty to force user choice or "Smart Select" placeholder.
       }
     }
     fetchCities();
-  }, []);
+  }, []); // Run once on mount
+
+  // Sync state if store updates (e.g. reset) - optional but good practice
+  useEffect(() => {
+    if (cityId) setSelectedCity(cityId);
+    if (storeStart) setStartDate(storeStart);
+    if (storeEnd) setEndDate(storeEnd);
+    if (storeBudget) setBudgetState(storeBudget);
+  }, [cityId, storeStart, storeEnd, storeBudget]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedCity) {
+      alert("Please select a city");
+      return;
+    }
+    if (!startDate || !endDate) {
+      alert("Please select dates");
+      return;
+    }
+
     setCity(selectedCity);
     setDates(startDate, endDate);
     setBudget(budget);
@@ -40,46 +80,21 @@ export default function SetupForm() {
         <label className="label">
           <span className="label-text font-semibold">Where are you going?</span>
         </label>
-        <select
-          className="select select-bordered w-full text-lg"
-          value={selectedCity}
-          onChange={(e) => setSelectedCity(e.target.value)}
-          disabled={dbCities.length === 0}
-        >
-          {dbCities.map((city) => (
-            <option key={city.id} value={city.id}>
-              {city.name}, {city.country}
-            </option>
-          ))}
-        </select>
+        <SmartCitySelect cities={dbCities} selectedCityId={selectedCity} onSelect={setSelectedCity} />
       </div>
 
-      <div className="flex gap-4">
-        <div className="form-control w-1/2">
-          <label className="label">
-            <span className="label-text font-semibold">Start Date</span>
-          </label>
-          <input
-            type="date"
-            required
-            className="input input-bordered w-full"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
-        <div className="form-control w-1/2">
-          <label className="label">
-            <span className="label-text font-semibold">End Date</span>
-          </label>
-          <input
-            type="date"
-            required
-            className="input input-bordered w-full"
-            value={endDate}
-            min={startDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
+      <div className="form-control w-full">
+        <label className="label">
+          <span className="label-text font-semibold">When?</span>
+        </label>
+        <DateRangePicker
+          startDate={startDate}
+          endDate={endDate}
+          onChange={(start, end) => {
+            setStartDate(start);
+            setEndDate(end);
+          }}
+        />
       </div>
 
       <div className="form-control">

@@ -6,7 +6,7 @@ import { Itinerary, UserPreferences } from "../types";
 import crypto from "crypto";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
 export async function getVibeDescription(vibeId: string, placeId: string, placeName: string, vibeTitle: string) {
@@ -67,6 +67,7 @@ export async function cacheItinerary(cityId: string, prefs: UserPreferences, iti
     .digest("hex");
 
   await db.insert(itineraries).values({
+    id: itinerary.id,
     cityId,
     preferencesHash: prefsHash,
     data: JSON.stringify(itinerary),

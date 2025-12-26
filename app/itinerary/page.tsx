@@ -42,6 +42,68 @@ export default function ItineraryPage() {
     );
   }
 
+  const handleSwap = (dayId: string, activityId: string) => {
+    if (!itinerary) return;
+    const newDays = itinerary.days.map((day) => {
+      if (day.id !== dayId) return day;
+      return {
+        ...day,
+        activities: day.activities.map((act) => {
+          if (act.id !== activityId || !act.alternative) return act;
+          const oldVibe = act.vibe;
+          const newVibe = act.alternative;
+          return {
+            ...act,
+            vibe: newVibe,
+            alternative: oldVibe,
+            note: newVibe.description,
+          };
+        }),
+      };
+    });
+    setItinerary({ ...itinerary, days: newDays });
+  };
+
+  const handleRemove = (dayId: string, activityId: string) => {
+    if (!itinerary) return;
+    const newDays = itinerary.days.map((day) => {
+      if (day.id !== dayId) return day;
+      return {
+        ...day,
+        activities: day.activities.filter((act) => act.id !== activityId),
+      };
+    });
+    setItinerary({ ...itinerary, days: newDays });
+  };
+
+  const handleAdd = (dayId: string) => {
+    if (!itinerary) return;
+    const newDays = itinerary.days.map((day) => {
+      if (day.id !== dayId) return day;
+      const newActivity = {
+        id: crypto.randomUUID(),
+        vibe: {
+          id: "custom",
+          title: "New Activity",
+          description: "Description",
+          imageUrl: "",
+          category: "custom",
+          cityId: process.env.NEXT_PUBLIC_DEFAULT_CITY_ID || "",
+          tags: [],
+        } as any,
+        startTime: "12:00",
+        endTime: "13:00",
+        note: "Added manually",
+        isAlternative: false,
+      };
+      return {
+        ...day,
+        activities: [...day.activities, newActivity],
+      };
+    });
+    setItinerary({ ...itinerary, days: newDays });
+  };
+
   return (
     <div className="max-w-xl mx-auto">
       <div className="text-center mb-8">
@@ -51,7 +113,13 @@ export default function ItineraryPage() {
 
       <div>
         {itinerary.days.map((day) => (
-          <ItineraryDay key={day.id} day={day} />
+          <ItineraryDay
+            key={day.id}
+            day={day}
+            onSwap={(actId) => handleSwap(day.id, actId)}
+            onRemove={(actId) => handleRemove(day.id, actId)}
+            onAdd={() => handleAdd(day.id)}
+          />
         ))}
       </div>
 
@@ -65,7 +133,10 @@ export default function ItineraryPage() {
             onClick={async () => {
               if (!itinerary) return;
               setIsSaving(true);
-              await saveItineraryAction(itinerary.id);
+
+              // Persist the current state of the itinerary including edits
+              await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
+
               setHasSaved(true);
               setIsSaving(false);
             }}

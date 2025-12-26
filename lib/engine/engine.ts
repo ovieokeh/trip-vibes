@@ -59,12 +59,20 @@ export class MatchingEngine {
       )
       .all();
 
-    return results.map((r) => ({
-      ...r.place,
-      metadata: JSON.parse(r.place.metadata || "{}"),
-      openingHours: r.place.openingHours ? JSON.parse(r.place.openingHours) : null,
-      photoUrls: r.place.photoUrls ? JSON.parse(r.place.photoUrls) : [],
-    }));
+    return results.map((r) => {
+      const dbPhotos = r.place.photoUrls ? JSON.parse(r.place.photoUrls) : [];
+      // Check if dbPhotos is array of strings or objects.
+      // If objects, assign to photos; if strings, assign to photoUrls
+      const isRich = dbPhotos.length > 0 && typeof dbPhotos[0] === "object";
+
+      return {
+        ...r.place,
+        metadata: JSON.parse(r.place.metadata || "{}"),
+        openingHours: r.place.openingHours ? JSON.parse(r.place.openingHours) : null,
+        photoUrls: !isRich ? dbPhotos : [],
+        photos: isRich ? dbPhotos : [],
+      };
+    });
   }
 
   private async enrichFromFoursquare(city: any) {
@@ -176,22 +184,35 @@ export class MatchingEngine {
         });
 
         const details = detailsRes.data.result;
+
+        // Save rich photo data
+        const richPhotos = details?.photos || [];
+
         await db
           .update(places)
           .set({
             googlePlacesId: googleId,
-            website: details.website || null,
-            phone: details.formatted_phone_number || null,
-            openingHours: details.opening_hours ? JSON.stringify(details.opening_hours) : null,
-            photoUrls: details.photos ? JSON.stringify(details.photos.map((p: any) => p.photo_reference)) : null,
-            rating: details.rating || place.rating,
+            website: details?.website || null,
+            phone: details?.formatted_phone_number || null,
+            openingHours: details?.opening_hours ? JSON.stringify(details.opening_hours) : null,
+            // Store rich objects in the text field (it's big, but sqlite can handle it)
+            photoUrls: JSON.stringify(richPhotos),
+            rating: details?.rating || place.rating,
           })
           .where(eq(places.id, place.id));
 
-        // Update the local object for immediate use in assembleItinerary
-        place.website = details.website;
-        place.phone = details.formatted_phone_number;
-        place.openingHours = details.opening_hours;
+        place.website = details?.website;
+        place.phone = details?.formatted_phone_number;
+        place.openingHours = details?.opening_hours;
+        place.photos = richPhotos;
+
+        // Construct Image URL if photos exist for immediate display usage
+        if (richPhotos?.length > 0) {
+          const ref = richPhotos[0].photo_reference;
+          place.imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${GOOGLE_PLACES_API_KEY}`;
+          // Also update DB
+          await db.update(places).set({ imageUrl: place.imageUrl }).where(eq(places.id, place.id));
+        }
       }
     } catch (error) {
       console.error(`Google Places error for ${place.name}:`, error);
@@ -219,32 +240,61 @@ export class MatchingEngine {
       ];
 
       for (const slot of slots) {
-        if (candidateIdx < candidates.length) {
+        // Find a candidate that is open
+        let chosenCandidate = null;
+        let attempts = 0;
+
+        // Loop through candidates until we find one that is open or run out
+        while (candidateIdx < candidates.length && !chosenCandidate && attempts < candidates.length) {
           const p = candidates[candidateIdx];
+
+          if (this.isPlaceOpen(p, currentDate, slot.start, slot.end)) {
+            chosenCandidate = p;
+            candidateIdx++;
+          } else {
+            // If closed, maybe move it to end of list? or just skip for this day?
+            // Simple strategy: Skip and try next.
+            // Ideally we shouldn't discard it completely, but for now let's just increment
+            // Warning: This is linear scanning. If strict, we might skip many.
+            // Let's swap the closed one to the end of the array to reconsider later?
+            // Or just simple increment.
+            candidateIdx++;
+          }
+          attempts++;
+        }
+
+        // If we exhausted list but found nothing open, reset?
+        // Or just pick the last one we saw even if closed (fallback)?
+        if (!chosenCandidate && candidateIdx >= candidates.length) {
+          // Fallback: Just pick one from the recycled list or previous logic
+          // Ideally we'd have a pool.
+          // For now, let's just proceed with whatever was at the index if we can, or valid index.
+          if (candidateIdx > 0 && candidates.length > 0) {
+            chosenCandidate = candidates[(candidateIdx - 1) % candidates.length];
+          }
+        }
+
+        if (chosenCandidate) {
+          // Attempt to find an alternative (also ideally open)
+          let altCandidate = null;
+          if (candidateIdx < candidates.length) {
+            const potentialAlt = candidates[candidateIdx];
+            if (this.isPlaceOpen(potentialAlt, currentDate, slot.start, slot.end)) {
+              altCandidate = potentialAlt;
+              candidateIdx++;
+            }
+          }
+
           dayActivities.push({
             id: uuidv4(),
-            vibe: {
-              id: p.id,
-              title: p.name,
-              description: p.address || "Local discovery",
-              imageUrl: p.imageUrl || "",
-              category: p.metadata.categories?.[0] || "culture",
-              cityId: p.cityId,
-              tags: [],
-              lat: p.lat,
-              lng: p.lng,
-              neighborhood: p.metadata.neighborhood,
-              website: p.website,
-              phone: p.phone,
-              openingHours: p.openingHours,
-            } as any, // Cast to any to handle extra fields for now
+            vibe: this.mapCandidateToVibe(chosenCandidate),
             startTime: slot.start,
             endTime: slot.end,
             note: "",
             isAlternative: false,
             transitNote: "15 min walk",
+            alternative: altCandidate ? this.mapCandidateToVibe(altCandidate) : undefined,
           });
-          candidateIdx++;
         }
       }
 
@@ -263,5 +313,62 @@ export class MatchingEngine {
       days,
       createdAt: new Date().toISOString(),
     };
+  }
+
+  // Returns true if the place is open during the requested slot
+  private isPlaceOpen(place: any, date: Date, startTime: string, endTime: string): boolean {
+    if (!place.openingHours?.periods) return true; // Assume open if no data
+
+    const dayIndex = date.getDay(); // 0 = Sunday
+    const startInt = parseInt(startTime.replace(":", ""));
+    const endInt = parseInt(endTime.replace(":", ""));
+
+    // Google Periods: { open: { day: 0, time: "1000" }, close: { day: 0, time: "1700" } }
+    const periods = place.openingHours.periods;
+
+    return periods.some((period: any) => {
+      // Simple case: Open and Close on same day
+      if (period.open.day === dayIndex) {
+        const openTime = parseInt(period.open.time);
+
+        // If no close time, usually means 24h?
+        if (!period.close) return true;
+
+        // If close day is different (e.g. next day), effective close time for THIS day logic is complex
+        // but for now, if close.day != open.day, it closes strictly AFTER this day, so it's open for the rest of this day.
+        if (period.close.day !== period.open.day) {
+          return startInt >= openTime;
+        }
+
+        const closeTime = parseInt(period.close.time);
+        return startInt >= openTime && endInt <= closeTime;
+      }
+      return false;
+    });
+  }
+
+  private mapCandidateToVibe(p: any): Vibe {
+    return {
+      id: p.id,
+      title: p.name,
+      description: p.address || "Local discovery",
+      imageUrl: p.imageUrl || "",
+      category: p.metadata.categories?.[0] || "culture",
+      cityId: p.cityId,
+      tags: [],
+      lat: p.lat,
+      lng: p.lng,
+      neighborhood: p.metadata.neighborhood,
+      website: p.website,
+      phone: p.phone,
+      openingHours: p.openingHours,
+      photos:
+        p.photos?.map((photo: any) => ({
+          ...photo,
+          url: `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${GOOGLE_PLACES_API_KEY}`,
+        })) || [],
+      rating: p.rating,
+      address: p.address,
+    } as any;
   }
 }
