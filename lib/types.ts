@@ -46,6 +46,14 @@ export interface Vibe {
   address?: string;
 }
 
+export interface TransitDetails {
+  mode: "walking" | "driving" | "transit";
+  durationMinutes: number;
+  distanceKm: number;
+  from: { lat: number; lng: number };
+  to: { lat: number; lng: number };
+}
+
 export interface TripActivity {
   id: string;
   vibe: Vibe;
@@ -54,6 +62,7 @@ export interface TripActivity {
   note: string; // "Walk 15 mins along the canal"
   isAlternative: boolean;
   transitNote?: string; // e.g., "15 min walk"
+  transitDetails?: TransitDetails;
   alternative?: Vibe;
 }
 

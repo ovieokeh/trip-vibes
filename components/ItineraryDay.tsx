@@ -1,19 +1,181 @@
 "use client";
 
-import { DayPlan } from "@/lib/types";
+import { DayPlan, Vibe } from "@/lib/types";
 import { motion } from "framer-motion";
-import { Star, Globe, Phone } from "lucide-react";
+import { Star, Globe, Phone, ImageIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { getFallbackImageAction } from "@/lib/db-actions";
+
+function VibeImage({ vibe }: { vibe: Vibe }) {
+  const [src, setSrc] = useState(vibe.imageUrl || "");
+
+  useEffect(() => {
+    if (!src) {
+      getFallbackImageAction(vibe.category || "travel").then((url) => {
+        if (url) setSrc(url);
+      });
+    }
+  }, [vibe, src]);
+
+  return (
+    <div
+      className="h-24 sm:h-auto sm:w-28 bg-cover bg-center shrink-0 bg-base-200 flex items-center justify-center text-base-content/20"
+      style={{ backgroundImage: src ? `url(${src})` : undefined }}
+    >
+      {!src && <ImageIcon className="w-8 h-8" />}
+    </div>
+  );
+}
+
+import { estimateTravelTime } from "@/lib/geo";
+
+function TransitIndicator({ activity, onUpdate }: { activity: any; onUpdate?: (actId: string, updates: any) => void }) {
+  const details = activity.transitDetails;
+
+  // If no details, fallback to string parsing or static
+  if (!details) {
+    return (
+      <span className="text-[10px] font-bold uppercase tracking-widest opacity-30 flex items-center gap-1">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-3 w-3"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+        {activity.transitNote || "Getting there"}
+      </span>
+    );
+  }
+
+  const handleModeChange = (mode: "walking" | "driving" | "transit") => {
+    const newDuration = estimateTravelTime(details.distanceKm, mode);
+    const newDetails = { ...details, mode, durationMinutes: newDuration };
+    // Update both detail object and the legacy string for safety
+    onUpdate?.(activity.id, {
+      transitDetails: newDetails,
+      transitNote: `${newDuration} min ${mode}`,
+    });
+  };
+
+  const getIcon = (mode: string) => {
+    switch (mode) {
+      case "walking":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-3 w-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M13 14l-4.5-9" />
+            <path d="M8 14l-3-5" />
+            <path d="M9 18l3 5" />
+            <path d="M14 18l-3 5" />
+            <circle cx="12" cy="5" r="2" />
+          </svg>
+        );
+      case "driving":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-3 w-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12v4.5a2 2 0 0 0 2 2h1" />
+            <circle cx="5" cy="19" r="2" />
+            <circle cx="19" cy="19" r="2" />
+            <path d="M2 12h3" />
+            <path d="M2 12h1x" />
+          </svg>
+        );
+      case "transit":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-3 w-3"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect width="14" height="16" x="5" y="4" rx="2" />
+            <path d="M9 18v2" />
+            <path d="M15 18v2" />
+            <path d="M2 8h20" />
+            <path d="M5 14h.01" />
+            <path d="M19 14h.01" />
+            <path d="M10 2h4" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="dropdown dropdown-hover dropdown-right dropdown-end">
+        <div
+          tabIndex={0}
+          role="button"
+          className="btn btn-xs btn-ghost gap-1 h-auto min-h-0 py-0.5 px-1 font-normal opacity-50 hover:opacity-100"
+        >
+          {getIcon(details.mode)}
+          <span className="text-[10px] font-bold uppercase tracking-widest">
+            {details.durationMinutes} min {details.mode}
+          </span>
+        </div>
+        <ul
+          tabIndex={0}
+          className="dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box w-32 border border-base-200"
+        >
+          <li>
+            <a onClick={() => handleModeChange("walking")} className="text-xs py-1">
+              Walking
+            </a>
+          </li>
+          <li>
+            <a onClick={() => handleModeChange("transit")} className="text-xs py-1">
+              Transit
+            </a>
+          </li>
+          <li>
+            <a onClick={() => handleModeChange("driving")} className="text-xs py-1">
+              Driving
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}
 
 export default function ItineraryDay({
   day,
   onSwap,
   onRemove,
   onAdd,
+  onUpdate,
 }: {
   day: DayPlan;
   onSwap?: (id: string) => void;
   onRemove?: (id: string) => void;
   onAdd?: () => void;
+  onUpdate?: (actId: string, updates: any) => void;
 }) {
   // Get day name for opening hours lookup, e.g. "Monday"
   const dateObj = new Date(day.date);
@@ -55,10 +217,7 @@ export default function ItineraryDay({
                       ))}
                     </div>
                   ) : (
-                    <div
-                      className="h-24 sm:h-auto sm:w-28 bg-cover bg-center shrink-0"
-                      style={{ backgroundImage: `url(${act.vibe.imageUrl})` }}
-                    ></div>
+                    <VibeImage vibe={act.vibe} />
                   )}
 
                   <div className="card-body p-3 flex-1 min-w-0">
@@ -191,21 +350,10 @@ export default function ItineraryDay({
                 </div>
               </motion.div>
 
-              {act.transitNote && index < day.activities.length - 1 && (
+              {(act.transitNote || act.transitDetails) && index < day.activities.length - 1 && (
                 <div className="flex items-center gap-2 py-4 ml-6 border-l border-dashed border-base-300">
                   <div className="w-2 h-2 rounded-full bg-base-300 -ml-[4.5px]"></div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-30 flex items-center gap-1">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-3 w-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    {act.transitNote}
-                  </span>
+                  <TransitIndicator activity={act} onUpdate={onUpdate} />
                 </div>
               )}
             </div>

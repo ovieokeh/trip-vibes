@@ -4,6 +4,7 @@ import { eq, inArray, sql } from "drizzle-orm";
 import { UserPreferences, Itinerary, DayPlan, TripActivity, Vibe } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
+import { getTransitNote, getTravelDetails } from "../geo";
 
 // Environment variables for APIs
 const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
@@ -239,7 +240,7 @@ export class MatchingEngine {
         { name: "Evening", start: "19:00", end: "21:30" },
       ];
 
-      for (const slot of slots) {
+      for (const [slotIdx, slot] of slots.entries()) {
         // Find a candidate that is open
         let chosenCandidate = null;
         let attempts = 0;
@@ -252,37 +253,52 @@ export class MatchingEngine {
             chosenCandidate = p;
             candidateIdx++;
           } else {
-            // If closed, maybe move it to end of list? or just skip for this day?
-            // Simple strategy: Skip and try next.
-            // Ideally we shouldn't discard it completely, but for now let's just increment
-            // Warning: This is linear scanning. If strict, we might skip many.
-            // Let's swap the closed one to the end of the array to reconsider later?
-            // Or just simple increment.
+            // If closed, move strictly forward for now (simple heuristic)
             candidateIdx++;
           }
           attempts++;
         }
 
-        // If we exhausted list but found nothing open, reset?
-        // Or just pick the last one we saw even if closed (fallback)?
-        if (!chosenCandidate && candidateIdx >= candidates.length) {
-          // Fallback: Just pick one from the recycled list or previous logic
-          // Ideally we'd have a pool.
-          // For now, let's just proceed with whatever was at the index if we can, or valid index.
-          if (candidateIdx > 0 && candidates.length > 0) {
-            chosenCandidate = candidates[(candidateIdx - 1) % candidates.length];
-          }
+        // Fallback: If ran out, try to pick previous unused or wrapped (simplified)
+        if (!chosenCandidate && candidates.length > 0) {
+          // Just take mod if we ran out
+          chosenCandidate = candidates[candidateIdx % candidates.length];
+          candidateIdx++;
         }
 
         if (chosenCandidate) {
-          // Attempt to find an alternative (also ideally open)
+          // Attempt to find an alternative
           let altCandidate = null;
           if (candidateIdx < candidates.length) {
-            const potentialAlt = candidates[candidateIdx];
-            if (this.isPlaceOpen(potentialAlt, currentDate, slot.start, slot.end)) {
-              altCandidate = potentialAlt;
-              candidateIdx++;
+            // simplified alt logic
+            altCandidate = candidates[candidateIdx];
+            candidateIdx++;
+          }
+
+          // Calculate transit from previous activity if exists
+          let transitNote = "";
+          let transitDetails = undefined;
+
+          if (dayActivities.length > 0) {
+            const prevActivity = dayActivities[dayActivities.length - 1];
+            // Get previous lat/lng from the vibe object
+            if (prevActivity.vibe.lat && prevActivity.vibe.lng && chosenCandidate.lat && chosenCandidate.lng) {
+              const details = getTravelDetails(
+                prevActivity.vibe.lat,
+                prevActivity.vibe.lng,
+                chosenCandidate.lat,
+                chosenCandidate.lng
+              );
+              transitDetails = details;
+
+              // Backwards compat string
+              transitNote = `${details.durationMinutes} min ${details.mode}`;
+            } else {
+              transitNote = "Getting there"; // Generic fallback if coords missing
             }
+          } else {
+            // From hotel/start?
+            transitNote = "Start of day";
           }
 
           dayActivities.push({
@@ -292,7 +308,8 @@ export class MatchingEngine {
             endTime: slot.end,
             note: "",
             isAlternative: false,
-            transitNote: "15 min walk",
+            transitNote: transitNote,
+            transitDetails: transitDetails,
             alternative: altCandidate ? this.mapCandidateToVibe(altCandidate) : undefined,
           });
         }

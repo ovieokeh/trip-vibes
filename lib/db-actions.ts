@@ -28,6 +28,7 @@ function generateId() {
 
 import { MatchingEngine } from "./engine/engine";
 import { getCachedItinerary, cacheItinerary, getVibeDescription } from "./engine/architect";
+import { getRandomImageForCategory } from "./unsplash";
 
 export async function generateItineraryAction(prefs: UserPreferences): Promise<Itinerary> {
   // 1. Check full itinerary cache
@@ -122,4 +123,8 @@ export async function renameItineraryAction(id: string, name: string) {
 
 export async function deleteItineraryAction(id: string) {
   await db.delete(itineraries).where(eq(itineraries.id, id));
+}
+
+export async function getFallbackImageAction(query: string) {
+  return await getRandomImageForCategory(query);
 }
