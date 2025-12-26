@@ -28,119 +28,136 @@ async function main() {
   const archetypesData = [
     {
       title: "Secret Garden",
-      description: "Escape the city noise in a hidden green oasis.",
+      description:
+        "Hidden pockets of greenery where the city noise drops off. Expect quiet courtyards, botanical corners, and places built for slowing down.",
       imageUrl: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800&q=80",
       category: "nature",
       searchTags: "garden,botanical,quiet,nature,oasis",
     },
     {
       title: "Industrial Decay",
-      description: "Raw concrete, street art, and repurposed spaces.",
+      description:
+        "Former factories and warehouses turned cultural spaces. Rough edges, street art, and a strong before-and-after story.",
       imageUrl: "https://images.unsplash.com/photo-1641503070352-54f3ff29b253?q=80&w=1036",
       category: "culture",
       searchTags: "industrial,street art,warehouse,brutalist",
     },
     {
       title: "Local Market Hustle",
-      description: "Taste the real city street food and buy vintage trinkets.",
+      description:
+        "Busy markets where food, noise, and chance discoveries collide. Come hungry and expect a little chaos.",
       imageUrl: "https://images.unsplash.com/photo-1533900298318-6b8da08a523e?w=800&q=80",
       category: "food",
       searchTags: "market,food,street food,bustling",
     },
     {
       title: "Dark Academia",
-      description: "Old books, silence, and dust particles dancing in light beams.",
+      description:
+        "Old libraries, historic halls, and places that reward silence. Ideal for wandering, reading, or pretending you’re very serious.",
       imageUrl: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800&q=80",
       category: "history",
       searchTags: "library,books,history,quiet,academia",
     },
     {
       title: "Neon Noir Nights",
-      description: "Sleek lighting, rain-slicked streets, and late-night vibes.",
+      description:
+        "Late evenings under glowing signs and reflective streets. Think cocktail bars, night walks, and cinematic city energy.",
       imageUrl: "https://images.unsplash.com/photo-1514525253361-b44c8b9d038a?w=800&q=80",
       category: "nightlife",
       searchTags: "neon,cyberpunk,noir,bar,cocktails",
     },
     {
       title: "Mid-Century Modern",
-      description: "Clean lines, functional design, and 1950s elegance.",
+      description:
+        "Design-forward spaces with clean lines and warm materials. Architecture tours, stylish cafés, and classic interiors.",
       imageUrl: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=800&q=80",
       category: "architecture",
       searchTags: "design,mid-century,furniture,minimalist",
     },
     {
       title: "Third-Wave Coffee Cult",
-      description: "Light roasts, artisanal techniques, and minimalist spaces.",
+      description:
+        "Cafés that take coffee very seriously. Expect light roasts, slow brewing, and menus that explain everything.",
       imageUrl: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80",
       category: "food",
       searchTags: "coffee,brunch,roastery,minimalist",
     },
     {
       title: "Post-Socialist Brutalism",
-      description: "Monolithic concrete structures and dramatic scales.",
+      description:
+        "Massive concrete buildings from another era. Stark, imposing, and unexpectedly fascinating once you stop to look.",
       imageUrl: "https://images.unsplash.com/photo-1542385431-7e61ee212a4c?w=800&q=80",
       category: "architecture",
       searchTags: "brutalist,concrete,soviet,monumental",
     },
     {
       title: "Secret Speakeasies",
-      description: "Unmarked doors, dimly lit booths, and world-class mixology.",
+      description:
+        "Bars hidden behind unmarked doors or strange entrances. Low light, good drinks, and a small sense of discovery.",
       imageUrl: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80",
       category: "nightlife",
       searchTags: "secret,speakeasy,cocktails,hidden",
     },
     {
       title: "Vinyl & High-Fidelity",
-      description: "Analog sounds, warm aesthetics, and listening bars.",
+      description:
+        "Listening bars and record shops built around sound quality. Sit down, tune in, and let the music do the work.",
       imageUrl: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=800&q=80",
       category: "culture",
       searchTags: "vinyl,music,records,hifi,listening bar",
     },
     {
       title: "Kinfolk Minimalism",
-      description: "Soft textures, natural light, and slow living aesthetics.",
+      description:
+        "Calm, light-filled spaces focused on simplicity. Natural materials, neutral colors, and an unspoken request to relax.",
       imageUrl: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=800&q=80",
       category: "nature",
       searchTags: "minimalist,kinfolk,serene,natural",
     },
     {
       title: "Cyberpunk Street Food",
-      description: "Neon-lit stalls, steaming bowls, and urban energy.",
+      description:
+        "Late-night food stalls under bright lights. Fast, flavorful meals with an unmistakably urban backdrop.",
       imageUrl: "https://images.unsplash.com/photo-1545044846-351ba102b4d5?w=800&q=80",
       category: "food",
       searchTags: "urban,neon,street food,asian",
     },
     {
       title: "Wabi-Sabi Tea Rooms",
-      description: "Imperfection, simplicity, and mindful preparation.",
+      description:
+        "Quiet tea spaces that value simplicity and imperfection. Slow rituals, minimal décor, and very few distractions.",
       imageUrl: "https://images.unsplash.com/photo-1544787210-282dc4bc51f3?w=800&q=80",
       category: "culture",
       searchTags: "tea,japanese,mindful,minimalist",
     },
     {
       title: "Art Deco Opulence",
-      description: "Geometric patterns, gold accents, and jazz age flair.",
+      description:
+        "Bold geometry, rich materials, and a hint of old-school glamour. Great for architecture walks and dramatic interiors.",
       imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
       category: "architecture",
       searchTags: "art deco,luxury,glamour,interior",
     },
     {
       title: "Rave Culture Ruins",
-      description: "Abandoned factories, heavy bass, and nocturnal energy.",
+      description:
+        "Nightlife set in repurposed industrial spaces. Heavy bass, long nights, and venues that feel temporary but legendary.",
       imageUrl: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80",
       category: "nightlife",
       searchTags: "techno,warehouse,club,berlin",
     },
     {
       title: "Nordic Noir Cosiness",
-      description: "Hygge vibes, darker tones, and moody lighting.",
+      description:
+        "Moody interiors softened by warm lighting and simple comfort. Think candles, dark wood, and a calm, introspective feel.",
       imageUrl: "https://images.unsplash.com/photo-1478144592103-258228816893?w=800&q=80",
       category: "culture",
       searchTags: "hygge,cosy,nordic,moody",
     },
     {
       title: "Victorian Gothic",
-      description: "Wrought iron, dark velvet, and historic drama.",
+      description:
+        "Historic spaces with ornate details and a darker edge. Dramatic architecture, ironwork, and a sense of past lives.",
       imageUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&q=80",
       category: "history",
       searchTags: "gothic,victorian,dramatic,historic",

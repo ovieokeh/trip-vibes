@@ -12,12 +12,15 @@ const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
 export class MatchingEngine {
   private prefs: UserPreferences;
+  private onProgress: (msg: string) => void;
 
-  constructor(prefs: UserPreferences) {
+  constructor(prefs: UserPreferences, onProgress?: (msg: string) => void) {
     this.prefs = prefs;
+    this.onProgress = onProgress || (() => {});
   }
 
   async generate(): Promise<Itinerary> {
+    this.onProgress("Initializing engine...");
     const city = await db.select().from(cities).where(eq(cities.id, this.prefs.cityId)).get();
     if (!city) {
       // Try slug lookup
@@ -26,23 +29,38 @@ export class MatchingEngine {
       this.prefs.cityId = cityBySlug.id;
     }
 
-    // 1. Discovery Phase: Find places matching liked vibes in current DB
+    // 1. Discovery Phase
+    this.onProgress(`Scouting best vibes in ${city?.name || "the city"}...`);
     let candidates = await this.discoverPlacesInDB();
 
-    // 2. Data Enrichment: If we have few candidates, hit Foursquare
+    // 2. Data Enrichment
     if (candidates.length < 5) {
+      this.onProgress("Expanding search to external sources...");
       await this.enrichFromFoursquare(city!);
       candidates = await this.discoverPlacesInDB();
     }
 
-    // 3. Deep Enrichment: For each candidate, get Google Places details if missing
-    for (const p of candidates) {
-      if (!p.website || !p.openingHours) {
-        await this.enrichFromGoogle(p);
-      }
+    // 3. Deep Enrichment
+    this.onProgress("Verifying opening hours and details...");
+    let checkedCount = 0;
+    // Batch process in chunks to speed up but respect rate limits
+    for (let i = 0; i < candidates.length; i += 5) {
+      const chunk = candidates.slice(i, i + 5);
+      await Promise.all(
+        chunk.map(async (p) => {
+          if (!p.website || !p.openingHours) {
+            await this.enrichFromGoogle(p);
+          }
+          checkedCount++;
+          if (checkedCount % 5 === 0) {
+            this.onProgress(`Analyzing ${checkedCount} of ${candidates.length} matches...`);
+          }
+        })
+      );
     }
 
-    // 4. Optimization Phase: Geographic clustering and Time slotting
+    // 4. Optimization Phase
+    this.onProgress("Optimizing route and schedule...");
     return this.assembleItinerary(candidates);
   }
 

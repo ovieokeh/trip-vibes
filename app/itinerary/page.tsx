@@ -13,6 +13,7 @@ import { Itinerary, TripActivity, Vibe } from "@/lib/types";
 import ItineraryDay from "@/components/ItineraryDay";
 import AlertModal from "@/components/AlertModal";
 import AddActivityModal from "@/components/AddActivityModal";
+import LoadingScreen from "@/components/LoadingScreen";
 import { getTransitNote } from "@/lib/geo";
 
 // Note: Metadata cannot be exported from a "use client" component.
@@ -52,6 +53,10 @@ export default function ItineraryPage() {
     type: "info",
   });
 
+  // Loading State
+  const [loadingMessage, setLoadingMessage] = useState("Initializing The Architect...");
+  const [currentStep, setCurrentStep] = useState("init");
+
   useEffect(() => {
     // Basic protection to ensure we have a city selected
     if (!prefs.cityId) {
@@ -59,11 +64,49 @@ export default function ItineraryPage() {
       return;
     }
 
-    // Generate Itinerary using DB-backed Architect
+    // Generate Itinerary using Streaming API
     async function generate() {
       try {
-        const result = await generateItineraryAction(prefs);
-        setItinerary(result);
+        const encodedPrefs = encodeURIComponent(JSON.stringify(prefs));
+        const response = await fetch(`/api/itinerary/stream?prefs=${encodedPrefs}`);
+
+        if (!response.ok) throw new Error("Generation failed");
+        if (!response.body) throw new Error("No response body");
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n\n");
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                const event = JSON.parse(line.slice(6));
+
+                if (event.type === "progress") {
+                  setLoadingMessage(event.message);
+                  if (event.step) setCurrentStep(event.step);
+                } else if (event.type === "result") {
+                  setItinerary(event.data);
+                } else if (event.type === "error") {
+                  setAlert({
+                    isOpen: true,
+                    title: "Generation Error",
+                    message: event.message,
+                    type: "error",
+                  });
+                }
+              } catch (e) {
+                console.error("Error parsing stream chunk", e);
+              }
+            }
+          }
+        }
       } catch (error) {
         console.error("Failed to generate itinerary:", error);
         setAlert({
@@ -74,16 +117,15 @@ export default function ItineraryPage() {
         });
       }
     }
-    generate();
-  }, [prefs, router]);
+
+    // Only run if we don't have an itinerary yet
+    if (!itinerary) {
+      generate();
+    }
+  }, [prefs, router, itinerary]); // Added itinerary to deps to prevent re-run if set
 
   if (!itinerary) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <span className="loading loading-spinner text-primary loading-lg"></span>
-        <p className="animate-pulse">The Architect is analyzing thousands of data points...</p>
-      </div>
-    );
+    return <LoadingScreen message={loadingMessage} step={currentStep} />;
   }
 
   // Minimal client-side check (simplified compared to server)

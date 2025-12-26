@@ -34,7 +34,7 @@ export default async function RootLayout({
   const saved = await getSavedItinerariesAction();
 
   return (
-    <html lang="en" data-theme="lofi">
+    <html lang="en" data-theme="autumn">
       <body className="font-sans antialiased min-h-screen bg-base-100 text-base-content pb-24">
         <Navbar savedCount={saved.length} />
         <main className="container mx-auto max-w-2xl px-4 py-8">{children}</main>
