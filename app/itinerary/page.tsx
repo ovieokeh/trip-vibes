@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
-import { generateItinerary } from "@/lib/architect";
+import { generateItineraryAction } from "@/lib/db-actions";
 import { Itinerary } from "@/lib/types";
 import ItineraryDay from "@/components/ItineraryDay";
 
@@ -19,9 +19,16 @@ export default function ItineraryPage() {
       return;
     }
 
-    // Generate Itinerary (Simulation of AI Architect)
-    const result = generateItinerary(prefs);
-    setItinerary(result);
+    // Generate Itinerary using DB-backed Architect
+    async function generate() {
+      try {
+        const result = await generateItineraryAction(prefs);
+        setItinerary(result);
+      } catch (error) {
+        console.error("Failed to generate itinerary:", error);
+      }
+    }
+    generate();
   }, [prefs, router]);
 
   if (!itinerary) {
@@ -42,7 +49,7 @@ export default function ItineraryPage() {
 
       <div>
         {itinerary.days.map((day) => (
-          <ItineraryDay key={day.dayNumber} day={day} />
+          <ItineraryDay key={day.id} day={day} />
         ))}
       </div>
 

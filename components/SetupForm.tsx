@@ -1,18 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useStore } from "@/store/useStore"; // Ensure this path is correct
-import { CITIES } from "@/lib/data";
+import { useStore } from "@/store/useStore";
+import { getCities } from "@/lib/db-actions";
 
 export default function SetupForm() {
   const router = useRouter();
   const { setCity, setDates, setBudget } = useStore();
 
-  const [selectedCity, setSelectedCity] = useState(CITIES[0].id);
+  const [dbCities, setDbCities] = useState<any[]>([]);
+  const [selectedCity, setSelectedCity] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [budget, setBudgetState] = useState<"low" | "medium" | "high">("medium");
+
+  useEffect(() => {
+    async function fetchCities() {
+      const data = await getCities();
+      setDbCities(data);
+      if (data.length > 0) {
+        setSelectedCity(data[0].id);
+      }
+    }
+    fetchCities();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +44,9 @@ export default function SetupForm() {
           className="select select-bordered w-full text-lg"
           value={selectedCity}
           onChange={(e) => setSelectedCity(e.target.value)}
+          disabled={dbCities.length === 0}
         >
-          {CITIES.map((city) => (
+          {dbCities.map((city) => (
             <option key={city.id} value={city.id}>
               {city.name}, {city.country}
             </option>

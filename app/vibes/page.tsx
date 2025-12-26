@@ -3,17 +3,40 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
-import { VIBES } from "@/lib/data";
+import { getVibeArchetypes } from "@/lib/db-actions";
 import SwipeCard from "@/components/SwipeCard";
 import { AnimatePresence } from "framer-motion";
+import { Vibe } from "@/lib/types";
 
 export default function VibesPage() {
   const router = useRouter();
   const { cityId, addLike, addDislike } = useStore();
-  const [cards, setCards] = useState(() => {
-    // Filter vibes by selected city
-    return VIBES.filter((v) => v.cityId === cityId);
-  });
+  const [cards, setCards] = useState<Vibe[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchVibes() {
+      try {
+        const archs = await getVibeArchetypes();
+        // Convert DB archetypes to frontend Vibe type
+        const vibes: Vibe[] = archs.map((a) => ({
+          id: a.id,
+          title: a.title,
+          description: a.description,
+          imageUrl: a.imageUrl,
+          category: a.category,
+          tags: a.searchTags.split(","),
+          cityId: cityId || "", // Archetypes are city-agnostic in search phase
+        }));
+        setCards(vibes);
+      } catch (error) {
+        console.error("Failed to fetch vibes:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchVibes();
+  }, [cityId]);
 
   // If no city selected (e.g. refresh), redirect home
   useEffect(() => {
@@ -48,7 +71,7 @@ export default function VibesPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] overflow-hidden">
-      {cards.length > 0 ? (
+      {!loading && cards.length > 0 ? (
         <div className="relative w-full max-w-sm h-[60vh]">
           <AnimatePresence>
             {cards.map(
