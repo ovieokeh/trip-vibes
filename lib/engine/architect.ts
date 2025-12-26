@@ -11,11 +11,13 @@ const openai = new OpenAI({
 
 export async function getVibeDescription(vibeId: string, placeId: string, placeName: string, vibeTitle: string) {
   // 1. Check Cache
-  const cached = await db
-    .select()
-    .from(vibeDescriptionsCache)
-    .where(and(eq(vibeDescriptionsCache.vibeId, vibeId), eq(vibeDescriptionsCache.placeId, placeId)))
-    .get();
+  const cached = (
+    await db
+      .select()
+      .from(vibeDescriptionsCache)
+      .where(and(eq(vibeDescriptionsCache.vibeId, vibeId), eq(vibeDescriptionsCache.placeId, placeId)))
+      .limit(1)
+  )[0];
 
   if (cached) return cached;
 
@@ -46,7 +48,7 @@ export async function getVibeDescription(vibeId: string, placeId: string, placeN
       alternativeNote: result.alternative || "Check out nearby spots.",
     };
 
-    const inserted = await db.insert(vibeDescriptionsCache).values(newEntry).returning().get();
+    const inserted = (await db.insert(vibeDescriptionsCache).values(newEntry).returning())[0];
     return inserted;
   } catch (error) {
     console.error("OpenAI Error:", error);
@@ -88,9 +90,11 @@ export async function getCachedItinerary(cityId: string, prefs: UserPreferences)
     )
     .digest("hex");
 
-  return await db
-    .select()
-    .from(itineraries)
-    .where(and(eq(itineraries.cityId, cityId), eq(itineraries.preferencesHash, prefsHash)))
-    .get();
+  return (
+    await db
+      .select()
+      .from(itineraries)
+      .where(and(eq(itineraries.cityId, cityId), eq(itineraries.preferencesHash, prefsHash)))
+      .limit(1)
+  )[0];
 }

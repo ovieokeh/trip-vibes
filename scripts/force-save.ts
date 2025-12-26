@@ -4,13 +4,13 @@ import { eq } from "drizzle-orm";
 
 async function main() {
   try {
-    const all = await db.select().from(itineraries).all();
+    const all = await db.select().from(itineraries);
     if (all.length > 0) {
       const id = all[0].id;
       console.log(`Updating itinerary ${id} to isSaved=true`);
       await db.update(itineraries).set({ isSaved: true }).where(eq(itineraries.id, id));
 
-      const saved = await db.select().from(itineraries).where(eq(itineraries.isSaved, true)).all();
+      const saved = await db.select().from(itineraries).where(eq(itineraries.isSaved, true));
       console.log("Saved itineraries after update:", saved.length);
     } else {
       console.log("No itineraries to update.");

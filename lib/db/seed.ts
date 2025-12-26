@@ -15,13 +15,13 @@ async function main() {
   ];
 
   for (const city of citiesData) {
-    const existing = await db.select().from(cities).where(eq(cities.slug, city.slug)).get();
+    const existing = (await db.select().from(cities).where(eq(cities.slug, city.slug)).limit(1))[0];
     if (!existing) {
       await db.insert(cities).values(city);
     }
   }
 
-  const ams = await db.select().from(cities).where(eq(cities.slug, "amsterdam")).get();
+  const ams = (await db.select().from(cities).where(eq(cities.slug, "amsterdam")).limit(1))[0];
   const amsId = ams?.id;
 
   // 2. Create Archetypes (15+)
@@ -62,7 +62,7 @@ async function main() {
       title: "Neon Noir Nights",
       description:
         "Late evenings under glowing signs and reflective streets. Think cocktail bars, night walks, and cinematic city energy.",
-      imageUrl: "https://images.unsplash.com/photo-1514525253361-b44c8b9d038a?w=800&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1534327994605-92db6819738d?q=80&w=800",
       category: "nightlife",
       searchTags: "neon,cyberpunk,noir,bar,cocktails",
     },
@@ -86,7 +86,7 @@ async function main() {
       title: "Post-Socialist Brutalism",
       description:
         "Massive concrete buildings from another era. Stark, imposing, and unexpectedly fascinating once you stop to look.",
-      imageUrl: "https://images.unsplash.com/photo-1542385431-7e61ee212a4c?w=800&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1688115569270-494472557502?q=80&w=800",
       category: "architecture",
       searchTags: "brutalist,concrete,soviet,monumental",
     },
@@ -118,7 +118,7 @@ async function main() {
       title: "Cyberpunk Street Food",
       description:
         "Late-night food stalls under bright lights. Fast, flavorful meals with an unmistakably urban backdrop.",
-      imageUrl: "https://images.unsplash.com/photo-1545044846-351ba102b4d5?w=800&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1733070417830-d157dcad0fc3?q=80&w=800",
       category: "food",
       searchTags: "urban,neon,street food,asian",
     },
@@ -126,7 +126,7 @@ async function main() {
       title: "Wabi-Sabi Tea Rooms",
       description:
         "Quiet tea spaces that value simplicity and imperfection. Slow rituals, minimal décor, and very few distractions.",
-      imageUrl: "https://images.unsplash.com/photo-1544787210-282dc4bc51f3?w=800&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1674749232554-2ac15ced3954?q=80&w=800",
       category: "culture",
       searchTags: "tea,japanese,mindful,minimalist",
     },
@@ -150,7 +150,7 @@ async function main() {
       title: "Nordic Noir Cosiness",
       description:
         "Moody interiors softened by warm lighting and simple comfort. Think candles, dark wood, and a calm, introspective feel.",
-      imageUrl: "https://images.unsplash.com/photo-1478144592103-258228816893?w=800&q=80",
+      imageUrl: "https://images.unsplash.com/photo-1586631411201-8f8f31c0ac16?q=80&w=800",
       category: "culture",
       searchTags: "hygge,cosy,nordic,moody",
     },
@@ -165,7 +165,7 @@ async function main() {
   ];
 
   for (const arch of archetypesData) {
-    const existing = await db.select().from(archetypes).where(eq(archetypes.title, arch.title)).get();
+    const existing = (await db.select().from(archetypes).where(eq(archetypes.title, arch.title)).limit(1))[0];
     if (!existing) {
       await db.insert(archetypes).values(arch);
     }

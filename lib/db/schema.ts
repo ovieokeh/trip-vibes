@@ -1,59 +1,53 @@
-import { sqliteTable, text, real, integer, primaryKey } from "drizzle-orm/sqlite-core";
+import { pgTable, text, doublePrecision, integer, boolean, timestamp, primaryKey, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const cities = sqliteTable("cities", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const cities = pgTable("cities", {
+  id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   country: text("country").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const archetypes = sqliteTable("archetypes", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const archetypes = pgTable("archetypes", {
+  id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   imageUrl: text("image_url").notNull(),
   category: text("category").notNull(),
   searchTags: text("search_tags").notNull(), // Comma-separated tags
-  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const places = sqliteTable("places", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const places = pgTable("places", {
+  id: uuid("id").primaryKey().defaultRandom(),
   foursquareId: text("foursquare_id"),
   googlePlacesId: text("google_places_id"),
   name: text("name").notNull(),
   address: text("address"),
-  lat: real("lat").notNull(),
-  lng: real("lng").notNull(),
+  lat: doublePrecision("lat").notNull(),
+  lng: doublePrecision("lng").notNull(),
   imageUrl: text("image_url"),
-  rating: real("rating"),
+  rating: doublePrecision("rating"),
   priceLevel: integer("price_level").default(1),
   website: text("website"),
   phone: text("phone"),
   openingHours: text("opening_hours"), // JSON stringified
   photoUrls: text("photo_urls"), // JSON stringified array
-  cityId: text("city_id")
+  cityId: uuid("city_id")
     .notNull()
     .references(() => cities.id),
   metadata: text("metadata"), // JSON stringified blob
-  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const archetypesToPlaces = sqliteTable(
+export const archetypesToPlaces = pgTable(
   "archetypes_to_places",
   {
-    archetypeId: text("archetype_id")
+    archetypeId: uuid("archetype_id")
       .notNull()
       .references(() => archetypes.id),
-    placeId: text("place_id")
+    placeId: uuid("place_id")
       .notNull()
       .references(() => places.id),
   },
@@ -90,29 +84,25 @@ export const archetypesToPlacesRelations = relations(archetypesToPlaces, ({ one 
   }),
 }));
 
-export const itineraries = sqliteTable("itineraries", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  cityId: text("city_id")
+export const itineraries = pgTable("itineraries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cityId: uuid("city_id")
     .notNull()
     .references(() => cities.id),
   preferencesHash: text("preferences_hash").notNull(), // Hash of likedVibes, dates, budget
   data: text("data").notNull(), // JSON stringified Itinerary
-  isSaved: integer("is_saved", { mode: "boolean" }).default(false),
+  isSaved: boolean("is_saved").default(false),
   name: text("name"),
   startDate: text("start_date"),
   endDate: text("end_date"),
-  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const vibeDescriptionsCache = sqliteTable("vibe_descriptions_cache", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  vibeId: text("vibe_id").notNull(),
-  placeId: text("place_id").notNull(),
+export const vibeDescriptionsCache = pgTable("vibe_descriptions_cache", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  vibeId: text("vibe_id").notNull(), // This might be an archetype ID (uuid) or internal ID
+  placeId: uuid("place_id").notNull(),
   note: text("note").notNull(),
   alternativeNote: text("alternative_note"),
-  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  createdAt: timestamp("created_at").defaultNow(),
 });

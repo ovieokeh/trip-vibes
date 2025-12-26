@@ -75,18 +75,22 @@ export default function ItineraryPage() {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = "";
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n\n");
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
+          // Keep the last part in the buffer as it might be incomplete
+          buffer = parts.pop() || "";
+
+          for (const part of parts) {
+            if (part.startsWith("data: ")) {
               try {
-                const event = JSON.parse(line.slice(6));
+                const event = JSON.parse(part.slice(6));
 
                 if (event.type === "progress") {
                   setLoadingMessage(event.message);

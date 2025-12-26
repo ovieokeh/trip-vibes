@@ -21,10 +21,10 @@ export class MatchingEngine {
 
   async generate(): Promise<Itinerary> {
     this.onProgress("Initializing engine...");
-    const city = await db.select().from(cities).where(eq(cities.id, this.prefs.cityId)).get();
+    const city = (await db.select().from(cities).where(eq(cities.id, this.prefs.cityId)).limit(1))[0];
     if (!city) {
       // Try slug lookup
-      const cityBySlug = await db.select().from(cities).where(eq(cities.slug, this.prefs.cityId)).get();
+      const cityBySlug = (await db.select().from(cities).where(eq(cities.slug, this.prefs.cityId)).limit(1))[0];
       if (!cityBySlug) throw new Error("City not found");
       this.prefs.cityId = cityBySlug.id;
     }
@@ -75,8 +75,7 @@ export class MatchingEngine {
       .innerJoin(archetypesToPlaces, eq(places.id, archetypesToPlaces.placeId))
       .where(
         sql`${places.cityId} = ${this.prefs.cityId} AND ${archetypesToPlaces.archetypeId} IN ${this.prefs.likedVibes}`
-      )
-      .all();
+      );
 
     return results.map((r) => {
       const dbPhotos = r.place.photoUrls ? JSON.parse(r.place.photoUrls) : [];
@@ -101,7 +100,7 @@ export class MatchingEngine {
     }
 
     // Get the tags from liked archetypes
-    const likedArchs = await db.select().from(archetypes).where(inArray(archetypes.id, this.prefs.likedVibes)).all();
+    const likedArchs = await db.select().from(archetypes).where(inArray(archetypes.id, this.prefs.likedVibes));
     const searchTerms = likedArchs.flatMap((a) => a.searchTags.split(","));
 
     for (const term of searchTerms.slice(0, 5)) {
@@ -135,7 +134,7 @@ export class MatchingEngine {
             lng = fsqPlace.geocodes?.main?.longitude;
           }
 
-          const existing = await db.select().from(places).where(eq(places.foursquareId, fsqId)).get();
+          const existing = (await db.select().from(places).where(eq(places.foursquareId, fsqId)).limit(1))[0];
           if (!existing) {
             const placeId = uuidv4();
             await db.insert(places).values({

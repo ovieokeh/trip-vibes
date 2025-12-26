@@ -4,38 +4,40 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "./db";
 import { archetypes, cities, places, archetypesToPlaces, itineraries } from "./db/schema";
-import { eq, inArray, sql, desc, and, like, or } from "drizzle-orm";
+import { eq, inArray, sql, desc, and, ilike, or } from "drizzle-orm";
 import { UserPreferences, Itinerary, DayPlan, TripActivity } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { searchGoogleCities, getGooglePlaceDetails } from "./google-places";
 import { generateDefaultTripName } from "./formatting";
 
 export async function getVibeArchetypes() {
-  return await db.select().from(archetypes).all();
+  return await db.select().from(archetypes);
 }
 
 export async function getCities() {
-  return await db.select().from(cities).all();
+  return await db.select().from(cities);
 }
 
 export async function getCityById(id: string) {
-  return await db.select().from(cities).where(eq(cities.id, id)).get();
+  return (await db.select().from(cities).where(eq(cities.id, id)).limit(1))[0];
 }
 
 export async function getCityBySlug(slug: string) {
-  return await db.select().from(cities).where(eq(cities.slug, slug)).get();
+  return (await db.select().from(cities).where(eq(cities.slug, slug)).limit(1))[0];
 }
 
 export async function searchCitiesAction(query: string) {
+  console.log(`[Search] Query: "${query}"`);
   if (!query || query.length < 2) return [];
 
   // 1. Search DB
   const dbResults = await db
     .select()
     .from(cities)
-    .where(or(like(cities.name, `%${query}%`), like(cities.country, `%${query}%`)))
-    .limit(10)
-    .all();
+    .where(or(ilike(cities.name, `%${query}%`), ilike(cities.country, `%${query}%`)))
+    .limit(10);
+
+  console.log(`[Search] DB hits: ${dbResults.length}`);
 
   // 2. If we have good matches (exact start match or enough results), return them
   const hasExactMatch = dbResults.some((c) => c.name.toLowerCase() === query.toLowerCase());
@@ -45,17 +47,21 @@ export async function searchCitiesAction(query: string) {
 
   // 3. Fallback to Google Places
   const googleResults = await searchGoogleCities(query);
+  console.log(`[Search] Google hits: ${googleResults.length}`);
 
   if (!googleResults.length) return dbResults;
 
   // 4. Ingest new cities
   for (const prediction of googleResults) {
     // Only process if it looks like a city (google usually filters well with (cities) type)
-    const existing = await db
-      .select()
-      .from(cities)
-      .where(sql`lower(${cities.name}) = ${prediction.structured_formatting.main_text.toLowerCase()}`)
-      .get();
+    const mainText = prediction.structured_formatting?.main_text || prediction.description.split(",")[0];
+    const existing = (
+      await db
+        .select()
+        .from(cities)
+        .where(sql`lower(${cities.name}) = ${mainText.toLowerCase()}`)
+        .limit(1)
+    )[0];
 
     if (!existing) {
       // Fetch details to get country
@@ -66,6 +72,8 @@ export async function searchCitiesAction(query: string) {
         const country = countryComponent ? countryComponent.long_name : "Unknown";
         const name = details.name;
 
+        console.log(`[Search] Ingesting: ${name}, ${country}`);
+
         // Generate slug
         let slug = name
           .toLowerCase()
@@ -73,7 +81,7 @@ export async function searchCitiesAction(query: string) {
           .replace(/^-|-$/g, "");
 
         // Ensure slug uniqueness (simple check)
-        const slugExists = await db.select().from(cities).where(eq(cities.slug, slug)).get();
+        const slugExists = (await db.select().from(cities).where(eq(cities.slug, slug)).limit(1))[0];
         if (slugExists) {
           slug = `${slug}-${uuidv4().slice(0, 4)}`;
         }
@@ -91,10 +99,10 @@ export async function searchCitiesAction(query: string) {
   const finalResults = await db
     .select()
     .from(cities)
-    .where(or(like(cities.name, `%${query}%`), like(cities.country, `%${query}%`)))
-    .limit(20)
-    .all();
+    .where(or(ilike(cities.name, `%${query}%`), ilike(cities.country, `%${query}%`)))
+    .limit(20);
 
+  console.log(`[Search] Final results: ${finalResults.length}`);
   return finalResults;
 }
 
@@ -123,7 +131,7 @@ export async function generateItineraryAction(prefs: UserPreferences): Promise<I
       // Find the vibe that matched this place (naive: just use first liked vibe for now)
       // In a real app, the engine would pass which vibe matched which place.
       const matchedVibeId = prefs.likedVibes[0];
-      const vibe = await db.select().from(archetypes).where(eq(archetypes.id, matchedVibeId)).get();
+      const vibe = (await db.select().from(archetypes).where(eq(archetypes.id, matchedVibeId)).limit(1))[0];
 
       const vibeDesc = await getVibeDescription(
         matchedVibeId,
@@ -152,7 +160,7 @@ export async function saveItineraryAction(id: string, name?: string, itineraryDa
 
   // Generate default name if missing
   if (!finalName && itineraryData) {
-    const city = await db.select().from(cities).where(eq(cities.id, itineraryData.cityId)).get();
+    const city = (await db.select().from(cities).where(eq(cities.id, itineraryData.cityId)).limit(1))[0];
     if (city) {
       finalName = generateDefaultTripName(city.name, itineraryData.startDate || "", itineraryData.endDate || "");
     } else {
@@ -187,14 +195,13 @@ export async function getSavedItinerariesAction() {
     .from(itineraries)
     .leftJoin(cities, eq(itineraries.cityId, cities.id))
     .where(eq(itineraries.isSaved, true))
-    .orderBy(desc(itineraries.createdAt))
-    .all();
+    .orderBy(desc(itineraries.createdAt));
 
   return saved;
 }
 
 export async function getItineraryByIdAction(id: string): Promise<Itinerary | null> {
-  const record = await db.select().from(itineraries).where(eq(itineraries.id, id)).get();
+  const record = (await db.select().from(itineraries).where(eq(itineraries.id, id)).limit(1))[0];
   if (record) {
     const data = JSON.parse(record.data);
     return {
@@ -265,7 +272,7 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
   } else {
     // If no activities, try to find city center or use first activity of previous day?
     // For now, let's just use the city object to find center if possible, or skip distance scoring
-    const city = await db.select().from(cities).where(eq(cities.id, cityId)).get();
+    const city = (await db.select().from(cities).where(eq(cities.id, cityId)).limit(1))[0];
     // We don't have city lat/lng in types easily, but let's assume 0,0 implies "don't score distance"
   }
 
@@ -285,8 +292,8 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
     .select()
     .from(places)
     .where(and(eq(places.cityId, cityId)))
-    .limit(50) // Fetch a decent chunk to rank
-    .all(); // In real app, might want to filter by category or something first if too many
+    .limit(50); // Fetch a decent chunk to rank
+  // In real app, might want to filter by category or something first if too many
 
   // 4. Score and Rank
   const scored = candidates

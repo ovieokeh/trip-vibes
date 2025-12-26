@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
 
             // Find the vibe that matched this place
             const matchedVibeId = prefs.likedVibes[0];
-            const vibe = await db.select().from(archetypes).where(eq(archetypes.id, matchedVibeId)).get();
+            const vibe = (await db.select().from(archetypes).where(eq(archetypes.id, matchedVibeId)).limit(1))[0];
 
             const vibeDesc = await getVibeDescription(
               matchedVibeId,
