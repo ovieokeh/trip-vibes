@@ -27,7 +27,7 @@ export class MatchingEngine {
     }
 
     // 1. Discovery
-    this.onProgress(`Scouting vibes in ${city.name} (DB + Foursquare)...`);
+    this.onProgress(`Scouting vibes in ${city.name}`);
     const discovery = new DiscoveryEngine(this.prefs);
     let candidates = await discovery.findCandidates(city);
 
@@ -40,7 +40,7 @@ export class MatchingEngine {
     // We enrich the top N to ensure high quality itinerary items
     // This was in the original engine. Let's keep a limited version.
     const topCandidates = candidates.slice(0, 25);
-    this.onProgress(" enriching top picks with Google details...");
+    this.onProgress(" enriching top picks...");
     await Promise.all(topCandidates.map((c) => discovery.enrichFromGoogle(c)));
 
     // 4. Scheduling

@@ -14,6 +14,18 @@ export default function SwipeCard({ vibe, onSwipe, style }: SwipeCardProps) {
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
 
+  const variants = {
+    initial: { scale: 0.9, opacity: 0 },
+    animate: { scale: 1, opacity: 1 },
+    exit: (direction: "left" | "right") => ({
+      x: direction === "right" ? 500 : -500,
+      opacity: 0,
+      scale: 0.5,
+      rotate: direction === "right" ? 45 : -45,
+      transition: { duration: 0.4 },
+    }),
+  };
+
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (info.offset.x > 100) {
       onSwipe("right");
@@ -29,9 +41,10 @@ export default function SwipeCard({ vibe, onSwipe, style }: SwipeCardProps) {
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
       className="absolute w-full max-w-sm h-[60vh] bg-base-100 rounded-3xl shadow-2xl overflow-hidden cursor-grab active:cursor-grabbing touch-none border border-base-200"
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.95, opacity: 0 }}
+      variants={variants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
       transition={{ duration: 0.3 }}
     >
       <div className="h-4/6 md:h-3/4 w-full bg-cover bg-center" style={{ backgroundImage: `url(${vibe.imageUrl})` }}>

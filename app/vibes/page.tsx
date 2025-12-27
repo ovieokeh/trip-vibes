@@ -13,6 +13,7 @@ export default function VibesPage() {
   const { cityId, addLike, addDislike, vibeProfile, likedVibes, dislikedVibes } = useStore();
   const [currentCard, setCurrentCard] = useState<AppVibe | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [lastSwipeDirection, setLastSwipeDirection] = useState<"left" | "right">("right");
 
   // Initialize Engine
   const engine = useMemo(() => {
@@ -59,6 +60,9 @@ export default function VibesPage() {
 
   const handleSwipe = (direction: "left" | "right") => {
     if (!currentCard) return;
+
+    // Set direction for exit animation
+    setLastSwipeDirection(direction);
 
     // Optimistic UI: Remove card immediately
     const id = currentCard.id;
@@ -124,7 +128,7 @@ export default function VibesPage() {
       </div>
 
       <div className="relative w-full max-w-sm h-[60vh] mt-8">
-        <AnimatePresence mode="wait">
+        <AnimatePresence custom={lastSwipeDirection}>
           {currentCard && <SwipeCard key={currentCard.id} vibe={currentCard} onSwipe={handleSwipe} />}
         </AnimatePresence>
       </div>
