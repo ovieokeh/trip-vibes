@@ -30,76 +30,103 @@ export async function searchCitiesAction(query: string) {
   console.log(`[Search] Query: "${query}"`);
   if (!query || query.length < 2) return [];
 
-  // 1. Search DB
+  // 1. Search DB First (Acts as "Recent Searches" / Cache)
+  const dbResults = await db
+    .select()
+    .from(cities)
+    .where(or(ilike(cities.name, `%${query}%`), ilike(cities.country, `%${query}%`)))
+    .limit(10);
 
-  // 3. Fallback to Google Places
+  console.log(`[Search] DB hits: ${dbResults.length}`);
+
+  // If we have enough results, return immediately (Speed!)
+  if (dbResults.length >= 5) {
+    return dbResults;
+  }
+
+  // 2. Fallback to Google Places (if local results are scarce)
+  // Run in background if we wanted to be super optmistic, but for accurate results we await.
   const googleResults = await searchGoogleCities(query);
   console.log(`[Search] Google hits: ${googleResults.length}`);
 
   if (!googleResults.length) {
-    const dbResults = await db
-      .select()
-      .from(cities)
-      .where(or(ilike(cities.name, `%${query}%`), ilike(cities.country, `%${query}%`)))
-      .limit(10);
-
-    console.log(`[Search] DB hits: ${dbResults.length}`);
     return dbResults;
   }
 
-  // 4. Ingest new cities
-  for (const prediction of googleResults) {
-    // Only process if it looks like a city (google usually filters well with (cities) type)
-    const mainText = prediction.structured_formatting?.main_text || prediction.description.split(",")[0];
-    const existing = (
-      await db
-        .select()
-        .from(cities)
-        .where(sql`lower(${cities.name}) = ${mainText.toLowerCase()}`)
-        .limit(1)
-    )[0];
-
-    if (!existing) {
-      // Fetch details to get country
+  // 3. Ingest new cities from Google
+  // process in parallel for speed
+  const ingestionPromises = googleResults.map(async (prediction) => {
+    try {
+      // Always fetch details to get the Country for accurate deduplication
       const details = await getGooglePlaceDetails(prediction.place_id);
-      if (details) {
-        // Extract country
-        const countryComponent = details.address_components.find((c) => c.types.includes("country"));
-        const country = countryComponent ? countryComponent.long_name : "Unknown";
-        const name = details.name;
+      if (!details) return null;
 
-        console.log(`[Search] Ingesting: ${name}, ${country}`);
+      // Extract country
+      const countryComponent = details.address_components.find((c) => c.types.includes("country"));
+      const country = countryComponent ? countryComponent.long_name : "Unknown";
+      const name = details.name;
 
-        // Generate slug
-        let slug = name
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "");
+      // Check existence by Name AND Country
+      const existing = (
+        await db
+          .select()
+          .from(cities)
+          .where(
+            and(
+              sql`lower(${cities.name}) = ${name.toLowerCase()}`,
+              sql`lower(${cities.country}) = ${country.toLowerCase()}`
+            )
+          )
+          .limit(1)
+      )[0];
 
-        // Ensure slug uniqueness (simple check)
-        const slugExists = (await db.select().from(cities).where(eq(cities.slug, slug)).limit(1))[0];
-        if (slugExists) {
-          slug = `${slug}-${uuidv4().slice(0, 4)}`;
-        }
+      if (existing) {
+        // Already exists, return it, so we can merge it into results if it wasn't already there
+        return existing;
+      }
 
-        await db.insert(cities).values({
+      console.log(`[Search] Ingesting: ${name}, ${country}`);
+
+      // Generate slug
+      let slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      // Ensure slug uniqueness
+      const slugExists = (await db.select().from(cities).where(eq(cities.slug, slug)).limit(1))[0];
+      if (slugExists) {
+        slug = `${slug}-${uuidv4().slice(0, 4)}`;
+      }
+
+      const [inserted] = await db
+        .insert(cities)
+        .values({
           slug,
           name,
           country,
-        });
-      }
+        })
+        .returning();
+
+      return inserted;
+    } catch (err) {
+      console.error(`[Search] Error processing prediction`, err);
+      return null;
     }
-  }
+  });
 
-  // 5. Re-fetch from DB to get the newly added ones
-  const finalResults = await db
-    .select()
-    .from(cities)
-    .where(or(ilike(cities.name, `%${query}%`), ilike(cities.country, `%${query}%`)))
-    .limit(20);
+  const processed = await Promise.all(ingestionPromises);
+  const newOrExistingFromGoogle = processed.filter((c): c is NonNullable<typeof c> => c !== null);
 
-  console.log(`[Search] Final results: ${finalResults.length}`);
-  return finalResults;
+  // 4. Merge and Return
+  // Combine initial DB results + newly ingested cities
+  // Filter duplicates just in case
+  const combined = [...dbResults, ...newOrExistingFromGoogle];
+
+  // Deduplicate by ID
+  const unique = Array.from(new Map(combined.map((item) => [item.id, item])).values());
+
+  return unique;
 }
 
 function generateId() {

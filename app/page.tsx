@@ -24,7 +24,7 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="w-full max-w-md z-10">
+      <div className="w-full max-w-xl z-10">
         <SetupForm />
       </div>
 

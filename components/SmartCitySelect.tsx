@@ -30,53 +30,68 @@ export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCit
 
   // 1. Fetch details of selected city if we have an ID but no data (or mismatch)
   useEffect(() => {
+    let active = true;
     async function fetchSelected() {
       if (!selectedCityId) {
-        setSelectedCityData(null);
+        if (active) setSelectedCityData(null);
         return;
       }
 
       // If we already have the data locally in results, use it
       const inResults = results.find((c) => c.id === selectedCityId);
       if (inResults) {
-        setSelectedCityData(inResults);
+        if (active) setSelectedCityData(inResults);
         return;
       }
 
       // Otherwise fetch from server
       try {
         const city = await getCityById(selectedCityId);
-        if (city) setSelectedCityData(city);
+        if (active && city) setSelectedCityData(city);
       } catch (err) {
         console.error("Failed to fetch selected city", err);
       }
     }
     fetchSelected();
-  }, [selectedCityId]);
+    return () => {
+      active = false;
+    };
+  }, [selectedCityId, results]);
 
-  // 2. Search Effect
+  // 2. Search Effect with Race Condition Protection
   useEffect(() => {
+    let active = true;
+    const query = debouncedSearch.trim();
+
     async function performSearch() {
+      if (!query || query.length < 2) {
+        if (active) {
+          setResults([]);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const query = debouncedSearch.trim();
-        // If query is short, we can choose to load suggestions or empty
-        if (query.length < 2) {
-          // We could show popular cities here, or just empty
-          // For now, let's just clear results to be clean
-          setResults([]);
-        } else {
-          const data = await searchCitiesAction(query);
+        const data = await searchCitiesAction(query);
+        if (active) {
           setResults(data);
         }
       } catch (err) {
         console.error(err);
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     }
 
     performSearch();
+
+    return () => {
+      active = false;
+      // We can't really "abort" the server action easily without AbortController support in server actions
+      // (which is tricky), but we can ignore the result.
+    };
   }, [debouncedSearch]);
 
   return (

@@ -51,8 +51,8 @@ export default function SetupForm() {
   };
 
   return (
-    <div className="card w-full border border-base-200 bg-base-100/50 backdrop-blur-sm">
-      <form onSubmit={handleSubmit(onSubmit)} className="card-body gap-5 p-6">
+    <div className="card w-full bg-base-100/50 backdrop-blur-sm">
+      <form onSubmit={handleSubmit(onSubmit)} className="card-body gap-5">
         <div className="form-control w-full">
           <label className="label pt-0">
             <span className="label-text font-bold uppercase tracking-wider text-xs opacity-60">Destination</span>
