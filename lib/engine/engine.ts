@@ -49,35 +49,49 @@ export class MatchingEngine {
     candidates = scoring.rankCandidates(candidates);
 
     // 3. Deep Enrichment (Google) - Optional / Lazy
-    // We enrich a balanced set of top candidates to ensure high quality itinerary items
+    // We only enrich top candidates to save Google API quota
+    // But we pass ALL candidates to the scheduler so it has maximum choice
     const mealCandidates = candidates.filter(isMeal);
     const activityCandidates = candidates.filter(isActivity);
 
-    // Dynamic sizing for Top Picks
-    // We need 2× candidates to fill both primary AND alternative slots
-    // Daily template has 6 slots × dayCount days × 2 (primary + alternative) = 12 × dayCount
-    const requiredMeals = minMeals * 2;
-    const requiredActivities = minActivities * 2;
+    // Calculate how many to enrich (top picks for quality)
+    // We need 2× slots to account for primary + alternative
+    // Daily template has 6 slots, so 6 × dayCount × 2 = 12 × dayCount
+    const enrichmentLimit = dayCount * 12;
+    const topActivitiesToEnrich = activityCandidates.slice(0, enrichmentLimit);
+    const topMealsToEnrich = mealCandidates.slice(0, enrichmentLimit);
 
-    const topActivities = activityCandidates.slice(0, requiredActivities);
-    const topMeals = mealCandidates.slice(0, requiredMeals);
-
-    // Deduplicate: Hybrids may appear in both arrays. Use a Map to ensure uniqueness.
-    const candidateMap = new Map<string, (typeof candidates)[0]>();
-    for (const c of [...topActivities, ...topMeals]) {
-      if (!candidateMap.has(c.id)) {
-        candidateMap.set(c.id, c);
+    // Deduplicate enrichment targets (hybrids may appear in both)
+    const enrichmentSet = new Map<string, (typeof candidates)[0]>();
+    for (const c of [...topActivitiesToEnrich, ...topMealsToEnrich]) {
+      if (!enrichmentSet.has(c.id)) {
+        enrichmentSet.set(c.id, c);
       }
     }
-    const topCandidates = Array.from(candidateMap.values());
+    const toEnrich = Array.from(enrichmentSet.values());
 
-    this.onProgress(" enriching top picks...");
-    await Promise.all(topCandidates.map((c) => discovery.enrichFromGoogle(c)));
+    this.onProgress(`Enriching ${toEnrich.length} top picks...`);
+    await Promise.all(toEnrich.map((c) => discovery.enrichFromGoogle(c)));
 
-    // 4. Scheduling
+    // 4. Scheduling - pass ALL candidates, not just enriched ones
+    // This ensures the scheduler has maximum flexibility
     this.onProgress("Assembling your journey...");
     const scheduler = new SchedulerEngine(this.prefs);
-    const itinerary = scheduler.assembleItinerary(topCandidates); // Use enriched balanced pool
+
+    // Deduplicate all candidates before passing to scheduler
+    const allCandidatesMap = new Map<string, (typeof candidates)[0]>();
+    for (const c of candidates) {
+      if (!allCandidatesMap.has(c.id)) {
+        allCandidatesMap.set(c.id, c);
+      }
+    }
+    const allUniqueCandidates = Array.from(allCandidatesMap.values());
+
+    console.log(
+      `[Engine] Passing ${allUniqueCandidates.length} candidates to scheduler (${mealCandidates.length} meals, ${activityCandidates.length} activities)`
+    );
+
+    const itinerary = scheduler.assembleItinerary(allUniqueCandidates);
 
     this.onProgress("Finalizing details...");
     return itinerary;
