@@ -66,3 +66,64 @@ export function getTravelDetails(fromLat: number, fromLng: number, toLat: number
     to: { lat: toLat, lng: toLng },
   };
 }
+
+// ============================================================================
+// GEO-EXPLORATION UTILITIES
+// ============================================================================
+
+export interface SearchZone {
+  id: string;
+  lat: number;
+  lng: number;
+}
+
+/**
+ * Converts km offset to latitude delta.
+ * 1 degree of latitude ≈ 111km everywhere on Earth.
+ */
+export function kmToLatOffset(km: number): number {
+  return km / 111;
+}
+
+/**
+ * Converts km offset to longitude delta.
+ * Longitude distance varies by latitude (cos factor).
+ */
+export function kmToLngOffset(km: number, atLatitude: number): number {
+  return km / (111 * Math.cos(atLatitude * (Math.PI / 180)));
+}
+
+/**
+ * Generates search zones around a city center for geo-exploration.
+ * Creates 9 zones: center + 8 cardinal/intercardinal directions.
+ *
+ * @param centerLat - City center latitude
+ * @param centerLng - City center longitude
+ * @param offsetKm - Distance from center to zone centers (default 6km)
+ * @returns Array of search zones, starting with center
+ */
+export function generateSearchZones(centerLat: number, centerLng: number, offsetKm: number = 6): SearchZone[] {
+  const zones: SearchZone[] = [{ id: "center", lat: centerLat, lng: centerLng }];
+
+  // 8 cardinal + intercardinal directions
+  const directions = [
+    { id: "north", latMult: 1, lngMult: 0 },
+    { id: "northeast", latMult: 0.7, lngMult: 0.7 },
+    { id: "east", latMult: 0, lngMult: 1 },
+    { id: "southeast", latMult: -0.7, lngMult: 0.7 },
+    { id: "south", latMult: -1, lngMult: 0 },
+    { id: "southwest", latMult: -0.7, lngMult: -0.7 },
+    { id: "west", latMult: 0, lngMult: -1 },
+    { id: "northwest", latMult: 0.7, lngMult: -0.7 },
+  ];
+
+  for (const dir of directions) {
+    zones.push({
+      id: dir.id,
+      lat: centerLat + kmToLatOffset(offsetKm * dir.latMult),
+      lng: centerLng + kmToLngOffset(offsetKm * dir.lngMult, centerLat),
+    });
+  }
+
+  return zones;
+}

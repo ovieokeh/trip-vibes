@@ -106,6 +106,9 @@ export async function searchCitiesAction(query: string) {
           slug,
           name,
           country,
+          // Capture coordinates for geo-exploration
+          lat: details.geometry?.location?.lat || null,
+          lng: details.geometry?.location?.lng || null,
         })
         .returning();
 

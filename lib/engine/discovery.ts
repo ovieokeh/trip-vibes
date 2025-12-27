@@ -5,6 +5,7 @@ import { EngineCandidate, UserPreferences } from "../types";
 import { ARCHETYPES } from "../archetypes";
 import { CATEGORIES } from "../categories";
 import { isMeal, isActivity } from "./utils";
+import { generateSearchZones, SearchZone } from "../geo";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 
@@ -53,10 +54,10 @@ export class DiscoveryEngine {
   /**
    * Primary method to find candidates.
    * 1. Search DB for matching categories.
-   * 2. If insufficient, fetch from Foursquare using Category IDs.
+   * 2. If insufficient, fetch from Foursquare using geo-exploration (or name fallback).
    */
   async findCandidates(
-    city: { id: string; name: string; slug: string; country: string },
+    city: { id: string; name: string; slug: string; country: string; lat?: number | null; lng?: number | null },
     requirements: { minMeals: number; minActivities: number }
   ): Promise<EngineCandidate[]> {
     // 1. Identify relevant category IDs based on user vibes
@@ -65,7 +66,7 @@ export class DiscoveryEngine {
     // 2. Search DB
     let candidates = await this.searchDB(city.id, targetCategoryIds);
 
-    // 3. Fallback/Enrichment (Targeted)
+    // 3. Fallback/Enrichment via Foursquare Geo-Exploration
     const meals = candidates.filter(isMeal);
     const activities = candidates.filter(isActivity);
 
@@ -77,22 +78,17 @@ export class DiscoveryEngine {
         `[Discovery] Insufficient balance. Meals: ${meals.length}/${requirements.minMeals}, Activities: ${activities.length}/${requirements.minActivities}`
       );
 
-      // We only want to fetch what is missing to save API calls
-      // But mapVibesToCategoryIds gives us a mix.
-      // We need to filter the *ids* we search for based on type.
-      // This is hard because IDs are opaque.
-      // Heuristic: If we need meals, we search ALL categories (ensure food is included).
-      // If we *only* need activities, we *could* filter out food, but for now let's just fetch default set.
-      // Improvement: In mapVibesToCategoryIds, we explicitly added "mandatoryTags" (food).
-
-      await this.fetchFromFoursquare(city, targetCategoryIds);
+      // Use geo-exploration if city has coordinates
+      if (city.lat && city.lng) {
+        await this.fetchWithGeoExploration(city, targetCategoryIds, requirements);
+      } else {
+        // Fallback to name-based search (single zone)
+        await this.fetchFromFoursquareByName(city, targetCategoryIds);
+      }
 
       // Re-fetch from DB
       candidates = await this.searchDB(city.id, targetCategoryIds);
     }
-
-    // 4. Google Enrichment (Lazy - done later or on demand, but we can do a quick pass here for top candidates if needed?
-    // The original engine did it later. Let's keep it separate/later to save quota.)
 
     return candidates;
   }
@@ -266,26 +262,76 @@ export class DiscoveryEngine {
     return Array.from(set);
   }
 
-  private async fetchFromFoursquare(city: { name: string; id: string; country: string }, categoryIds: string[]) {
+  /**
+   * Geo-exploration: Fetches candidates by searching multiple zones around city center.
+   * Stops early when requirements are met to save API calls.
+   */
+  private async fetchWithGeoExploration(
+    city: { id: string; name: string; country: string; lat?: number | null; lng?: number | null },
+    categoryIds: string[],
+    requirements: { minMeals: number; minActivities: number }
+  ) {
+    if (!process.env.FOURSQUARE_API_KEY || !city.lat || !city.lng) return;
+
+    const zones = generateSearchZones(city.lat, city.lng, 6); // 6km offset
+    const idsToSearch = this.prepareCategoryIds(categoryIds);
+
+    console.log(`[Geo-Exploration] Starting with ${zones.length} zones for ${city.name}`);
+
+    for (const zone of zones) {
+      // Check if we already have enough candidates
+      const currentCandidates = await this.searchDB(city.id, categoryIds);
+      const meals = currentCandidates.filter(isMeal);
+      const activities = currentCandidates.filter(isActivity);
+
+      if (meals.length >= requirements.minMeals && activities.length >= requirements.minActivities) {
+        console.log(
+          `[Geo-Exploration] Requirements met after zone "${zone.id}". Meals: ${meals.length}, Activities: ${activities.length}`
+        );
+        break;
+      }
+
+      console.log(`[Geo-Exploration] Searching zone: ${zone.id} (${zone.lat.toFixed(4)}, ${zone.lng.toFixed(4)})`);
+
+      try {
+        const res = await axios.get<{ results: FoursquarePlace[] }>("https://places-api.foursquare.com/places/search", {
+          params: {
+            ll: `${zone.lat},${zone.lng}`,
+            radius: 5000, // 5km radius per zone
+            limit: 50,
+            categories: idsToSearch,
+          },
+          headers: {
+            Authorization: `Bearer ${process.env.FOURSQUARE_API_KEY}`,
+            "x-places-api-version": "2025-06-17",
+          },
+        });
+
+        console.log(`[Geo-Exploration] Zone "${zone.id}": ${res.data.results.length} places`);
+
+        // Save in parallel
+        await Promise.all(res.data.results.map((fsq) => this.savePlace(fsq, city.id)));
+      } catch (e) {
+        console.error(`[Geo-Exploration] Error fetching zone ${zone.id}:`, e);
+      }
+    }
+  }
+
+  /**
+   * Fallback: Fetches candidates using city name (when no coordinates available).
+   */
+  private async fetchFromFoursquareByName(city: { name: string; id: string; country: string }, categoryIds: string[]) {
     if (!process.env.FOURSQUARE_API_KEY) return;
 
-    // Convert to top-level category IDs
-    const topLevelIds = new Set<string>();
-    categoryIds.forEach((id) => {
-      topLevelIds.add(this.getTopLevelCategoryId(id));
-    });
+    const idsToSearch = this.prepareCategoryIds(categoryIds);
 
-    // Foursquare allows comma separated category IDs
-    // Limit to 50 ids per call?
-    const idsToSearch = Array.from(topLevelIds).slice(0, 50).join(",");
-
-    console.log("Fetching from Foursquare", city.name, idsToSearch);
+    console.log(`[Discovery] Fetching by name: ${city.name}, ${city.country}`);
 
     try {
       const res = await axios.get<{ results: FoursquarePlace[] }>("https://places-api.foursquare.com/places/search", {
         params: {
           near: `${city.name}, ${city.country}`,
-          limit: 300,
+          limit: 50,
           categories: idsToSearch,
         },
         headers: {
@@ -294,13 +340,23 @@ export class DiscoveryEngine {
         },
       });
 
-      console.log(`Foursquare response: ${res.data.results.length} places`);
+      console.log(`[Discovery] Foursquare response: ${res.data.results.length} places`);
 
-      // Parallelize saves for speed
       await Promise.all(res.data.results.map((fsq) => this.savePlace(fsq, city.id)));
     } catch (e) {
-      console.error("Foursquare error", e);
+      console.error("[Discovery] Foursquare error", e);
     }
+  }
+
+  /**
+   * Prepares category IDs for Foursquare API call.
+   */
+  private prepareCategoryIds(categoryIds: string[]): string {
+    const topLevelIds = new Set<string>();
+    categoryIds.forEach((id) => {
+      topLevelIds.add(this.getTopLevelCategoryId(id));
+    });
+    return Array.from(topLevelIds).slice(0, 50).join(",");
   }
 
   public getTopLevelCategoryId(id: string): string {

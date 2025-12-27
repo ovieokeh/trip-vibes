@@ -6,6 +6,8 @@ export const cities = pgTable("cities", {
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   country: text("country").notNull(),
+  lat: doublePrecision("lat"), // City center latitude for geo-exploration
+  lng: doublePrecision("lng"), // City center longitude for geo-exploration
   createdAt: timestamp("created_at").defaultNow(),
 });
 

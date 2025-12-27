@@ -60,7 +60,9 @@ describe("DiscoveryEngine Category Logic", () => {
     // Override mapVibesToCategoryIds to return our specific test ID
     vi.spyOn(engine as any, "mapVibesToCategoryIds").mockReturnValue(["5109983191d435c0d71c2bb1"]); // Attraction
 
-    await (engine as any).fetchFromFoursquare({ name: "City", id: "city-1" }, ["5109983191d435c0d71c2bb1"]);
+    await (engine as any).fetchFromFoursquareByName({ name: "City", id: "city-1", country: "Country" }, [
+      "5109983191d435c0d71c2bb1",
+    ]);
 
     expect(axios.get).toHaveBeenCalledWith(
       expect.stringContaining("search"),
