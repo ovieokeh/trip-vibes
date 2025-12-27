@@ -37,16 +37,37 @@ export class MatchingEngine {
     candidates = scoring.rankCandidates(candidates);
 
     // 3. Deep Enrichment (Google) - Optional / Lazy
-    // We enrich the top N to ensure high quality itinerary items
-    // This was in the original engine. Let's keep a limited version.
-    const topCandidates = candidates.slice(0, 25);
+    // We enrich a balanced set of top candidates to ensure high quality itinerary items
+    const foodPattern =
+      /restaurant|cafe|food|bakery|bistro|diner|steakhouse|pizza|taco|burger|sushi|ramen|gastropub|pub|bar|eatery|grill/;
+
+    const mealCandidates = candidates.filter((c) => {
+      const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
+      const name = c.name.toLowerCase();
+      const combined = [...cats, name].join(" ");
+      return foodPattern.test(combined);
+    });
+
+    const activityCandidates = candidates.filter((c) => {
+      const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
+      const name = c.name.toLowerCase();
+      const combined = [...cats, name].join(" ");
+      const isFood = foodPattern.test(combined) && !/market|hall|museum|park|plaza/.test(combined);
+      return !isFood;
+    });
+
+    // Take top 15 activities and top 10 meals (total 25 max)
+    const topActivities = activityCandidates.slice(0, 15);
+    const topMeals = mealCandidates.slice(0, 10);
+    const topCandidates = [...topActivities, ...topMeals];
+
     this.onProgress(" enriching top picks...");
     await Promise.all(topCandidates.map((c) => discovery.enrichFromGoogle(c)));
 
     // 4. Scheduling
     this.onProgress("Assembling your journey...");
     const scheduler = new SchedulerEngine(this.prefs);
-    const itinerary = scheduler.assembleItinerary(topCandidates); // Use enriched ones
+    const itinerary = scheduler.assembleItinerary(topCandidates); // Use enriched balanced pool
 
     this.onProgress("Finalizing details...");
     return itinerary;

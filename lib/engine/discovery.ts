@@ -142,7 +142,11 @@ export class DiscoveryEngine {
 
     const categoryValues = Object.values(CATEGORIES);
 
-    allTags.forEach((tag) => {
+    // ALWAYS include base food categories to ensure we have restaurants
+    const mandatoryTags = ["restaurant", "cafe", "bakery", "food"];
+    const tagsToSearch = new Set([...allTags, ...mandatoryTags]);
+
+    tagsToSearch.forEach((tag) => {
       // Find category where name matches tag (fuzzy)
       // e.g. tag "park" matches category "Park", "National Park", etc.
       // We prioritize exact matches or "end with" matches

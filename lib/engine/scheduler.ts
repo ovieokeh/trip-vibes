@@ -160,18 +160,22 @@ export class SchedulerEngine {
   }
 
   private matchesSlotType(c: EngineCandidate, slot: TimeSlot): boolean {
-    const cats = (c.metadata.categories || []).map((s) => s.toLowerCase());
+    const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
     const name = c.name.toLowerCase();
     const combined = [...cats, name].join(" ");
 
+    // Broad set of keywords for anything food related
+    const foodPattern =
+      /restaurant|cafe|food|bakery|bistro|diner|steakhouse|pizza|taco|burger|sushi|ramen|gastropub|pub|bar|eatery|grill/;
+
     if (slot.type === "meal") {
       if (slot.requiredTags) {
-        return slot.requiredTags.some((tag) => combined.includes(tag));
+        if (slot.requiredTags.some((tag) => combined.includes(tag))) return true;
       }
-      return /restaurant|cafe|food|bakery|bistro|diner|steakhouse/.test(combined);
+      return foodPattern.test(combined);
     } else {
       // Activity (Exclude pure food places unless it's a market)
-      const isFood = /restaurant|cafe|bistro|steakhouse/.test(combined) && !/market|hall/.test(combined);
+      const isFood = foodPattern.test(combined) && !/market|hall|museum|park|plaza/.test(combined);
       return !isFood;
     }
   }
