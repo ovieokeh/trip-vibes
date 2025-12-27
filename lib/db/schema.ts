@@ -106,3 +106,12 @@ export const vibeDescriptionsCache = pgTable("vibe_descriptions_cache", {
   alternativeNote: text("alternative_note"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const vibeDecks = pgTable("vibe_decks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(), // "Foodie Adventure", "Cultural Explorer"
+  likedVibes: text("liked_vibes").notNull(), // JSON stringified array of archetype IDs
+  vibeProfile: text("vibe_profile").notNull(), // JSON stringified VibeProfile
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});

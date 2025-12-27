@@ -2,7 +2,7 @@
 
 import { DayPlan, Vibe, TripActivity } from "@/lib/types";
 import { motion } from "framer-motion";
-import { Star, Globe, Phone } from "lucide-react";
+import { Star, Globe, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import VibeImage from "./VibeImage";
 
@@ -306,6 +306,24 @@ export default function ItineraryDay({
                           Call
                         </a>
                       )}
+                      {act.vibe.lat &&
+                        act.vibe.lng &&
+                        (() => {
+                          const prevAct = index > 0 ? day.activities[index - 1] : null;
+                          const hasOrigin = prevAct?.vibe.lat && prevAct?.vibe.lng;
+                          const originParam = hasOrigin ? `&origin=${prevAct.vibe.lat},${prevAct.vibe.lng}` : "";
+                          return (
+                            <a
+                              href={`https://www.google.com/maps/dir/?api=1${originParam}&destination=${act.vibe.lat},${act.vibe.lng}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-xs btn-ghost gap-1 opacity-70 hover:opacity-100 px-1 h-6 min-h-0"
+                            >
+                              <MapPin className="w-3 h-3" />
+                              Directions
+                            </a>
+                          );
+                        })()}
                     </div>
 
                     {act.alternative && (

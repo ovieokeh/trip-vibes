@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { db } from "./db";
-import { archetypes, cities, places, itineraries } from "./db/schema";
+import { archetypes, cities, places, itineraries, vibeDecks } from "./db/schema";
 import { eq, sql, desc, and, ilike, or } from "drizzle-orm";
 import { UserPreferences, Itinerary, Vibe } from "./types";
 import { v4 as uuidv4 } from "uuid";
@@ -484,4 +484,77 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
   }
 
   return top5.map((s) => s.vibe);
+}
+
+// ==================== VIBE DECKS ====================
+
+import { VibeProfile } from "./vibes/types";
+
+export interface VibeDeck {
+  id: string;
+  name: string;
+  likedVibes: string[];
+  vibeProfile: VibeProfile;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}
+
+export async function saveVibeDeckAction(
+  name: string,
+  likedVibes: string[],
+  vibeProfile: VibeProfile
+): Promise<VibeDeck> {
+  const [inserted] = await db
+    .insert(vibeDecks)
+    .values({
+      name,
+      likedVibes: JSON.stringify(likedVibes),
+      vibeProfile: JSON.stringify(vibeProfile),
+    })
+    .returning();
+
+  return {
+    id: inserted.id,
+    name: inserted.name,
+    likedVibes: JSON.parse(inserted.likedVibes),
+    vibeProfile: JSON.parse(inserted.vibeProfile),
+    createdAt: inserted.createdAt,
+    updatedAt: inserted.updatedAt,
+  };
+}
+
+export async function getVibeDecksAction(): Promise<VibeDeck[]> {
+  const decks = await db.select().from(vibeDecks).orderBy(desc(vibeDecks.createdAt));
+
+  return decks.map((d) => ({
+    id: d.id,
+    name: d.name,
+    likedVibes: JSON.parse(d.likedVibes),
+    vibeProfile: JSON.parse(d.vibeProfile),
+    createdAt: d.createdAt,
+    updatedAt: d.updatedAt,
+  }));
+}
+
+export async function getVibeDeckByIdAction(id: string): Promise<VibeDeck | null> {
+  const deck = (await db.select().from(vibeDecks).where(eq(vibeDecks.id, id)).limit(1))[0];
+
+  if (!deck) return null;
+
+  return {
+    id: deck.id,
+    name: deck.name,
+    likedVibes: JSON.parse(deck.likedVibes),
+    vibeProfile: JSON.parse(deck.vibeProfile),
+    createdAt: deck.createdAt,
+    updatedAt: deck.updatedAt,
+  };
+}
+
+export async function deleteVibeDeckAction(id: string): Promise<void> {
+  await db.delete(vibeDecks).where(eq(vibeDecks.id, id));
+}
+
+export async function renameVibeDeckAction(id: string, name: string): Promise<void> {
+  await db.update(vibeDecks).set({ name, updatedAt: new Date() }).where(eq(vibeDecks.id, id));
 }

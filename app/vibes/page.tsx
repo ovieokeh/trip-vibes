@@ -7,12 +7,14 @@ import SwipeCard from "@/components/SwipeCard";
 import { AnimatePresence, motion } from "framer-motion";
 import { Vibe } from "@/lib/types";
 import { DeckEngine } from "@/lib/vibes/deck";
+import { SaveDeckModal } from "@/components/SaveDeckModal";
 
 export default function VibesPage() {
   const router = useRouter();
   const { cityId, addLike, addDislike, vibeProfile, likedVibes, dislikedVibes } = useStore();
   const [currentCard, setCurrentCard] = useState<AppVibe | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [showSaveDeck, setShowSaveDeck] = useState(false);
   const [lastSwipeDirection, setLastSwipeDirection] = useState<"left" | "right">("right");
 
   // Initialize Engine
@@ -53,9 +55,13 @@ export default function VibesPage() {
 
   const finishVibeCheck = () => {
     setIsFinishing(true);
-    setTimeout(() => {
-      router.push("/itinerary");
-    }, 1500);
+    // Show save deck modal instead of immediately redirecting
+    setShowSaveDeck(true);
+  };
+
+  const handleContinueToItinerary = () => {
+    setShowSaveDeck(false);
+    router.push("/itinerary");
   };
 
   const handleSwipe = (direction: "left" | "right") => {
@@ -89,18 +95,27 @@ export default function VibesPage() {
 
   if (isFinishing) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
-        <h2 className="text-3xl font-bold mb-4">Vibe Check Complete!</h2>
-        <div className="text-xl opacity-80 mb-8">Building your unique itinerary...</div>
-        <div className="flex gap-2 flex-wrap justify-center">
-          {topTraits.map(([trait, score]) => (
-            <span key={trait} className="badge badge-lg badge-primary capitalize">
-              {trait}
-            </span>
-          ))}
+      <>
+        <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">Vibe Check Complete!</h2>
+          <div className="text-xl opacity-80 mb-8">Building your unique itinerary...</div>
+          <div className="flex gap-2 flex-wrap justify-center">
+            {topTraits.map(([trait, score]) => (
+              <span key={trait} className="badge badge-lg badge-primary capitalize">
+                {trait}
+              </span>
+            ))}
+          </div>
+          <span className="loading loading-dots loading-lg mt-8"></span>
         </div>
-        <span className="loading loading-dots loading-lg mt-8"></span>
-      </div>
+
+        <SaveDeckModal
+          isOpen={showSaveDeck}
+          onClose={() => setShowSaveDeck(false)}
+          onSaved={handleContinueToItinerary}
+          onSkip={handleContinueToItinerary}
+        />
+      </>
     );
   }
 

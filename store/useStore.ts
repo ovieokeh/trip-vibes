@@ -6,16 +6,22 @@ import { DeckEngine } from "@/lib/vibes/deck";
 import { VibeProfile } from "@/lib/vibes/types";
 
 interface AppState extends UserPreferences {
+  // Deck state
+  activeDeckId: string | null;
+
   // Actions
   setCity: (cityId: string) => void;
   setDates: (start: string, end: string) => void;
   setBudget: (budget: "low" | "medium" | "high") => void;
   addLike: (vibeId: string) => void;
   addDislike: (vibeId: string) => void;
+  setActiveDeck: (id: string | null) => void;
+  loadFromDeck: (likedVibes: string[], vibeProfile: VibeProfile) => void;
+  clearVibes: () => void;
   reset: () => void;
 }
 
-const initialState: UserPreferences = {
+const initialState: UserPreferences & { activeDeckId: string | null } = {
   cityId: "",
   startDate: "",
   endDate: "",
@@ -23,6 +29,7 @@ const initialState: UserPreferences = {
   likedVibes: [],
   dislikedVibes: [],
   vibeProfile: { weights: {}, swipes: 0 },
+  activeDeckId: null,
 };
 
 export const useStore = create<AppState>()(
@@ -42,6 +49,20 @@ export const useStore = create<AppState>()(
           dislikedVibes: [...state.dislikedVibes, vibeId],
           vibeProfile: DeckEngine.updateProfile(state.vibeProfile, vibeId, false),
         })),
+      setActiveDeck: (id) => set({ activeDeckId: id }),
+      loadFromDeck: (likedVibes, vibeProfile) =>
+        set({
+          likedVibes,
+          dislikedVibes: [], // Clear dislikes when loading a deck
+          vibeProfile,
+        }),
+      clearVibes: () =>
+        set({
+          likedVibes: [],
+          dislikedVibes: [],
+          vibeProfile: { weights: {}, swipes: 0 },
+          activeDeckId: null,
+        }),
       reset: () => set(initialState),
     }),
     {
