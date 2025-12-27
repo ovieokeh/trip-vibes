@@ -126,6 +126,7 @@ export interface GooglePlaceDetails {
 
 export interface EngineCandidate {
   id: string;
+  foursquareId: string | null;
   googlePlacesId: string | null;
   cityId: string;
   name: string;

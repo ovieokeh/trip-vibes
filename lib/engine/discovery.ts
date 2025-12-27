@@ -206,7 +206,20 @@ export class DiscoveryEngine {
 
     const results = await db.select().from(places).where(and(whereClause, matchCondition));
 
-    return results.map(this.mapRowToCandidate);
+    // Deduplicate results by foursquareId
+    const uniqueMap = new Map<string, typeof places.$inferSelect>();
+    for (const r of results) {
+      if (r.foursquareId) {
+        if (!uniqueMap.has(r.foursquareId)) {
+          uniqueMap.set(r.foursquareId, r);
+        }
+      } else {
+        // Fallback: use ID as key if no fsq id (shouldn't happen for fsq sources but good safety)
+        uniqueMap.set(r.id, r);
+      }
+    }
+
+    return Array.from(uniqueMap.values()).map(this.mapRowToCandidate);
   }
 
   private expandCategoryIds(ids: string[]): string[] {
@@ -291,9 +304,30 @@ export class DiscoveryEngine {
       social: fsq.social_media,
     };
 
-    await db
-      .insert(places)
-      .values({
+    // UPSERT LOGIC (Manual check since no unique constraint on foursquareId yet)
+    const existing = await db
+      .select({ id: places.id })
+      .from(places)
+      .where(and(eq(places.foursquareId, fsq.fsq_place_id), eq(places.cityId, cityId)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing
+      await db
+        .update(places)
+        .set({
+          name: fsq.name, // in case it changed
+          address: fsq.location?.formatted_address,
+          lat: fsq.latitude ?? 0,
+          lng: fsq.longitude ?? 0,
+          metadata: JSON.stringify(metadata),
+          website: fsq.website || undefined,
+          phone: fsq.tel || undefined,
+        })
+        .where(eq(places.id, existing[0].id));
+    } else {
+      // Insert new
+      await db.insert(places).values({
         id: uuidv4(),
         foursquareId: fsq.fsq_place_id,
         name: fsq.name,
@@ -304,9 +338,9 @@ export class DiscoveryEngine {
         metadata: JSON.stringify(metadata),
         website: fsq.website,
         phone: fsq.tel,
-        rating: null, // we don't have rating for now
-      })
-      .onConflictDoNothing();
+        rating: null,
+      });
+    }
   }
 
   private mapRowToCandidate(row: typeof places.$inferSelect): EngineCandidate {

@@ -47,6 +47,7 @@ export class SchedulerEngine {
     const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
 
     const usedIds = new Set<string>();
+    const usedExternalIds = new Set<string>();
 
     // Deep copy candidates to avoid mutation issues if any
     let availableCandidates = [...candidates];
@@ -60,12 +61,15 @@ export class SchedulerEngine {
 
       for (const slot of this.DAILY_TEMPLATE) {
         // Determine candidate(s) - now returns { primary, alternative? }
-        const selection = this.selectForSlot(slot, availableCandidates, usedIds, date);
+        const selection = this.selectForSlot(slot, availableCandidates, usedIds, usedExternalIds, date);
 
         if (selection && selection.primary) {
           usedIds.add(selection.primary.id);
+          if (selection.primary.foursquareId) usedExternalIds.add(selection.primary.foursquareId);
+
           if (selection.alternative) {
             usedIds.add(selection.alternative.id);
+            if (selection.alternative.foursquareId) usedExternalIds.add(selection.alternative.foursquareId);
           }
 
           const activity = this.createActivity(selection.primary, slot, selection.alternative, previousLocation);
@@ -100,10 +104,15 @@ export class SchedulerEngine {
     slot: TimeSlot,
     candidates: EngineCandidate[],
     usedIds: Set<string>,
+    usedExternalIds: Set<string>,
     date: Date
   ): { primary: EngineCandidate; alternative?: EngineCandidate } | null {
     // Filter candidates valid for this slot
-    const pool = candidates.filter((c) => !usedIds.has(c.id));
+    const pool = candidates.filter((c) => {
+      if (usedIds.has(c.id)) return false;
+      if (c.foursquareId && usedExternalIds.has(c.foursquareId)) return false;
+      return true;
+    });
 
     let primary: EngineCandidate | null = null;
     let alternative: EngineCandidate | null = null;
@@ -114,24 +123,33 @@ export class SchedulerEngine {
         if (!primary) {
           primary = c;
         } else {
+          // Check if distinct from primary
+          if (c.id === primary.id) continue;
+          if (c.foursquareId && primary.foursquareId && c.foursquareId === primary.foursquareId) continue;
+
           alternative = c;
           break; // Found both
         }
       }
     }
 
-    if (!primary) {
+    if (!primary || !alternative) {
       // Priority 2: Matches Slot Type (Ignore Opening Hours if missing data)
       for (const c of pool) {
-        // If opening hours are missing, assume open.
-        // If present and closed, skip.
         if (this.matchesSlotType(c, slot)) {
           if (!c.openingHours || this.isOpen(c, date, slot.time)) {
             if (!primary) {
               primary = c;
             } else {
-              alternative = c;
-              break;
+              // Must be distinct
+              if (c.id === primary.id) continue;
+              if (c.foursquareId && primary.foursquareId && c.foursquareId === primary.foursquareId) continue;
+
+              // Avoid overwriting if we already found a valid alternative in Priority 1
+              if (!alternative) {
+                alternative = c;
+                break;
+              }
             }
           }
         }
