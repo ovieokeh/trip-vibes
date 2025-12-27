@@ -1,0 +1,244 @@
+export type ArchetypeCategory =
+  | "Nature"
+  | "Urban"
+  | "Foodie"
+  | "Nightlife"
+  | "Culture"
+  | "Relaxing"
+  | "Adventure"
+  | "Luxury"
+  | "History"
+  | "Social";
+
+export interface ArchetypeDefinition {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  category: ArchetypeCategory;
+  tags: string[];
+  weights: Record<string, number>; // Scoring weights for this vibe
+  relatedVibes?: string[];
+  conflictingVibes?: string[];
+}
+
+export const ARCHETYPES: ArchetypeDefinition[] = [
+  // --- CORE VIBES (Broad Appeal) ---
+  {
+    id: "nature-lover",
+    title: "Nature Lover",
+    description: "Parks, gardens, and fresh air.",
+    imageUrl: "https://images.unsplash.com/photo-1472396961693-142e6e269027?q=80&w=800",
+    category: "Nature",
+    tags: ["park", "botanical garden", "hiking trail", "nature preserve", "beach"],
+    weights: { nature: 10, urban: -5, adventure: 5, relaxation: 5 },
+    relatedVibes: ["adventure-seeker", "beach-bum", "wellness-spa"],
+    conflictingVibes: ["shopaholic", "night-crawler"],
+  },
+  {
+    id: "urban-explorer",
+    title: "Urban Explorer",
+    description: "City streets, architecture, and hidden gems.",
+    imageUrl: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?q=80&w=800",
+    category: "Urban",
+    tags: ["plaza", "neighborhood", "street art", "pedestrian plaza", "monument", "bridge"],
+    weights: { urban: 10, nature: -2, culture: 5, history: 3 },
+    relatedVibes: ["shopaholic", "hidden-gems", "history-buff"],
+    conflictingVibes: ["nature-lover"],
+  },
+  {
+    id: "foodie",
+    title: "The Foodie",
+    description: "Culinary delights, from street food to fine dining.",
+    imageUrl: "https://plus.unsplash.com/premium_photo-1677000666741-17c3c57139a2?q=80&w=800",
+    category: "Foodie",
+    tags: ["restaurant", "food court", "market", "street food", "bakery", "cafe"],
+    weights: { food: 10, social: 3, luxury: 2 },
+    relatedVibes: ["street-foodie", "luxury-life", "cocktail-connoisseur"],
+  },
+  {
+    id: "night-crawler",
+    title: "Night Crawler",
+    description: "Bars, clubs, and late-night adventures.",
+    imageUrl: "https://images.unsplash.com/photo-1506699311528-5be252edc26a?q=80&w=800",
+    category: "Nightlife",
+    tags: ["bar", "nightclub", "pub", "lounge", "speakeasy", "beer garden"],
+    weights: { nightlife: 10, quiet: -10, social: 8, energy: 8 },
+    relatedVibes: ["party-animal", "cocktail-connoisseur", "music-lover"],
+    conflictingVibes: ["cozy-vibes", "family-fun"],
+  },
+  {
+    id: "art-buff",
+    title: "Art Buff",
+    description: "Museums, galleries, and creative spaces.",
+    imageUrl: "https://images.unsplash.com/photo-1572953109213-3be62398eb95?q=80&w=800",
+    category: "Culture",
+    tags: ["art gallery", "museum", "art museum", "public art", "sculpture garden"],
+    weights: { culture: 10, history: 5, creativity: 8 },
+    relatedVibes: ["history-buff", "local-culture", "urban-explorer"],
+  },
+
+  // --- SECONDARY VIBES (Specific Interests) ---
+  {
+    id: "cozy-vibes",
+    title: "Cozy & Chill",
+    description: "Quiet corners, books, and coffee.",
+    imageUrl: "https://images.unsplash.com/photo-1518373714866-3f1478910cc0?q=80&w=800",
+    category: "Relaxing",
+    tags: ["cafe", "bookstore", "library", "tea room", "indie movie theater"],
+    weights: { relaxation: 10, quiet: 8, social: -3, energy: -5 },
+    relatedVibes: ["wellness-spa", "art-buff"],
+    conflictingVibes: ["party-animal", "night-crawler"],
+  },
+  {
+    id: "luxury-life",
+    title: "Luxury Life",
+    description: "High-end shopping, dining, and pampering.",
+    imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800",
+    category: "Luxury",
+    tags: ["fine dining", "cocktail bar", "upscale shopping", "spa", "hotel bar", "winery"],
+    weights: { luxury: 10, budget: -10, comfort: 8, aesthetics: 7 },
+    relatedVibes: ["cocktail-connoisseur", "shopaholic", "wellness-spa"],
+    conflictingVibes: ["street-foodie", "adventure-seeker"],
+  },
+  {
+    id: "history-buff",
+    title: "History Buff",
+    description: "Ancient ruins, historic sites, and stories of the past.",
+    imageUrl: "https://images.unsplash.com/photo-1582034438152-77bc94ffa6ae?q=80&w=800",
+    category: "History",
+    tags: ["history museum", "historic site", "castle", "monument", "church", "temple"],
+    weights: { history: 10, culture: 6, learning: 7 },
+    relatedVibes: ["art-buff", "local-culture"],
+  },
+  {
+    id: "adventure-seeker",
+    title: "Adventure Seeker",
+    description: "Active pursuits and adrenaline.",
+    imageUrl: "https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=800",
+    category: "Adventure",
+    tags: ["climbing gym", "escape room", "amusement park", "kayak rental", "hiking trail"],
+    weights: { adventure: 10, energy: 9, physical: 8, relaxation: -3 },
+    relatedVibes: ["nature-lover", "beach-bum", "sporty"],
+    conflictingVibes: ["luxury-life", "cozy-vibes"],
+  },
+  {
+    id: "beach-bum",
+    title: "Beach Bum",
+    description: "Sun, sand, and sea.",
+    imageUrl: "https://plus.unsplash.com/premium_photo-1677691961682-490fc5c593bf?q=80&w=800",
+    category: "Nature",
+    tags: ["beach", "surf spot", "beach bar", "pier", "boardwalk"],
+    weights: { beach: 10, nature: 7, relaxation: 8, summer: 8 },
+    relatedVibes: ["nature-lover", "wellness-spa", "cocktail-connoisseur"],
+    conflictingVibes: ["urban-explorer"],
+  },
+  {
+    id: "street-foodie",
+    title: "Street Foodie",
+    description: "Authentic local eats and markets.",
+    imageUrl: "https://images.unsplash.com/photo-1603088549155-6ae9395b928f?q=80&w=800",
+    category: "Foodie",
+    tags: ["food truck", "food stand", "night market", "farmers market", "flea market"],
+    weights: { food: 9, budget: 5, local: 8, adventure: 4 },
+    relatedVibes: ["foodie", "local-culture"],
+    conflictingVibes: ["luxury-life"],
+  },
+  {
+    id: "cocktail-connoisseur",
+    title: "Cocktail Connoisseur",
+    description: "Craft drinks and stylish lounges.",
+    imageUrl: "https://images.unsplash.com/photo-1609951651556-5334e2706168?q=80&w=800",
+    category: "Nightlife",
+    tags: ["cocktail bar", "speakeasy", "wine bar", "whisky bar", "rooftop bar"],
+    weights: { nightlife: 7, aesthetics: 8, social: 6, alcohol: 10 },
+    relatedVibes: ["night-crawler", "luxury-life", "scene-setter"],
+    conflictingVibes: ["family-fun"],
+  },
+  {
+    id: "shopaholic",
+    title: "Shopaholic",
+    description: "Boutiques, malls, and markets.",
+    imageUrl: "https://plus.unsplash.com/premium_photo-1664202525979-80d1da46b34b?q=80&w=800",
+    category: "Urban",
+    tags: ["shopping mall", "boutique", "clothing store", "department store", "market"],
+    weights: { shopping: 10, luxury: 4, urban: 6 },
+    relatedVibes: ["urban-explorer", "luxury-life"],
+    conflictingVibes: ["nature-lover"],
+  },
+  {
+    id: "wellness-spa",
+    title: "Wellness & Spa",
+    description: "Relaxation, yoga, and self-care.",
+    imageUrl: "https://plus.unsplash.com/premium_photo-1679430887921-31e1047e5b55?q=80&w=800",
+    category: "Relaxing",
+    tags: ["spa", "yoga studio", "sauna", "massage studio", "hot spring"],
+    weights: { wellness: 10, relaxation: 10, physical: 5, energy: -2 },
+    relatedVibes: ["cozy-vibes", "luxury-life", "nature-lover"],
+    conflictingVibes: ["party-animal"],
+  },
+  {
+    id: "music-lover",
+    title: "Music Lover",
+    description: "Live venues, record stores, and concerts.",
+    imageUrl: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=800",
+    category: "Culture",
+    tags: ["music venue", "jazz club", "concert hall", "record shop", "piano bar"],
+    weights: { music: 10, culture: 5, nightlife: 6, energy: 7 },
+    relatedVibes: ["night-crawler", "art-buff", "party-animal"],
+  },
+  {
+    id: "hidden-gems",
+    title: "Hidden Gems",
+    description: "Off the beaten path spots.",
+    imageUrl: "https://images.unsplash.com/photo-1567008386823-90c713249ed1?q=80&w=800",
+    category: "Adventure",
+    tags: ["speakeasy", "dive bar", "vintage store", "historic site", "lookout"],
+    weights: { exploration: 10, unique: 9, tourists: -8 },
+    relatedVibes: ["urban-explorer", "local-culture"],
+  },
+  {
+    id: "family-fun",
+    title: "Family Fun",
+    description: "Great for kids and groups.",
+    imageUrl: "https://images.unsplash.com/photo-1574031493536-05e45f214ab6?q=80&w=800",
+    category: "Social",
+    tags: ["playground", "zoo", "aquarium", "science museum", "ice cream parlor", "park"],
+    weights: { family: 10, kids: 10, wholesome: 8, nightlife: -10 },
+    relatedVibes: ["nature-lover", "adventure-seeker"],
+    conflictingVibes: ["night-crawler", "cocktail-connoisseur", "romantic-getaway"],
+  },
+  {
+    id: "romantic-getaway",
+    title: "Romantic Getaway",
+    description: "Date spots and scenic views.",
+    imageUrl: "https://images.unsplash.com/photo-1513279922550-250c2129b13a?q=80&w=800",
+    category: "Luxury",
+    tags: ["scenic lookout", "french restaurant", "italian restaurant", "wine bar", "garden"],
+    weights: { romance: 10, atmosphere: 9, private: 6, social: -2 },
+    relatedVibes: ["luxury-life", "cozy-vibes", "cocktail-connoisseur"],
+    conflictingVibes: ["family-fun", "party-animal"],
+  },
+  {
+    id: "local-culture",
+    title: "Local Culture",
+    description: "Dive into the local way of life.",
+    imageUrl: "https://images.unsplash.com/photo-1519802772250-a52a9af0eacb?q=80&w=800",
+    category: "Culture",
+    tags: ["plaza", "market", "historic site", "local government office", "community center"],
+    weights: { culture: 9, local: 10, tourism: -2 },
+    relatedVibes: ["art-buff", "history-buff", "street-foodie"],
+    conflictingVibes: ["luxury-life"],
+  },
+  {
+    id: "party-animal",
+    title: "Party Animal",
+    description: "Dance until dawn.",
+    imageUrl: "https://images.unsplash.com/photo-1630395822970-acd6a691d97e?q=80&w=800",
+    category: "Nightlife",
+    tags: ["nightclub", "dance studio", "rock club", "karaoke bar", "festival"],
+    weights: { party: 10, nightlife: 9, energy: 10, quiet: -10 },
+    relatedVibes: ["night-crawler", "music-lover"],
+    conflictingVibes: ["cozy-vibes", "early-riser"],
+  },
+];

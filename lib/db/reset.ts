@@ -13,12 +13,12 @@ async function reset() {
     // Drizzle's delete() doesn't always support CASCADE easily in all flavors
     const tableName = (table as unknown as Record<symbol, string>)[Symbol.for("drizzle:Name")];
     console.log(`Clearing ${tableName}...`);
-    await db.execute(sql.raw(`TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE`));
+    await db.execute(sql.raw(`DROP TABLE IF EXISTS "${tableName}" CASCADE`));
   }
 
   console.log("All tables cleared.");
 
-  await seed();
+  // await seed(); // seeding must happen after push
 }
 
 reset().catch((err) => {

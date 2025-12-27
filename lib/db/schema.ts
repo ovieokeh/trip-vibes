@@ -10,7 +10,7 @@ export const cities = pgTable("cities", {
 });
 
 export const archetypes = pgTable("archetypes", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(), // Manual ID (slug)
   title: text("title").notNull(),
   description: text("description").notNull(),
   imageUrl: text("image_url").notNull(),
@@ -44,7 +44,7 @@ export const places = pgTable("places", {
 export const archetypesToPlaces = pgTable(
   "archetypes_to_places",
   {
-    archetypeId: uuid("archetype_id")
+    archetypeId: text("archetype_id")
       .notNull()
       .references(() => archetypes.id),
     placeId: uuid("place_id")

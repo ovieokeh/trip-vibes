@@ -85,13 +85,16 @@ export interface Itinerary {
   endDate?: string;
 }
 
+import { VibeProfile } from "./vibes/types";
+
 export interface UserPreferences {
   cityId: string;
   startDate: string;
   endDate: string;
   budget: "low" | "medium" | "high";
-  likedVibes: string[]; // IDs of liked vibes
+  likedVibes: string[]; // IDs of liked vibes (Keep for legacy/debugging)
   dislikedVibes: string[];
+  vibeProfile: VibeProfile; // The new weighted profile
 }
 
 export interface GooglePlacePrediction {

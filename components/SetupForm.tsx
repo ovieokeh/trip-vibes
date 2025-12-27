@@ -109,7 +109,7 @@ export default function SetupForm() {
                   className={`btn flex-1 ${field.value === b ? "btn-neutral" : "btn-outline"}`}
                   onClick={() => field.onChange(b)}
                 >
-                  {b === "low" ? "$" : b === "medium" ? "$$$" : "$$$"}
+                  {b === "low" ? "$" : b === "medium" ? "$$" : "$$$"}
                 </button>
               ))}
             </div>
