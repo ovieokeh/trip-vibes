@@ -58,14 +58,14 @@ export default function VibesPage() {
 
   // When stack is empty, go to itinerary
   useEffect(() => {
-    if (cityId && cards.length === 0) {
+    if (!loading && cityId && cards.length === 0) {
       // Small delay for UX
       const timeout = setTimeout(() => {
         router.push("/itinerary");
       }, 500);
       return () => clearTimeout(timeout);
     }
-  }, [cards, cityId, router]);
+  }, [cards, cityId, router, loading]);
 
   if (!cityId) return null;
 
