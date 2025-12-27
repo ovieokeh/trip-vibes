@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     creator: "@tripvibes",
   },
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.ico",
   },
 };
 
