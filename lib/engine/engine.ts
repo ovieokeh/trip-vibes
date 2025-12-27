@@ -327,6 +327,8 @@ export class MatchingEngine {
 
     let candidateIdx = 0;
 
+    const usedPlaceIds = new Set<string>();
+
     for (let i = 0; i < dayCount; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
@@ -338,13 +340,28 @@ export class MatchingEngine {
       ];
 
       for (const slot of slots) {
-        if (candidateIdx >= candidates.length) {
-          candidateIdx = 0; // Wrap around if out of spots
+        // Cycle through candidates to find an unused one
+        let attempts = 0;
+        let p: EngineCandidate | null = null;
+
+        while (attempts < candidates.length) {
+          if (candidateIdx >= candidates.length) candidateIdx = 0;
+          const candidate = candidates[candidateIdx];
+          if (!usedPlaceIds.has(candidate.id)) {
+            p = candidate;
+            usedPlaceIds.add(candidate.id);
+            candidateIdx++; // Move next for next search
+            break;
+          }
+          candidateIdx++;
+          attempts++;
         }
 
-        // Try to find open spot
-        let p = candidates[candidateIdx];
-        // Validate opening hours here? Skipped for brevity, assume "General Open"
+        if (!p) {
+          // If we ran out of unique places, skip this slot or fallback?
+          // Skipping is safer to avoid duplicates.
+          continue;
+        }
 
         dayActivities.push({
           id: uuidv4(),
@@ -355,7 +372,6 @@ export class MatchingEngine {
           isAlternative: false,
           transitNote: "Short walk",
         });
-        candidateIdx++;
       }
 
       days.push({
@@ -380,6 +396,7 @@ export class MatchingEngine {
   }
 
   private mapCandidateToVibe(p: any): Vibe {
+    if (!p) throw new Error("Candidate is undefined");
     return {
       id: p.id,
       title: p.name,

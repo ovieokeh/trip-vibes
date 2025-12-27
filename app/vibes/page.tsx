@@ -7,13 +7,11 @@ import SwipeCard from "@/components/SwipeCard";
 import { AnimatePresence, motion } from "framer-motion";
 import { Vibe } from "@/lib/types";
 import { DeckEngine } from "@/lib/vibes/deck";
-import { getFallbackImageAction } from "@/lib/db-actions";
 
 export default function VibesPage() {
   const router = useRouter();
   const { cityId, addLike, addDislike, vibeProfile, likedVibes, dislikedVibes } = useStore();
   const [currentCard, setCurrentCard] = useState<AppVibe | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isFinishing, setIsFinishing] = useState(false);
 
   // Initialize Engine
@@ -25,8 +23,8 @@ export default function VibesPage() {
   useEffect(() => {
     if (!cityId) return;
 
-    // Safety check: if we have done 6 swipes, finish
-    if (vibeProfile.swipes >= 6) {
+    // Safety check: if we have 6 likes, finish
+    if (likedVibes.length >= 6) {
       finishVibeCheck();
       return;
     }
@@ -34,23 +32,18 @@ export default function VibesPage() {
     const nextArchetype = engine.getNextCard(vibeProfile);
 
     if (nextArchetype) {
-      setLoading(true);
-      // Async fetch image
-      getFallbackImageAction(nextArchetype.imageUrl).then((url) => {
-        const vibe: AppVibe = {
-          id: nextArchetype.id,
-          title: nextArchetype.title,
-          description: nextArchetype.description,
-          imageUrl: url || "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1", // Fallback
-          category: nextArchetype.category,
-          cityId: cityId,
-          tags: nextArchetype.tags,
-          lat: 0,
-          lng: 0,
-        };
-        setCurrentCard(vibe);
-        setLoading(false);
-      });
+      const vibe: AppVibe = {
+        id: nextArchetype.id,
+        title: nextArchetype.title,
+        description: nextArchetype.description,
+        imageUrl: nextArchetype.imageUrl || "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1", // Fallback
+        category: nextArchetype.category,
+        cityId: cityId,
+        tags: nextArchetype.tags,
+        lat: 0,
+        lng: 0,
+      };
+      setCurrentCard(vibe);
     } else {
       // No more cards
       finishVibeCheck();
@@ -70,7 +63,6 @@ export default function VibesPage() {
     // Optimistic UI: Remove card immediately
     const id = currentCard.id;
     setCurrentCard(null); // Clear to trigger next load
-    setLoading(true);
 
     if (direction === "right") {
       addLike(id);
@@ -112,7 +104,7 @@ export default function VibesPage() {
     <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden relative">
       <div className="absolute top-4 w-full px-4 flex justify-between items-center text-xs opacity-50 uppercase tracking-widest">
         <span>Vibe Check</span>
-        <span>{vibeProfile.swipes} / 6</span>
+        <span>{likedVibes.length} / 6</span>
       </div>
 
       <div className="absolute top-12 w-full flex justify-center gap-2 px-4 h-8">
@@ -133,16 +125,11 @@ export default function VibesPage() {
 
       <div className="relative w-full max-w-sm h-[60vh] mt-8">
         <AnimatePresence mode="wait">
-          {!loading && currentCard && <SwipeCard key={currentCard.id} vibe={currentCard} onSwipe={handleSwipe} />}
-          {loading && !isFinishing && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="loading loading-spinner text-primary"></span>
-            </div>
-          )}
+          {currentCard && <SwipeCard key={currentCard.id} vibe={currentCard} onSwipe={handleSwipe} />}
         </AnimatePresence>
       </div>
 
-      {!loading && currentCard && (
+      {currentCard && (
         <div className="mt-8 text-center text-sm opacity-50 animate-pulse">Swipe right for YES, left for NO</div>
       )}
     </div>

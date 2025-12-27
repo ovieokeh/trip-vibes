@@ -31,25 +31,21 @@ export async function searchCitiesAction(query: string) {
   if (!query || query.length < 2) return [];
 
   // 1. Search DB
-  const dbResults = await db
-    .select()
-    .from(cities)
-    .where(or(ilike(cities.name, `%${query}%`), ilike(cities.country, `%${query}%`)))
-    .limit(10);
-
-  console.log(`[Search] DB hits: ${dbResults.length}`);
-
-  // 2. If we have good matches (exact start match or enough results), return them
-  const hasExactMatch = dbResults.some((c) => c.name.toLowerCase() === query.toLowerCase());
-  if (dbResults.length >= 5 || hasExactMatch) {
-    return dbResults;
-  }
 
   // 3. Fallback to Google Places
   const googleResults = await searchGoogleCities(query);
   console.log(`[Search] Google hits: ${googleResults.length}`);
 
-  if (!googleResults.length) return dbResults;
+  if (!googleResults.length) {
+    const dbResults = await db
+      .select()
+      .from(cities)
+      .where(or(ilike(cities.name, `%${query}%`), ilike(cities.country, `%${query}%`)))
+      .limit(10);
+
+    console.log(`[Search] DB hits: ${dbResults.length}`);
+    return dbResults;
+  }
 
   // 4. Ingest new cities
   for (const prediction of googleResults) {
