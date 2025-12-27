@@ -243,6 +243,7 @@ export async function renameItineraryAction(id: string, name: string) {
 
 export async function deleteItineraryAction(id: string) {
   await db.delete(itineraries).where(eq(itineraries.id, id));
+  revalidatePath("/saved");
 }
 
 export async function getFallbackImageAction(query: string) {

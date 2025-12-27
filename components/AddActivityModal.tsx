@@ -50,9 +50,9 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
             suggestions.map((vibe) => (
               <div
                 key={vibe.id}
-                className="card card-side bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow group"
+                className="card card-side bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow group h-32"
               >
-                <figure className="w-24 h-24 shrink-0 bg-base-300">
+                <figure className="w-32 shrink-0 bg-base-300 relative h-full">
                   {vibe.imageUrl ? (
                     <img src={vibe.imageUrl} alt={vibe.title} className="w-full h-full object-cover" />
                   ) : (
@@ -60,27 +60,66 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
                       <MapPin />
                     </div>
                   )}
+                  {vibe.priceLevel && (
+                    <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
+                      {"$".repeat(vibe.priceLevel)}
+                    </div>
+                  )}
                 </figure>
-                <div className="card-body p-3 flex-row items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm leading-tight mb-1">{vibe.title}</h3>
-                    <div className="flex flex-wrap items-center gap-2 text-xs opacity-70 mb-1">
-                      <span className="uppercase tracking-wider font-bold">{vibe.category}</span>
-                      {vibe.rating && (
-                        <span className="flex items-center gap-0.5">
-                          <Star className="w-3 h-3 fill-warning text-warning" />
-                          {vibe.rating}
-                        </span>
+                <div className="card-body p-3 flex flex-row items-start gap-3 h-full overflow-hidden">
+                  <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-bold text-sm leading-tight line-clamp-1" title={vibe.title}>
+                          {vibe.title}
+                        </h3>
+                        {vibe.rating && (
+                          <div className="flex items-center gap-0.5 text-xs font-medium shrink-0 bg-base-200 px-1 rounded">
+                            <Star className="w-3 h-3 fill-warning text-warning" />
+                            {vibe.rating}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-base-content/70 mt-1 line-clamp-1">
+                        {vibe.neighborhood || vibe.category}
+                      </div>
+
+                      <p className="text-xs text-base-content/60 mt-1 line-clamp-2 leading-relaxed">
+                        {vibe.description || vibe.address || "No description available"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-auto pt-2">
+                      {vibe.tags && vibe.tags.length > 0 && (
+                        <div className="flex gap-1 overflow-hidden">
+                          {vibe.tags.slice(0, 2).map((tag) => (
+                            <span
+                              key={tag}
+                              className="badge badge-xs badge-ghost text-[10px] whitespace-nowrap px-1 border-base-300"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                          {vibe.tags.length > 2 && (
+                            <span className="text-[10px] opacity-50">+{vibe.tags.length - 2}</span>
+                          )}
+                        </div>
+                      )}
+
+                      {vibe.distanceFromContext !== undefined && vibe.distanceFromContext > 0 && (
+                        <div className="text-[10px] flex items-center gap-1 opacity-60 ml-auto shrink-0">
+                          <MapPin className="w-3 h-3" />
+                          <span>{vibe.distanceFromContext.toFixed(1)} km</span>
+                        </div>
                       )}
                     </div>
-                    {vibe.distanceFromContext && vibe.distanceFromContext > 0 && (
-                      <div className="text-[10px] flex items-center gap-1 opacity-70">
-                        <MapPin className="w-3 h-3" />
-                        <span>{vibe.distanceFromContext.toFixed(1)} km away</span>
-                      </div>
-                    )}
                   </div>
-                  <button onClick={() => onSelect(vibe)} className="btn btn-sm btn-primary shrink-0">
+                  <button
+                    onClick={() => onSelect(vibe)}
+                    className="btn btn-sm btn-primary shrink-0 self-center"
+                    aria-label={`Add ${vibe.title}`}
+                  >
                     Add
                   </button>
                 </div>
