@@ -1,7 +1,8 @@
 import { EngineCandidate, Itinerary, UserPreferences, DayPlan, TripActivity, Vibe } from "../types";
 import { v4 as uuidv4 } from "uuid";
-import { getTravelDetails, getTransitNote } from "../geo";
 import { isMeal, isActivity } from "./utils";
+import { isPlaceOpenAt, calculateTransit } from "../activity";
+import { addMinutesToTime } from "../time";
 
 interface TimeSlot {
   name: string;
@@ -51,18 +52,22 @@ export class SchedulerEngine {
     const usedExternalIds = new Set<string>();
 
     // Deep copy candidates to avoid mutation issues if any
-    let availableCandidates = [...candidates];
+    const availableCandidates = [...candidates];
 
     for (let i = 0; i < dayCount; i++) {
       const date = new Date(start);
       date.setDate(start.getDate() + i);
 
       const dayActivities: TripActivity[] = [];
-      let previousLocation: { lat: number; lng: number } | null = null; // Track previous location for transit
+      let previousLocation: { lat: number; lng: number } | null = null;
 
       for (const slot of this.DAILY_TEMPLATE) {
-        // Determine candidate(s) - now returns { primary, alternative? }
         const selection = this.selectForSlot(slot, availableCandidates, usedIds, usedExternalIds, date);
+
+        // Skip optional slots if no candidates found
+        if (!selection && slot.optional) {
+          continue;
+        }
 
         if (selection && selection.primary) {
           usedIds.add(selection.primary.id);
@@ -175,33 +180,13 @@ export class SchedulerEngine {
     }
   }
 
+  /**
+   * Check if a candidate is open at the given date and time.
+   * Uses the shared isPlaceOpenAt utility for consistent behavior.
+   */
   private isOpen(candidate: EngineCandidate, date: Date, timeStr: string): boolean {
-    if (!candidate.openingHours?.periods) return true; // Assume open if no data
-
-    const day = date.getDay();
-    const time = parseInt(timeStr.replace(":", ""));
-
-    return candidate.openingHours.periods.some((p) => {
-      const openTime = parseInt(p.open.time);
-      const closeTime = p.close ? parseInt(p.close.time) : 2359;
-
-      if (p.open.day === day) {
-        // Normal case
-        if (p.close && parseInt(p.close.time) < openTime) {
-          // Closes next day
-          return time >= openTime;
-        }
-        return time >= openTime && (p.close ? time < closeTime : true);
-      }
-
-      // Prev day wrap
-      const prevDay = (day + 6) % 7;
-      if (p.open.day === prevDay && p.close && parseInt(p.close.time) < parseInt(p.open.time)) {
-        return time < parseInt(p.close.time);
-      }
-
-      return false;
-    });
+    // Delegate to shared utility
+    return isPlaceOpenAt(candidate.openingHours, date, timeStr);
   }
 
   private createActivity(
@@ -213,29 +198,24 @@ export class SchedulerEngine {
     let transitDetails = undefined;
     let transitNote = undefined;
 
+    // Use shared transit calculation
     if (previousLocation && c.lat && c.lng) {
-      transitDetails = getTravelDetails(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
-      transitNote = getTransitNote(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
+      const transit = calculateTransit(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
+      transitDetails = transit.transitDetails;
+      transitNote = transit.transitNote;
     }
 
     return {
       id: uuidv4(),
       vibe: this.mapCandidateToVibe(c),
       startTime: slot.time,
-      endTime: this.addMinutes(slot.time, slot.durationMinutes),
+      endTime: addMinutesToTime(slot.time, slot.durationMinutes), // Use shared utility
       note: `Enjoy ${slot.name} at ${c.name}.`,
       isAlternative: false,
       transitNote,
       transitDetails,
       alternative: alternativeCandidate ? this.mapCandidateToVibe(alternativeCandidate) : undefined,
     };
-  }
-
-  private addMinutes(time: string, mins: number): string {
-    const [h, m] = time.split(":").map(Number);
-    const date = new Date();
-    date.setHours(h, m + mins);
-    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   }
 
   private mapCandidateToVibe(p: EngineCandidate): Vibe {

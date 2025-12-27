@@ -30,10 +30,16 @@ export function estimateTravelTime(distanceKm: number, mode: "walking" | "drivin
   return Math.ceil(timeHours * 60); // Return minutes
 }
 
+/**
+ * Walking vs driving threshold in kilometers.
+ * Used by both getTransitNote and getTravelDetails for consistency.
+ */
+const WALKING_THRESHOLD_KM = 2.0;
+
 export function getTransitNote(fromLat: number, fromLng: number, toLat: number, toLng: number): string {
   const dist = calculateHaversineDistance(fromLat, fromLng, toLat, toLng);
 
-  if (dist < 1.5) {
+  if (dist < WALKING_THRESHOLD_KM) {
     const mins = estimateTravelTime(dist, "walking");
     return `${mins} min walk`;
   } else {
@@ -45,9 +51,9 @@ export function getTransitNote(fromLat: number, fromLng: number, toLat: number, 
 export function getTravelDetails(fromLat: number, fromLng: number, toLat: number, toLng: number): TransitDetails {
   const dist = calculateHaversineDistance(fromLat, fromLng, toLat, toLng);
 
-  // Default mode logic
+  // Default mode logic - uses same threshold as getTransitNote
   let mode: "walking" | "driving" = "walking";
-  if (dist >= 2.0) mode = "driving";
+  if (dist >= WALKING_THRESHOLD_KM) mode = "driving";
 
   // Calculate duration for default mode
   const duration = estimateTravelTime(dist, mode);

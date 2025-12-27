@@ -9,6 +9,7 @@ import { UserPreferences, Itinerary, Vibe } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { searchGoogleCities, getGooglePlaceDetails } from "./google-places";
 import { generateDefaultTripName } from "./formatting";
+import { isPlaceOpenAt } from "./activity";
 
 export async function getVibeArchetypes() {
   return await db.select().from(archetypes);
@@ -250,30 +251,6 @@ export async function getFallbackImageAction(query: string) {
   return await getRandomImageForCategory(query);
 }
 
-// Helper: Check if place is open
-function isPlaceOpen(place: { openingHours: Vibe["openingHours"] }, dateTime: Date): boolean {
-  if (!place.openingHours?.periods) return true; // Assume open if no data
-
-  const dayIndex = dateTime.getDay(); // 0 = Sunday
-  const startInt = dateTime.getHours() * 100 + dateTime.getMinutes();
-
-  const periods = place.openingHours.periods;
-
-  return periods.some((period) => {
-    if (period.open.day === dayIndex) {
-      const openTime = parseInt(period.open.time);
-      if (!period.close) return true; // 24h?
-      if (period.close.day !== period.open.day) {
-        // Closes next day, so it is open for the rest of this day
-        return startInt >= openTime;
-      }
-      const closeTime = parseInt(period.close.time);
-      return startInt >= openTime && startInt < closeTime;
-    }
-    return false;
-  });
-}
-
 import { calculateHaversineDistance } from "./geo";
 
 export async function getActivitySuggestionsAction(cityId: string, currentItinerary: Itinerary, dayId: string) {
@@ -294,10 +271,8 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
     const [h, m] = lastAct.endTime.split(":").map(Number);
     contextTime = new Date(`${day.date}T${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:00`);
   } else {
-    // If no activities, try to find city center or use first activity of previous day?
-    // For now, let's just use the city object to find center if possible, or skip distance scoring
-    await db.select().from(cities).where(eq(cities.id, cityId)).limit(1);
-    // We don't have city lat/lng in types easily, but let's assume 0,0 implies "don't score distance"
+    // No activities yet - use default context (0,0 effectively skips distance scoring)
+    // NOTE: Could enhance by adding city center lat/lng to cities table in the future
   }
 
   // 2. Exclude existing
@@ -341,8 +316,12 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
         score += 20 * (1 / (dist + 0.5));
       }
 
-      // B. Opening Hours Score
-      const isOpen = isPlaceOpen({ openingHours }, contextTime);
+      // B. Opening Hours Score - use shared utility for consistent behavior
+      const timeStr = `${contextTime.getHours().toString().padStart(2, "0")}:${contextTime
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+      const isOpen = isPlaceOpenAt(openingHours, contextTime, timeStr);
       if (!isOpen) {
         score -= 50; // Heavy penalty if closed
       } else {
@@ -406,6 +385,8 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
               url: photo.url || (photo.photo_reference ? `/api/places/photo?ref=${photo.photo_reference}` : ""),
             }))
           : [],
+        // Also populate photoUrls for backward compat - simple string array
+        photoUrls: !hasRichPhotos && Array.isArray(photoData) ? photoData : [],
       };
 
       return { vibe, score, placeRow: p, hasPhotos: hasRichPhotos };
