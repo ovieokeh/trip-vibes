@@ -86,7 +86,8 @@ type OpeningHours = Vibe["openingHours"];
  * @returns true if open, false if closed
  */
 export function isPlaceOpenAt(openingHours: OpeningHours, date: Date, timeStr: string): boolean {
-  if (!openingHours?.periods) return true; // Assume open if no data
+  // Assume open if no data OR if periods array is empty
+  if (!openingHours?.periods || openingHours.periods.length === 0) return true;
 
   const dayIndex = date.getDay(); // 0 = Sunday
   const timeInt = timeToInt(timeStr);

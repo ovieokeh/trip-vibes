@@ -54,9 +54,22 @@ export class MatchingEngine {
     const activityCandidates = candidates.filter(isActivity);
 
     // Dynamic sizing for Top Picks
-    const topActivities = activityCandidates.slice(0, minActivities);
-    const topMeals = mealCandidates.slice(0, minMeals);
-    const topCandidates = [...topActivities, ...topMeals];
+    // We need 2× candidates to fill both primary AND alternative slots
+    // Daily template has 6 slots × dayCount days × 2 (primary + alternative) = 12 × dayCount
+    const requiredMeals = minMeals * 2;
+    const requiredActivities = minActivities * 2;
+
+    const topActivities = activityCandidates.slice(0, requiredActivities);
+    const topMeals = mealCandidates.slice(0, requiredMeals);
+
+    // Deduplicate: Hybrids may appear in both arrays. Use a Map to ensure uniqueness.
+    const candidateMap = new Map<string, (typeof candidates)[0]>();
+    for (const c of [...topActivities, ...topMeals]) {
+      if (!candidateMap.has(c.id)) {
+        candidateMap.set(c.id, c);
+      }
+    }
+    const topCandidates = Array.from(candidateMap.values());
 
     this.onProgress(" enriching top picks...");
     await Promise.all(topCandidates.map((c) => discovery.enrichFromGoogle(c)));

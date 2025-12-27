@@ -140,22 +140,21 @@ export class SchedulerEngine {
     }
 
     if (!primary || !alternative) {
-      // Priority 2: Matches Slot Type (Ignore Opening Hours if missing data)
+      // Priority 2: Matches Slot Type, IGNORE opening hours entirely
+      // This is a fallback when Priority 1's strict opening hours filter was too restrictive
       for (const c of pool) {
         if (this.matchesSlotType(c, slot)) {
-          if (!c.openingHours || this.isOpen(c, date, slot.time)) {
-            if (!primary) {
-              primary = c;
-            } else {
-              // Must be distinct
-              if (c.id === primary.id) continue;
-              if (c.foursquareId && primary.foursquareId && c.foursquareId === primary.foursquareId) continue;
+          if (!primary) {
+            primary = c;
+          } else {
+            // Must be distinct
+            if (c.id === primary.id) continue;
+            if (c.foursquareId && primary.foursquareId && c.foursquareId === primary.foursquareId) continue;
 
-              // Avoid overwriting if we already found a valid alternative in Priority 1
-              if (!alternative) {
-                alternative = c;
-                break;
-              }
+            // Avoid overwriting if we already found a valid alternative in Priority 1
+            if (!alternative) {
+              alternative = c;
+              break;
             }
           }
         }
