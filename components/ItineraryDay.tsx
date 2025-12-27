@@ -183,6 +183,7 @@ export default function ItineraryDay({
   onAdd?: () => void;
   onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
 }) {
+  console.log("Rendering ItineraryDay for day:", day);
   // Get day name for opening hours lookup, e.g. "Monday"
   // Parse date securely to avoid timezone shifts (YYYY-MM-DD to local time)
   const [year, month, d] = day.date.split("-").map(Number);
@@ -208,6 +209,13 @@ export default function ItineraryDay({
 
           return (
             <div key={act.id}>
+              {(act.transitNote || act.transitDetails) && index > 0 && (
+                <div className="flex items-center gap-2 py-4 ml-6 border-l border-dashed border-base-300">
+                  <div className="w-2 h-2 rounded-full bg-accent -ml-[4.5px]"></div>
+                  <TransitIndicator activity={act} onUpdate={onUpdate} />
+                </div>
+              )}
+
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -357,13 +365,6 @@ export default function ItineraryDay({
                   </div>
                 </div>
               </motion.div>
-
-              {(act.transitNote || act.transitDetails) && index < day.activities.length - 1 && (
-                <div className="flex items-center gap-2 py-4 ml-6 border-l border-dashed border-base-300">
-                  <div className="w-2 h-2 rounded-full bg-accent -ml-[4.5px]"></div>
-                  <TransitIndicator activity={act} onUpdate={onUpdate} />
-                </div>
-              )}
             </div>
           );
         })}

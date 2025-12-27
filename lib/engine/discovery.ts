@@ -7,8 +7,40 @@ import { CATEGORIES } from "../categories";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 
-// const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
-// const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+interface FoursquarePlaceLocation {
+  address: string;
+  locality: string;
+  region: string;
+  postcode: string;
+  country: string;
+  formatted_address: string;
+}
+interface FoursquarePlace {
+  fsq_place_id: string;
+  latitude: number;
+  longitude: number;
+  categories: {
+    fsq_category_id: string;
+    name: string;
+    short_name: string;
+    plural_name: string;
+    icon: {
+      prefix: string;
+      suffix: string;
+    };
+  }[];
+  date_created: string;
+  date_refreshed: string;
+  distance: number;
+  extended_location: unknown;
+  link: string;
+  location: FoursquarePlaceLocation;
+  name: string;
+  placemaker_url: string;
+  tel: string;
+  website: string;
+  social_media: Record<string, string>;
+}
 
 export class DiscoveryEngine {
   private prefs: UserPreferences;
@@ -211,10 +243,9 @@ export class DiscoveryEngine {
     console.log("Fetching from Foursquare", city.name, idsToSearch);
 
     try {
-      const res = await axios.get("https://places-api.foursquare.com/places/search", {
+      const res = await axios.get<{ results: FoursquarePlace[] }>("https://places-api.foursquare.com/places/search", {
         params: {
-          // query: city.name, // REMOVED: Caused IP biasing
-          near: `${city.name}, ${city.country}`, // NEW: Enforce location context
+          near: `${city.name}, ${city.country}`,
           limit: 50,
           categories: idsToSearch,
         },
@@ -250,13 +281,14 @@ export class DiscoveryEngine {
     return currentId;
   }
 
-  private async savePlace(fsq: any, cityId: string) {
+  private async savePlace(fsq: FoursquarePlace, cityId: string) {
     if (!fsq.fsq_place_id) return;
 
     const metadata = {
       categories: fsq.categories?.map((c: any) => c.name) || [], // Store names for now (legacy compat)
       categoryIds: fsq.categories?.map((c: any) => c.id) || [], // NEW: Store IDs
       source: "foursquare",
+      social: fsq.social_media,
     };
 
     await db
@@ -266,14 +298,13 @@ export class DiscoveryEngine {
         foursquareId: fsq.fsq_place_id,
         name: fsq.name,
         address: fsq.location?.formatted_address,
-        lat: fsq.geocodes?.main?.latitude ?? 0,
-        lng: fsq.geocodes?.main?.longitude ?? 0,
+        lat: fsq.latitude ?? 0,
+        lng: fsq.longitude ?? 0,
         cityId: cityId,
         metadata: JSON.stringify(metadata),
-        rating: fsq.rating ? fsq.rating / 2 : null, // Foursquare is 0-10, we use 0-5? Or just store as is. Engine used 0-10.
-        // Wait, lib/types says rating: number.
-        // engine.ts used `score += (p.rating || 0) * 4`.
-        // Let's store raw rating.
+        website: fsq.website,
+        phone: fsq.tel,
+        rating: null, // we don't have rating for now
       })
       .onConflictDoNothing();
   }

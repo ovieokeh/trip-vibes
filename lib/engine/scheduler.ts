@@ -1,5 +1,6 @@
 import { EngineCandidate, Itinerary, UserPreferences, DayPlan, TripActivity, Vibe } from "../types";
 import { v4 as uuidv4 } from "uuid";
+import { getTravelDetails, getTransitNote } from "../geo";
 
 interface TimeSlot {
   name: string;
@@ -55,14 +56,26 @@ export class SchedulerEngine {
       date.setDate(start.getDate() + i);
 
       const dayActivities: TripActivity[] = [];
+      let previousLocation: { lat: number; lng: number } | null = null; // Track previous location for transit
 
       for (const slot of this.DAILY_TEMPLATE) {
-        // Determine candidate
+        // Determine candidate(s) - now returns { primary, alternative? }
         const selection = this.selectForSlot(slot, availableCandidates, usedIds, date);
 
-        if (selection) {
-          usedIds.add(selection.id);
-          dayActivities.push(this.createActivity(selection, slot));
+        if (selection && selection.primary) {
+          usedIds.add(selection.primary.id);
+          if (selection.alternative) {
+            usedIds.add(selection.alternative.id);
+          }
+
+          const activity = this.createActivity(selection.primary, slot, selection.alternative, previousLocation);
+
+          dayActivities.push(activity);
+
+          // Update previous location to the current activity's location
+          if (activity.vibe.lat && activity.vibe.lng) {
+            previousLocation = { lat: activity.vibe.lat, lng: activity.vibe.lng };
+          }
         }
       }
 
@@ -88,28 +101,44 @@ export class SchedulerEngine {
     candidates: EngineCandidate[],
     usedIds: Set<string>,
     date: Date
-  ): EngineCandidate | null {
+  ): { primary: EngineCandidate; alternative?: EngineCandidate } | null {
     // Filter candidates valid for this slot
     const pool = candidates.filter((c) => !usedIds.has(c.id));
+
+    let primary: EngineCandidate | null = null;
+    let alternative: EngineCandidate | null = null;
 
     // Priority 1: High Score + Matches Slot Type + Open
     for (const c of pool) {
       if (this.matchesSlotType(c, slot) && this.isOpen(c, date, slot.time)) {
-        return c;
+        if (!primary) {
+          primary = c;
+        } else {
+          alternative = c;
+          break; // Found both
+        }
       }
     }
 
-    // Priority 2: Matches Slot Type (Ignore Opening Hours if missing data)
-    for (const c of pool) {
-      // If opening hours are missing, assume open.
-      // If present and closed, skip.
-      if (this.matchesSlotType(c, slot)) {
-        if (!c.openingHours) return c;
-        if (this.isOpen(c, date, slot.time)) return c;
+    if (!primary) {
+      // Priority 2: Matches Slot Type (Ignore Opening Hours if missing data)
+      for (const c of pool) {
+        // If opening hours are missing, assume open.
+        // If present and closed, skip.
+        if (this.matchesSlotType(c, slot)) {
+          if (!c.openingHours || this.isOpen(c, date, slot.time)) {
+            if (!primary) {
+              primary = c;
+            } else {
+              alternative = c;
+              break;
+            }
+          }
+        }
       }
     }
 
-    return null;
+    return primary ? { primary, alternative: alternative || undefined } : null;
   }
 
   private matchesSlotType(c: EngineCandidate, slot: TimeSlot): boolean {
@@ -158,7 +187,20 @@ export class SchedulerEngine {
     });
   }
 
-  private createActivity(c: EngineCandidate, slot: TimeSlot): TripActivity {
+  private createActivity(
+    c: EngineCandidate,
+    slot: TimeSlot,
+    alternativeCandidate?: EngineCandidate,
+    previousLocation?: { lat: number; lng: number } | null
+  ): TripActivity {
+    let transitDetails = undefined;
+    let transitNote = undefined;
+
+    if (previousLocation && c.lat && c.lng) {
+      transitDetails = getTravelDetails(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
+      transitNote = getTransitNote(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
+    }
+
     return {
       id: uuidv4(),
       vibe: this.mapCandidateToVibe(c),
@@ -166,7 +208,9 @@ export class SchedulerEngine {
       endTime: this.addMinutes(slot.time, slot.durationMinutes),
       note: `Enjoy ${slot.name} at ${c.name}.`,
       isAlternative: false,
-      transitNote: "Transit pending...",
+      transitNote,
+      transitDetails,
+      alternative: alternativeCandidate ? this.mapCandidateToVibe(alternativeCandidate) : undefined,
     };
   }
 
