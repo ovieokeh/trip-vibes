@@ -285,7 +285,7 @@ export class DiscoveryEngine {
       const res = await axios.get<{ results: FoursquarePlace[] }>("https://places-api.foursquare.com/places/search", {
         params: {
           near: `${city.name}, ${city.country}`,
-          limit: 50,
+          limit: 300,
           categories: idsToSearch,
         },
         headers: {
@@ -294,11 +294,10 @@ export class DiscoveryEngine {
         },
       });
 
-      console.log("Foursquare response", res.data.results);
+      console.log(`Foursquare response: ${res.data.results.length} places`);
 
-      for (const fsq of res.data.results) {
-        await this.savePlace(fsq, city.id);
-      }
+      // Parallelize saves for speed
+      await Promise.all(res.data.results.map((fsq) => this.savePlace(fsq, city.id)));
     } catch (e) {
       console.error("Foursquare error", e);
     }

@@ -1,7 +1,7 @@
 import { UserPreferences, Itinerary } from "../types";
 import { db } from "../db";
 import { cities } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { DiscoveryEngine } from "./discovery";
 import { ScoringEngine } from "./scoring";
 import { SchedulerEngine } from "./scheduler";
@@ -19,13 +19,16 @@ export class MatchingEngine {
   async generate(): Promise<Itinerary> {
     this.onProgress("Initializing engine...");
 
-    // Resolve City
-    let city = (await db.select().from(cities).where(eq(cities.id, this.prefs.cityId)).limit(1))[0];
-    if (!city) {
-      city = (await db.select().from(cities).where(eq(cities.slug, this.prefs.cityId)).limit(1))[0];
-      if (!city) throw new Error(`Location ${this.prefs.cityId} not found in database.`);
-      this.prefs.cityId = city.id;
-    }
+    // Resolve City - single query with OR for both id and slug lookup
+    const cityResult = await db
+      .select()
+      .from(cities)
+      .where(or(eq(cities.id, this.prefs.cityId), eq(cities.slug, this.prefs.cityId)))
+      .limit(1);
+
+    const city = cityResult[0];
+    if (!city) throw new Error(`Location ${this.prefs.cityId} not found in database.`);
+    this.prefs.cityId = city.id;
 
     // 1. Discovery
     // 1. Discovery
