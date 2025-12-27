@@ -4,6 +4,7 @@ import { eq, and, or, sql } from "drizzle-orm";
 import { EngineCandidate, UserPreferences } from "../types";
 import { ARCHETYPES } from "../archetypes";
 import { CATEGORIES } from "../categories";
+import { isMeal, isActivity } from "./utils";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 
@@ -54,18 +55,39 @@ export class DiscoveryEngine {
    * 1. Search DB for matching categories.
    * 2. If insufficient, fetch from Foursquare using Category IDs.
    */
-  async findCandidates(city: { id: string; name: string; slug: string; country: string }): Promise<EngineCandidate[]> {
+  async findCandidates(
+    city: { id: string; name: string; slug: string; country: string },
+    requirements: { minMeals: number; minActivities: number }
+  ): Promise<EngineCandidate[]> {
     // 1. Identify relevant category IDs based on user vibes
     const targetCategoryIds = this.mapVibesToCategoryIds();
 
     // 2. Search DB
     let candidates = await this.searchDB(city.id, targetCategoryIds);
 
-    // 3. Fallback/Enrichment
-    if (candidates.length < 20 && process.env.FOURSQUARE_API_KEY) {
-      console.log(`[Discovery] Insufficient candidates (${candidates.length}). Fetching from Foursquare...`);
+    // 3. Fallback/Enrichment (Targeted)
+    const meals = candidates.filter(isMeal);
+    const activities = candidates.filter(isActivity);
+
+    const needsMeals = meals.length < requirements.minMeals;
+    const needsActivities = activities.length < requirements.minActivities;
+
+    if ((needsMeals || needsActivities) && process.env.FOURSQUARE_API_KEY) {
+      console.log(
+        `[Discovery] Insufficient balance. Meals: ${meals.length}/${requirements.minMeals}, Activities: ${activities.length}/${requirements.minActivities}`
+      );
+
+      // We only want to fetch what is missing to save API calls
+      // But mapVibesToCategoryIds gives us a mix.
+      // We need to filter the *ids* we search for based on type.
+      // This is hard because IDs are opaque.
+      // Heuristic: If we need meals, we search ALL categories (ensure food is included).
+      // If we *only* need activities, we *could* filter out food, but for now let's just fetch default set.
+      // Improvement: In mapVibesToCategoryIds, we explicitly added "mandatoryTags" (food).
+
       await this.fetchFromFoursquare(city, targetCategoryIds);
-      // Re-fetch from DB to get the newly inserted places
+
+      // Re-fetch from DB
       candidates = await this.searchDB(city.id, targetCategoryIds);
     }
 

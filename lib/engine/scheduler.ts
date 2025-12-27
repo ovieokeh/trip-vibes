@@ -1,6 +1,7 @@
 import { EngineCandidate, Itinerary, UserPreferences, DayPlan, TripActivity, Vibe } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import { getTravelDetails, getTransitNote } from "../geo";
+import { isMeal, isActivity } from "./utils";
 
 interface TimeSlot {
   name: string;
@@ -160,23 +161,17 @@ export class SchedulerEngine {
   }
 
   private matchesSlotType(c: EngineCandidate, slot: TimeSlot): boolean {
-    const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
-    const name = c.name.toLowerCase();
-    const combined = [...cats, name].join(" ");
-
-    // Broad set of keywords for anything food related
-    const foodPattern =
-      /restaurant|cafe|food|bakery|bistro|diner|steakhouse|pizza|taco|burger|sushi|ramen|gastropub|pub|bar|eatery|grill/;
-
     if (slot.type === "meal") {
+      const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
+      const name = c.name.toLowerCase();
+      const combined = [...cats, name].join(" ");
+
       if (slot.requiredTags) {
         if (slot.requiredTags.some((tag) => combined.includes(tag))) return true;
       }
-      return foodPattern.test(combined);
+      return isMeal(c);
     } else {
-      // Activity (Exclude pure food places unless it's a market)
-      const isFood = foodPattern.test(combined) && !/market|hall|museum|park|plaza/.test(combined);
-      return !isFood;
+      return isActivity(c);
     }
   }
 

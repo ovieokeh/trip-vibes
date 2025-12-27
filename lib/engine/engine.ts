@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { DiscoveryEngine } from "./discovery";
 import { ScoringEngine } from "./scoring";
 import { SchedulerEngine } from "./scheduler";
+import { isMeal, isActivity } from "./utils";
 
 export class MatchingEngine {
   private prefs: UserPreferences;
@@ -27,9 +28,20 @@ export class MatchingEngine {
     }
 
     // 1. Discovery
-    this.onProgress(`Scouting vibes in ${city.name}`);
+    // 1. Discovery
+    const start = new Date(this.prefs.startDate);
+    const end = new Date(this.prefs.endDate);
+    const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
+
+    // Calculate dynamic needs
+    // We target 4 meals per day (Breakfast, Lunch, Dinner + 1 buffer)
+    // We target 4 activities per day (Morning, Afternoon, Evening + 1 buffer)
+    const minMeals = dayCount * 4;
+    const minActivities = dayCount * 4;
+
+    this.onProgress(`Scouting vibes in ${city.name} for ${dayCount} days`);
     const discovery = new DiscoveryEngine(this.prefs);
-    let candidates = await discovery.findCandidates(city);
+    let candidates = await discovery.findCandidates(city, { minMeals, minActivities });
 
     // 2. Scoring & Ranking
     this.onProgress("Synthesizing vibe profile...");
@@ -38,27 +50,12 @@ export class MatchingEngine {
 
     // 3. Deep Enrichment (Google) - Optional / Lazy
     // We enrich a balanced set of top candidates to ensure high quality itinerary items
-    const foodPattern =
-      /restaurant|cafe|food|bakery|bistro|diner|steakhouse|pizza|taco|burger|sushi|ramen|gastropub|pub|bar|eatery|grill/;
+    const mealCandidates = candidates.filter(isMeal);
+    const activityCandidates = candidates.filter(isActivity);
 
-    const mealCandidates = candidates.filter((c) => {
-      const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
-      const name = c.name.toLowerCase();
-      const combined = [...cats, name].join(" ");
-      return foodPattern.test(combined);
-    });
-
-    const activityCandidates = candidates.filter((c) => {
-      const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
-      const name = c.name.toLowerCase();
-      const combined = [...cats, name].join(" ");
-      const isFood = foodPattern.test(combined) && !/market|hall|museum|park|plaza/.test(combined);
-      return !isFood;
-    });
-
-    // Take top 15 activities and top 10 meals (total 25 max)
-    const topActivities = activityCandidates.slice(0, 15);
-    const topMeals = mealCandidates.slice(0, 10);
+    // Dynamic sizing for Top Picks
+    const topActivities = activityCandidates.slice(0, minActivities);
+    const topMeals = mealCandidates.slice(0, minMeals);
     const topCandidates = [...topActivities, ...topMeals];
 
     this.onProgress(" enriching top picks...");
