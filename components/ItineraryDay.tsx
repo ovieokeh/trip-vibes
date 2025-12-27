@@ -176,12 +176,14 @@ export default function ItineraryDay({
   onRemove,
   onAdd,
   onUpdate,
+  onMoveActivity,
 }: {
   day: DayPlan;
   onSwap?: (id: string) => void;
   onRemove?: (id: string) => void;
   onAdd?: () => void;
   onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
+  onMoveActivity?: (actId: string) => void;
 }) {
   console.log("Rendering ItineraryDay for day:", day);
   // Get day name for opening hours lookup, e.g. "Monday"
@@ -291,6 +293,11 @@ export default function ItineraryDay({
                           tabIndex={0}
                           className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 text-xs"
                         >
+                          <li>
+                            <a onClick={() => onMoveActivity?.(act.id)} className="">
+                              Move to Day...
+                            </a>
+                          </li>
                           <li>
                             <a onClick={() => onRemove?.(act.id)} className="text-error">
                               Remove

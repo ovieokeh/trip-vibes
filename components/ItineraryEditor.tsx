@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useForm } from "react-hook-form";
 import { Itinerary, TripActivity, Vibe } from "@/lib/types";
 import { getActivitySuggestionsAction, saveItineraryAction } from "@/lib/db-actions";
 import { getTransitNote } from "@/lib/geo";
 import ItineraryDay from "@/components/ItineraryDay";
 import AlertModal from "@/components/AlertModal";
 import AddActivityModal from "@/components/AddActivityModal";
+import MoveActivityModal from "@/components/MoveActivityModal";
+import { AnimatePresence } from "framer-motion";
 
 interface ItineraryEditorProps {
   initialItinerary: Itinerary;
@@ -15,7 +18,17 @@ interface ItineraryEditorProps {
 }
 
 export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode = false }: ItineraryEditorProps) {
-  const [itinerary, setItinerary] = useState<Itinerary>(initialItinerary);
+  const {
+    watch,
+    setValue,
+    getValues,
+    reset,
+    formState: { isDirty },
+  } = useForm<Itinerary>({
+    defaultValues: initialItinerary,
+  });
+
+  const itinerary = watch();
   const [isSaving, setIsSaving] = useState(false);
 
   // Track if dirty? For now, we just save on explicit action or maybe auto-save (let's stick to explicit "Save Changes" for saved trips for clarity, or just rely on the existing "Save Trip" flow for the generated one).
@@ -110,7 +123,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
       return { ...day, activities: updatedActivities };
     });
 
-    setItinerary({ ...itinerary, days: newDays });
+    setValue("days", newDays, { shouldDirty: true });
     if (warningMessage) {
       setAlert({ isOpen: true, title: "Opening Hours Warning", message: warningMessage, type: "warning" });
     }
@@ -122,7 +135,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
       const filtered = day.activities.filter((act) => act.id !== activityId);
       return { ...day, activities: filtered };
     });
-    setItinerary({ ...itinerary, days: newDays });
+    setValue("days", newDays, { shouldDirty: true });
   };
 
   const handleActivityUpdate = (dayId: string, activityId: string, updates: Partial<TripActivity>) => {
@@ -134,7 +147,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
       });
       return { ...day, activities: newActivities };
     });
-    setItinerary({ ...itinerary, days: newDays });
+    setValue("days", newDays, { shouldDirty: true });
   };
 
   const handleOpenAddModal = async (dayId: string) => {
@@ -199,14 +212,91 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
       return { ...d, activities: [...d.activities, newActivity] };
     });
 
-    setItinerary({ ...itinerary, days: newDays });
+    setValue("days", newDays, { shouldDirty: true });
     setAddModal({ ...addModal, isOpen: false });
+  };
+
+  const [moveModal, setMoveModal] = useState<{
+    isOpen: boolean;
+    sourceDayId: string | null;
+    activityId: string | null;
+  }>({
+    isOpen: false,
+    sourceDayId: null,
+    activityId: null,
+  });
+
+  const handleOpenMoveModal = (dayId: string, activityId: string) => {
+    setMoveModal({ isOpen: true, sourceDayId: dayId, activityId });
+  };
+
+  const handleMoveActivity = (targetDayId: string) => {
+    const { sourceDayId, activityId } = moveModal;
+    if (!sourceDayId || !activityId) return;
+
+    if (sourceDayId === targetDayId) {
+      setMoveModal({ ...moveModal, isOpen: false });
+      return;
+    }
+
+    const sourceDay = itinerary.days.find((d) => d.id === sourceDayId);
+    const targetDay = itinerary.days.find((d) => d.id === targetDayId);
+    const activity = sourceDay?.activities.find((a) => a.id === activityId);
+
+    if (!sourceDay || !targetDay || !activity) return;
+
+    // 1. Remove from source day & recalculate its transit
+    const newSourceActivities = sourceDay.activities.filter((a) => a.id !== activityId);
+    const updatedSourceActivities = recalculateTransit(newSourceActivities);
+
+    // 2. Add to target day & recalculate its transit
+    // We'll append to the end for now.
+    // If target day has activities, we might need to update the transit note of the moving activity logic?
+    // Actually, let's just use the helper for the whole chain.
+    const newTargetActivities = [
+      ...targetDay.activities,
+      { ...activity, transitNote: undefined, transitDetails: undefined },
+    ];
+    const updatedTargetActivities = recalculateTransit(newTargetActivities);
+
+    const newDays = itinerary.days.map((d) => {
+      if (d.id === sourceDayId) return { ...d, activities: updatedSourceActivities };
+      if (d.id === targetDayId) return { ...d, activities: updatedTargetActivities };
+      return d;
+    });
+
+    setValue("days", newDays, { shouldDirty: true });
+    setMoveModal({ ...moveModal, isOpen: false });
+  };
+
+  const recalculateTransit = (activities: TripActivity[]): TripActivity[] => {
+    return activities.map((act, index) => {
+      if (index === 0) return { ...act, transitNote: undefined, transitDetails: undefined };
+
+      const prev = activities[index - 1];
+      if (prev.vibe.lat && prev.vibe.lng && act.vibe.lat && act.vibe.lng) {
+        // Preserve existing details if they match the pair?
+        // For simplicity, let's just regenerate the note base on lat/lng to be safe.
+        // But we loose "mode" preference if we do that completely.
+        // Ideally we check if the pair changed.
+        // For this task, let's just re-calculate the note string using the helper,
+        // resetting the details to force a re-estimation if needed or we could try to keep it complex.
+        // The prompt asked for "transit times... should still work".
+        // The simplest safe way is to re-assign transitNote using getTransitNote
+        // and clear custom transitDetails so they get re-calculated/defaulted.
+        const note = getTransitNote(prev.vibe.lat, prev.vibe.lng, act.vibe.lat, act.vibe.lng);
+        return { ...act, transitNote: note, transitDetails: undefined }; // Reset details to force defaults or basic walk calculation
+      }
+      return { ...act, transitNote: undefined, transitDetails: undefined };
+    });
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    const currentItinerary = getValues();
     try {
-      await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
+      await saveItineraryAction(currentItinerary.id, currentItinerary.name, currentItinerary);
+      reset(currentItinerary); // Clear dirty state
       setAlert({ isOpen: true, title: "Success", message: "Itinerary saved successfully!", type: "success" });
     } catch {
       setAlert({ isOpen: true, title: "Error", message: "Failed to save itinerary.", type: "error" });
@@ -225,13 +315,29 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
         onClose={() => setAlert({ ...alert, isOpen: false })}
       />
 
-      <AddActivityModal
-        isOpen={addModal.isOpen}
-        onClose={() => setAddModal({ ...addModal, isOpen: false })}
-        onSelect={handleAddActivity}
-        suggestions={addModal.suggestions}
-        isLoading={addModal.isLoading}
-      />
+      <AnimatePresence>
+        {addModal.isOpen && (
+          <AddActivityModal
+            isOpen={addModal.isOpen}
+            onClose={() => setAddModal({ ...addModal, isOpen: false })}
+            onSelect={handleAddActivity}
+            suggestions={addModal.suggestions}
+            isLoading={addModal.isLoading}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {moveModal.isOpen && (
+          <MoveActivityModal
+            isOpen={moveModal.isOpen}
+            onClose={() => setMoveModal({ ...moveModal, isOpen: false })}
+            onMove={handleMoveActivity}
+            days={itinerary.days}
+            sourceDayId={moveModal.sourceDayId || ""}
+          />
+        )}
+      </AnimatePresence>
 
       <div>
         {itinerary.days.map((day) => (
@@ -242,11 +348,12 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
             onRemove={(actId) => handleRemove(day.id, actId)}
             onAdd={() => handleOpenAddModal(day.id)}
             onUpdate={(actId, updates) => handleActivityUpdate(day.id, actId, updates)}
+            onMoveActivity={(actId) => handleOpenMoveModal(day.id, actId)}
           />
         ))}
       </div>
 
-      {isSavedMode && (
+      {isSavedMode && isDirty && (
         <div className="flex justify-center mt-8 pb-8 fixed bottom-4 right-8">
           <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
             {isSaving ? "Saving..." : "Save Changes"}
