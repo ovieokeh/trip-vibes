@@ -6,6 +6,7 @@ export type ArchetypeCategory =
   | "Culture"
   | "Relaxing"
   | "Adventure"
+  | "Activity"
   | "Luxury"
   | "History"
   | "Social";
@@ -152,7 +153,7 @@ export const ARCHETYPES: ArchetypeDefinition[] = [
     category: "Nightlife",
     tags: ["cocktail bar", "speakeasy", "wine bar", "whisky bar", "rooftop bar"],
     weights: { nightlife: 7, aesthetics: 8, social: 6, alcohol: 10 },
-    relatedVibes: ["night-crawler", "luxury-life", "scene-setter"],
+    relatedVibes: ["night-crawler", "luxury-life"],
     conflictingVibes: ["family-fun"],
   },
   {
@@ -240,5 +241,27 @@ export const ARCHETYPES: ArchetypeDefinition[] = [
     weights: { party: 10, nightlife: 9, energy: 10, quiet: -10 },
     relatedVibes: ["night-crawler", "music-lover"],
     conflictingVibes: ["cozy-vibes", "early-riser"],
+  },
+  {
+    id: "early-riser",
+    title: "Early Riser",
+    description: "Wake up early for a peaceful start.",
+    imageUrl: "https://images.unsplash.com/photo-1497321697169-1ca9f1c8a253?q=80&w=800",
+    category: "Culture",
+    tags: ["plaza", "market", "historic site", "local government office", "community center"],
+    weights: { tourism: 9, local: 9, nightlife: -10 },
+    relatedVibes: ["nature-lover", "sporty", "family-fun"],
+    conflictingVibes: ["party-animal"],
+  },
+  {
+    id: "sporty",
+    title: "Sports Enthusiast",
+    description: "Always on the move and active.",
+    imageUrl: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=800",
+    category: "Activity",
+    tags: ["sports", "fitness", "outdoor", "health", "exercise"],
+    weights: { culture: 9, local: 10, tourism: -2 },
+    relatedVibes: ["adventure-seeker", "foodie"],
+    conflictingVibes: ["luxury-life"],
   },
 ];

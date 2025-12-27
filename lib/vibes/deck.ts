@@ -24,7 +24,7 @@ export class DeckEngine {
       // Weights are usually defined for 'nature', 'urban', etc.
       // Let's bias towards the "Broad Appeal" ones first (first 5 in list usually)
       const core = candidates.filter((c) =>
-        ["nature-lover", "urban-explorer", "foodie", "night-owl", "art-buff"].includes(c.id)
+        ["nature-lover", "urban-explorer", "foodie", "night-crawler", "art-buff"].includes(c.id)
       );
       if (core.length > 0) {
         return this.pickRandom(core);
