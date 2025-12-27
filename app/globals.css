@@ -1,7 +1,5 @@
 @import "tailwindcss";
-@plugin "daisyui" {
-  themes: false;
-}
+@plugin "daisyui";
 
 @plugin "daisyui/theme" {
   name: "pastel";
