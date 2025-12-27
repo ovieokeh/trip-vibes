@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Get the base URL for absolute paths
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  
+
   // Convert image URL to absolute if it's a relative API route
   // Social platforms like WhatsApp can't access relative URLs
   let absoluteImageUrl = `${baseUrl}/og-image.jpg`; // fallback
@@ -101,14 +101,14 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
           <Link href="/saved" className="btn btn-ghost btn-circle btn-sm">
             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-sm font-bold opacity-60 uppercase tracking-widest">SAVED TRIP</h1>
+          <h1 className="text-sm font-bold opacity-70 uppercase tracking-widest">SAVED TRIP</h1>
         </div>
         <TripControls id={id} initialName={itinerary.name || `${cityName} Trip`} />
       </div>
 
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-black mb-1">{itinerary.name || `Trip to ${cityName}`}</h2>
-        <p className="opacity-60 font-medium">
+        <h2 className="text-3xl  mb-1">{itinerary.name || `Trip to ${cityName}`}</h2>
+        <p className="opacity-70 font-medium">
           {cityName}
           {dateRange ? ` • ${dateRange}` : ""}
         </p>

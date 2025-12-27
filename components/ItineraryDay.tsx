@@ -41,7 +41,7 @@ function TransitIndicator({
   // If no details, fallback to string parsing or static
   if (!details) {
     return (
-      <span className="text-[10px] font-bold uppercase tracking-widest opacity-30 flex items-center gap-1">
+      <span className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-80 flex items-center gap-1">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-3 w-3"
@@ -138,7 +138,7 @@ function TransitIndicator({
         <div
           tabIndex={0}
           role="button"
-          className="btn btn-xs btn-ghost gap-1 h-auto min-h-0 py-0.5 px-1 font-normal opacity-50 hover:opacity-100"
+          className="btn btn-xs btn-ghost gap-1 h-auto min-h-0 py-0.5 px-1 font-normal opacity-80 hover:opacity-100"
         >
           {getIcon(details.mode)}
           <span className="text-[10px] font-bold uppercase tracking-widest">
@@ -193,10 +193,10 @@ export default function ItineraryDay({
 
   return (
     <div className="mb-8 pl-4 border-l-2 border-base-300 relative">
-      <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary ring-4 ring-base-100"></div>
-      <h3 className="text-xl font-bold mb-4">
+      <div className="absolute -left-[9px] top-2 w-4 h-4 rounded-full bg-primary ring-4 ring-base-100"></div>
+      <h3 className="flex items-center gap-2 text-xl font-bold mb-4">
         {formattedDate}{" "}
-        <span className="text-sm opacity-50 font-normal ml-2">
+        <span className="text-sm opacity-70 font-normal">
           {dayName}, Day {day.dayNumber}
         </span>
       </h3>
@@ -233,14 +233,14 @@ export default function ItineraryDay({
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="badge badge-sm badge-neutral">{act.startTime}</span>
-                          <span className="text-[10px] uppercase tracking-wider font-bold opacity-40">
+                          <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">
                             {act.vibe.category}
                           </span>
                         </div>
                         <h4 className="font-bold text-sm sm:text-base leading-tight">{act.vibe.title}</h4>
                         <p className="text-xs sm:text-sm text-base-content/80 mt-1 line-clamp-2">{act.note}</p>
                         {act.vibe.address && (
-                          <p className="text-xs opacity-60 mt-0.5 truncate max-w-[200px]">{act.vibe.address}</p>
+                          <p className="text-xs opacity-70 mt-0.5 truncate max-w-[200px]">{act.vibe.address}</p>
                         )}
 
                         <div className="flex flex-wrap items-center gap-3 mt-2">
@@ -317,7 +317,7 @@ export default function ItineraryDay({
                     {act.alternative && (
                       <div className="mt-2 pt-2 border-t border-dashed border-base-300">
                         <details className="group">
-                          <summary className="text-[10px] font-bold uppercase cursor-pointer list-none flex items-center gap-1 opacity-50 hover:opacity-100 transition-opacity">
+                          <summary className="text-[10px] font-bold uppercase cursor-pointer list-none flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
                             <span>See Alternative</span>
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -360,7 +360,7 @@ export default function ItineraryDay({
 
               {(act.transitNote || act.transitDetails) && index < day.activities.length - 1 && (
                 <div className="flex items-center gap-2 py-4 ml-6 border-l border-dashed border-base-300">
-                  <div className="w-2 h-2 rounded-full bg-base-300 -ml-[4.5px]"></div>
+                  <div className="w-2 h-2 rounded-full bg-accent -ml-[4.5px]"></div>
                   <TransitIndicator activity={act} onUpdate={onUpdate} />
                 </div>
               )}
@@ -369,10 +369,7 @@ export default function ItineraryDay({
         })}
       </div>
 
-      <button
-        className="btn btn-ghost btn-sm w-full mt-2 border-dashed border-2 border-base-200 text-base-content/40 hover:text-primary hover:border-primary"
-        onClick={() => onAdd?.()}
-      >
+      <button className="btn btn-dash w-full" onClick={() => onAdd?.()}>
         + Add Activity
       </button>
     </div>

@@ -27,7 +27,7 @@ export default function LoadingScreen({ message, step }: LoadingScreenProps) {
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-black bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+        <h2 className="text-2xl  bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Building Your Trip
         </h2>
         <p className="text-lg font-medium opacity-80 min-h-[3rem] transition-all duration-300">{message}</p>
@@ -45,7 +45,7 @@ export default function LoadingScreen({ message, step }: LoadingScreenProps) {
         ))}
       </div>
 
-      <div className="text-xs opacity-40 font-mono uppercase tracking-widest mt-2">
+      <div className="text-xs opacity-70 font-mono uppercase tracking-widest mt-2">
         Step {Math.max(1, currentStepIdx + 1)} of 4
       </div>
     </div>

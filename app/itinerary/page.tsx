@@ -369,7 +369,7 @@ export default function ItineraryPage() {
       />
 
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-black mb-2">Your Vibe Itinerary</h1>
+        <h1 className="text-3xl  mb-2">Your Vibe Itinerary</h1>
         <p className="text-base-content/70">Optimized for {prefs.budget} budget</p>
       </div>
 
@@ -414,7 +414,7 @@ export default function ItineraryPage() {
         </button>
 
         <button
-          className="btn btn-neutral btn-outline"
+          className="btn btn-outline"
           onClick={() => {
             prefs.reset();
             router.push("/");

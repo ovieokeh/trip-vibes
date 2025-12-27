@@ -1,12 +1,18 @@
 @import "tailwindcss";
-@plugin "daisyui";
-
-/* Custom Theme Config if needed, for not using default light/dark */
-/*
-@theme {
-  --color-primary: #...;
+@plugin "daisyui" {
+  themes: false;
 }
-*/
+
+@plugin "daisyui/theme" {
+  name: "pastel";
+  prefersdark: false;
+  color-scheme: light;
+}
+@plugin "daisyui/theme" {
+  name: "sunset";
+  prefersdark: true;
+  color-scheme: dark;
+}
 
 :root {
   --background: #ffffff;

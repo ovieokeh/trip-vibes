@@ -79,9 +79,9 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
                 caption_label: "text-lg font-medium",
                 nav: "space-x-1 flex items-center",
                 button_previous:
-                  "h-8 w-8 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg hover:bg-base-200 absolute left-1",
+                  "h-8 w-8 bg-transparent p-0 opacity-70 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg hover:bg-base-200 absolute left-1",
                 button_next:
-                  "h-8 w-8 bg-transparent p-0 opacity-50 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg hover:bg-base-200 absolute right-1",
+                  "h-8 w-8 bg-transparent p-0 opacity-70 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg hover:bg-base-200 absolute right-1",
                 month_grid: "w-full border-collapse space-y-1",
                 weekdays: "flex",
                 weekday: "text-base-content/50 rounded-md w-10 font-normal text-[0.8rem]",
@@ -93,8 +93,8 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
                 selected:
                   "!bg-primary !text-primary-content hover:!bg-primary hover:!text-primary-content focus:!bg-primary focus:!text-primary-content shadow-sm",
                 today: "bg-base-content/10 text-base-content font-semibold",
-                outside: "text-base-content/30 opacity-50",
-                disabled: "text-base-content/30 opacity-50",
+                outside: "text-base-content/30 opacity-70",
+                disabled: "text-base-content/30 opacity-70",
                 range_middle: "!bg-base-200 !text-base-content !rounded-none hover:!bg-base-300",
                 hidden: "invisible",
               }}

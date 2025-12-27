@@ -102,7 +102,7 @@ export default function VibesPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden relative">
-      <div className="absolute top-4 w-full px-4 flex justify-between items-center text-xs opacity-50 uppercase tracking-widest">
+      <div className="absolute top-4 w-full px-4 flex justify-between items-center text-xs opacity-70 uppercase tracking-widest">
         <span>Vibe Check</span>
         <span>{likedVibes.length} / 6</span>
       </div>
@@ -130,7 +130,7 @@ export default function VibesPage() {
       </div>
 
       {currentCard && (
-        <div className="mt-8 text-center text-sm opacity-50 animate-pulse">Swipe right for YES, left for NO</div>
+        <div className="mt-8 text-center text-sm opacity-70 animate-pulse">Swipe right for YES, left for NO</div>
       )}
     </div>
   );

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { Command } from "cmdk";
@@ -87,34 +85,37 @@ export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCit
         type="button"
         onClick={() => !disabled && setOpen(!open)}
         className={clsx(
-          "btn btn-outline w-full justify-between font-normal text-lg h-12",
-          !selectedCityData && "text-base-content/50"
+          "btn btn-outline border-base-300 w-full justify-between font-normal text-lg h-12 bg-base-100 hover:bg-base-100 hover:border-base-content/30 text-base-content",
+          !selectedCityData && "text-base-content/40",
+          disabled && "btn-disabled"
         )}
         disabled={disabled}
       >
-        {selectedCityData ? `${selectedCityData.name}, ${selectedCityData.country}` : "Select a city..."}
-        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        <span className="truncate">
+          {selectedCityData ? `${selectedCityData.name}, ${selectedCityData.country}` : "Select a city..."}
+        </span>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute top-full mt-2 w-full z-20 p-1 bg-base-100 rounded-box border border-base-300 shadow-xl overflow-hidden">
+          <div className="absolute top-full mt-2 w-full z-20 p-1 bg-base-100 rounded-box border-2 border-base-200 shadow-xl overflow-hidden">
             <Command label="Search cities" shouldFilter={false}>
               <div className="flex items-center border-b border-base-200 px-3">
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-base-content/50"
+                  className="flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-base-content/40"
                   placeholder="Search city (e.g. Tokyo, London)..."
                   autoFocus
                 />
-                {isLoading && <Loader2 className="h-4 w-4 animate-spin opacity-50" />}
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin opacity-40" />}
               </div>
 
               <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-1">
                 {!isLoading && results.length === 0 && (
-                  <Command.Empty className="py-6 text-center text-sm text-base-content/50">
+                  <Command.Empty className="py-6 text-center text-sm text-base-content/40 font-medium">
                     {search.length < 2 ? "Type to search..." : "No city found."}
                   </Command.Empty>
                 )}
@@ -129,13 +130,13 @@ export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCit
                       setSearch("");
                     }}
                     className={clsx(
-                      "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-2.5 text-sm outline-none hover:bg-base-200 data-[selected=true]:bg-base-200 data-[selected=true]:text-base-content",
-                      selectedCityId === city.id && "bg-base-200"
+                      "relative flex cursor-pointer select-none items-center rounded-btn px-3 py-3 text-sm outline-none transition-colors hover:bg-base-200 data-[selected=true]:bg-base-200 data-[selected=true]:text-base-content",
+                      selectedCityId === city.id && "bg-base-200 font-medium"
                     )}
                   >
                     <Check className={clsx("mr-2 h-4 w-4", selectedCityId === city.id ? "opacity-100" : "opacity-0")} />
                     <span className="flex flex-col">
-                      <span className="font-medium">{city.name}</span>
+                      <span className="font-bold">{city.name}</span>
                       <span className="text-xs text-base-content/60">{city.country}</span>
                     </span>
                   </Command.Item>

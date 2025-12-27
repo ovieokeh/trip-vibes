@@ -7,11 +7,11 @@ export default async function SavedTripsPage() {
 
   return (
     <div className="max-w-xl mx-auto px-4">
-      <h1 className="text-3xl font-black mb-8 px-2">Saved Trips</h1>
+      <h1 className="text-3xl  mb-8 px-2">Saved Trips</h1>
 
       {savedTrips.length === 0 ? (
-        <div className="text-center py-12 opacity-60">
-          <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <div className="text-center py-12">
+          <Map className="w-12 h-12 mx-auto mb-4" />
           <p>No saved trips yet.</p>
           <Link href="/" className="btn btn-link">
             Plan a trip now
@@ -35,7 +35,7 @@ export default async function SavedTripsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mt-2 text-xs opacity-60">
+                <div className="flex items-center gap-2 mt-2 text-xs opacity-70">
                   <Calendar className="w-3 h-3" />
                   <span>
                     {trip.startDate ? new Date(trip.startDate).toLocaleDateString() : "No date"}

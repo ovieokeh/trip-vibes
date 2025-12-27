@@ -34,12 +34,12 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-50">
+            <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-70">
               <span className="loading loading-spinner loading-md"></span>
               <span>Finding the best spots for you...</span>
             </div>
           ) : suggestions.length === 0 ? (
-            <div className="text-center py-12 opacity-50">
+            <div className="text-center py-12 opacity-70">
               <p>No more suggestions available for this time.</p>
             </div>
           ) : (
@@ -70,7 +70,7 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
                       )}
                     </div>
                     {vibe.distanceFromContext && vibe.distanceFromContext > 0 && (
-                      <div className="text-[10px] flex items-center gap-1 opacity-60">
+                      <div className="text-[10px] flex items-center gap-1 opacity-70">
                         <MapPin className="w-3 h-3" />
                         <span>{vibe.distanceFromContext.toFixed(1)} km away</span>
                       </div>
