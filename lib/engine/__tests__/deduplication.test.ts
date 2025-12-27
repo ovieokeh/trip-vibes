@@ -1,5 +1,5 @@
 import { SchedulerEngine } from "../scheduler";
-import { EngineCandidate } from "../types";
+import { EngineCandidate } from "../../types";
 import { describe, it, expect, vi } from "vitest";
 
 const MOCK_PREFS = {
@@ -9,7 +9,7 @@ const MOCK_PREFS = {
   budget: "medium" as const,
   likedVibes: [],
   dislikedVibes: [],
-  vibeProfile: { weights: {} },
+  vibeProfile: { weights: {}, swipes: 0 },
 };
 
 describe("SchedulerEngine Deduplication", () => {

@@ -2,30 +2,9 @@
 
 import { DayPlan, Vibe, TripActivity } from "@/lib/types";
 import { motion } from "framer-motion";
-import { Star, Globe, Phone, ImageIcon } from "lucide-react";
-import { useState, useEffect } from "react";
-import { getFallbackImageAction } from "@/lib/db-actions";
-
-function VibeImage({ vibe }: { vibe: Vibe }) {
-  const [src, setSrc] = useState(vibe.imageUrl || "");
-
-  useEffect(() => {
-    if (!src) {
-      getFallbackImageAction(vibe.category || "travel").then((url) => {
-        if (url) setSrc(url);
-      });
-    }
-  }, [vibe, src]);
-
-  return (
-    <div
-      className="h-24 sm:h-auto sm:w-28 bg-cover bg-center shrink-0 bg-base-200 flex items-center justify-center text-base-content/20"
-      style={{ backgroundImage: src ? `url(${src})` : undefined }}
-    >
-      {!src && <ImageIcon className="w-8 h-8" />}
-    </div>
-  );
-}
+import { Star, Globe, Phone } from "lucide-react";
+import { useState } from "react";
+import VibeImage from "./VibeImage";
 
 import { estimateTravelTime } from "@/lib/geo";
 
@@ -235,7 +214,7 @@ export default function ItineraryDay({
                       ))}
                     </div>
                   ) : (
-                    <VibeImage vibe={act.vibe} />
+                    <VibeImage vibe={act.vibe} className="h-40 sm:h-auto sm:w-40" />
                   )}
 
                   <div className="card-body p-3 flex-1 min-w-0">
@@ -347,10 +326,7 @@ export default function ItineraryDay({
 
                           <div className="mt-2 bg-base-200 p-2 rounded flex gap-3 items-center">
                             {act.alternative.imageUrl && (
-                              <div
-                                className="w-12 h-12 rounded bg-cover bg-center shrink-0"
-                                style={{ backgroundImage: `url(${act.alternative.imageUrl})` }}
-                              ></div>
+                              <VibeImage vibe={act.alternative} className="w-12 h-12 rounded shrink-0" />
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="font-bold text-xs truncate">{act.alternative.title}</div>

@@ -2,6 +2,7 @@
 import { Vibe } from "@/lib/types";
 import { Star, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import VibeImage from "./VibeImage";
 
 interface AddActivityModalProps {
   isOpen: boolean;
@@ -52,17 +53,13 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
                 key={vibe.id}
                 className="card card-side bg-base-100 border border-base-200 shadow-sm hover:shadow-md transition-shadow group h-32"
               >
-                <figure className="w-32 shrink-0 bg-base-300 relative h-full">
-                  {vibe.imageUrl ? (
-                    <img src={vibe.imageUrl} alt={vibe.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex items-center justify-center w-full h-full text-base-content/20">
-                      <MapPin />
-                    </div>
-                  )}
-                  {vibe.priceLevel && (
-                    <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm">
-                      {"$".repeat(vibe.priceLevel)}
+                <figure className="w-32 shrink-0 relative h-full flex items-center justify-center overflow-hidden">
+                  <VibeImage vibe={vibe} className="w-full h-full" />
+
+                  {/* Price Level - Only show if valid integer > 0 */}
+                  {vibe.priceLevel !== undefined && Math.floor(vibe.priceLevel) > 0 && (
+                    <div className="absolute bottom-1 right-1 bg-black/30 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm h-4 w-fit">
+                      {"$".repeat(Math.min(4, Math.max(1, Math.floor(vibe.priceLevel))))}
                     </div>
                   )}
                 </figure>

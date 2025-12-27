@@ -375,6 +375,13 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
           score += 15;
       }
 
+      // Parse photos from DB - these are Google Places photo objects stored as JSON
+      let photoData: any[] = [];
+      try {
+        photoData = JSON.parse(p.photoUrls || "[]");
+      } catch (e) {}
+      const hasRichPhotos = photoData.length > 0 && typeof photoData[0] === "object";
+
       // Construct Vibe object
       const vibe: Vibe = {
         id: p.id,
@@ -389,13 +396,92 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
         rating: p.rating || undefined,
         openingHours: openingHours,
         distanceFromContext: dist, // Helper property for UI
+        phone: p.phone || undefined,
+        website: p.website || undefined,
+        priceLevel: p.priceLevel || undefined,
+        // Map photos with proper URL generation from photo_reference
+        photos: hasRichPhotos
+          ? photoData.map((photo: any) => ({
+              ...photo,
+              url: photo.url || (photo.photo_reference ? `/api/places/photo?ref=${photo.photo_reference}` : ""),
+            }))
+          : [],
       };
 
-      return { vibe, score };
+      return { vibe, score, placeRow: p, hasPhotos: hasRichPhotos };
     });
 
   // Sort by score desc
   scored.sort((a, b) => b.score - a.score);
 
-  return scored.slice(0, 20).map((s) => s.vibe);
+  const top5 = scored.slice(0, 5);
+
+  // 5. On-demand Google enrichment for suggestions without photos
+  // This ensures the Add Activity modal shows images
+  if (process.env.GOOGLE_PLACES_API_KEY) {
+    const { DiscoveryEngine } = await import("./engine/discovery");
+    const discovery = new DiscoveryEngine({
+      cityId,
+      startDate: "",
+      endDate: "",
+      budget: "medium",
+      likedVibes: [],
+      dislikedVibes: [],
+      vibeProfile: { weights: {}, swipes: 0 },
+    });
+
+    const needsEnrichment = top5.filter((s) => !s.hasPhotos);
+    if (needsEnrichment.length > 0) {
+      // Enrich in parallel (limit to 5 at a time to be nice to Google API)
+      const toEnrich = needsEnrichment.slice(0, 5);
+      await Promise.all(
+        toEnrich.map(async (s) => {
+          const candidate = {
+            id: s.placeRow.id,
+            foursquareId: s.placeRow.foursquareId,
+            googlePlacesId: s.placeRow.googlePlacesId,
+            cityId: s.placeRow.cityId,
+            name: s.placeRow.name,
+            address: s.placeRow.address,
+            lat: s.placeRow.lat || 0,
+            lng: s.placeRow.lng || 0,
+            rating: s.placeRow.rating,
+            website: s.placeRow.website,
+            phone: s.placeRow.phone,
+            imageUrl: s.placeRow.imageUrl,
+            metadata: JSON.parse(s.placeRow.metadata || "{}"),
+          };
+          await discovery.enrichFromGoogle(candidate);
+        })
+      );
+
+      // Re-fetch enriched places from DB and update vibes
+      const enrichedIds = toEnrich.map((s) => s.placeRow.id);
+      const enrichedPlaces = await db
+        .select()
+        .from(places)
+        .where(sql`${places.id} IN (${sql.join(enrichedIds, sql`, `)})`);
+
+      for (const ep of enrichedPlaces) {
+        const idx = top5.findIndex((s) => s.placeRow.id === ep.id);
+        if (idx !== -1) {
+          let photoData: any[] = [];
+          try {
+            photoData = JSON.parse(ep.photoUrls || "[]");
+          } catch (e) {}
+          const hasRichPhotos = photoData.length > 0 && typeof photoData[0] === "object";
+
+          top5[idx].vibe.photos = hasRichPhotos
+            ? photoData.map((photo: any) => ({
+                ...photo,
+                url: photo.url || (photo.photo_reference ? `/api/places/photo?ref=${photo.photo_reference}` : ""),
+              }))
+            : [];
+          top5[idx].vibe.rating = ep.rating || top5[idx].vibe.rating;
+        }
+      }
+    }
+  }
+
+  return top5.map((s) => s.vibe);
 }
