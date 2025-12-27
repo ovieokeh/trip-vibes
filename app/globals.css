@@ -25,3 +25,19 @@ body {
   /* color: var(--foreground); */
   /* DaisyUI handles background/color usually, but we can keep these or rely on base-100 */
 }
+
+/* Hide scrollbars globally while maintaining scroll functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Improve mobile scrolling */
+html {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none; /* Prevent bounce effect on mobile */
+}

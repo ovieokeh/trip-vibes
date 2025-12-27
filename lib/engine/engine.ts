@@ -1,10 +1,10 @@
 import { db } from "../db";
 import { places, archetypesToPlaces, cities, archetypes } from "../db/schema";
 import { eq, inArray, sql } from "drizzle-orm";
-import { UserPreferences, Itinerary, DayPlan, TripActivity, Vibe } from "../types";
+import { UserPreferences, Itinerary, DayPlan, TripActivity, Vibe, EngineCandidate } from "../types";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
-import { getTransitNote, getTravelDetails } from "../geo";
+import { getTravelDetails } from "../geo";
 
 // Environment variables for APIs
 const FOURSQUARE_API_KEY = process.env.FOURSQUARE_API_KEY;
@@ -61,7 +61,7 @@ export class MatchingEngine {
 
     // 4. Optimization Phase
     this.onProgress("Optimizing route and schedule...");
-    return this.assembleItinerary(candidates);
+    return this.assembleItinerary(candidates as EngineCandidate[]);
   }
 
   private async discoverPlacesInDB() {
@@ -93,7 +93,7 @@ export class MatchingEngine {
     });
   }
 
-  private async enrichFromFoursquare(city: any) {
+  private async enrichFromFoursquare(city: { id: string; name: string }) {
     if (!FOURSQUARE_API_KEY) {
       console.warn("FOURSQUARE_API_KEY missing. Skipping discovery.");
       return;
@@ -149,7 +149,7 @@ export class MatchingEngine {
               cityId: city.id,
               imageUrl: null, // Photos cause 429/not present in default
               metadata: JSON.stringify({
-                categories: fsqPlace.categories?.map((c: any) => c.name) || [],
+                categories: fsqPlace.categories?.map((c: { name: string }) => c.name) || [],
                 source: "foursquare",
                 website: fsqPlace.website,
                 phone: fsqPlace.tel,
@@ -173,7 +173,7 @@ export class MatchingEngine {
     }
   }
 
-  private async enrichFromGoogle(place: any) {
+  private async enrichFromGoogle(place: EngineCandidate) {
     if (!GOOGLE_PLACES_API_KEY) return;
 
     try {
@@ -238,7 +238,7 @@ export class MatchingEngine {
     }
   }
 
-  private assembleItinerary(candidates: any[]): Itinerary {
+  private assembleItinerary(candidates: EngineCandidate[]): Itinerary {
     const days: DayPlan[] = [];
     const startDate = new Date(this.prefs.startDate);
     const endDate = new Date(this.prefs.endDate);
@@ -258,7 +258,7 @@ export class MatchingEngine {
         { name: "Evening", start: "19:00", end: "21:30" },
       ];
 
-      for (const [slotIdx, slot] of slots.entries()) {
+      for (const [, slot] of slots.entries()) {
         // Find a candidate that is open
         let chosenCandidate = null;
         let attempts = 0;
@@ -350,8 +350,7 @@ export class MatchingEngine {
     };
   }
 
-  // Returns true if the place is open during the requested slot
-  private isPlaceOpen(place: any, date: Date, startTime: string, endTime: string): boolean {
+  private isPlaceOpen(place: EngineCandidate, date: Date, startTime: string, endTime: string): boolean {
     if (!place.openingHours?.periods) return true; // Assume open if no data
 
     const dayIndex = date.getDay(); // 0 = Sunday
@@ -361,7 +360,7 @@ export class MatchingEngine {
     // Google Periods: { open: { day: 0, time: "1000" }, close: { day: 0, time: "1700" } }
     const periods = place.openingHours.periods;
 
-    return periods.some((period: any) => {
+    return periods.some((period: { open: { day: number; time: string }; close?: { day: number; time: string } }) => {
       // Simple case: Open and Close on same day
       if (period.open.day === dayIndex) {
         const openTime = parseInt(period.open.time);
@@ -398,13 +397,13 @@ export class MatchingEngine {
       phone: p.phone,
       openingHours: p.openingHours,
       photos:
-        p.photos?.map((photo: any) => ({
+        p.photos?.map((photo: Record<string, unknown>) => ({
           ...photo,
           // Use local proxy
-          url: `/api/places/photo?maxwidth=400&ref=${photo.photo_reference}`,
+          url: `/api/places/photo?maxwidth=400&ref=${String(photo.photo_reference)}`,
         })) || [],
       rating: p.rating,
       address: p.address,
-    } as any;
+    };
   }
 }

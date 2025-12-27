@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { db } from "./db";
-import { archetypes, cities, places, archetypesToPlaces, itineraries } from "./db/schema";
-import { eq, inArray, sql, desc, and, ilike, or } from "drizzle-orm";
-import { UserPreferences, Itinerary, DayPlan, TripActivity } from "./types";
+import { archetypes, cities, places, itineraries } from "./db/schema";
+import { eq, sql, desc, and, ilike, or } from "drizzle-orm";
+import { UserPreferences, Itinerary, Vibe } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { searchGoogleCities, getGooglePlaceDetails } from "./google-places";
 import { generateDefaultTripName } from "./formatting";
@@ -68,7 +68,7 @@ export async function searchCitiesAction(query: string) {
       const details = await getGooglePlaceDetails(prediction.place_id);
       if (details) {
         // Extract country
-        const countryComponent = details.address_components.find((c: any) => c.types.includes("country"));
+        const countryComponent = details.address_components.find((c) => c.types.includes("country"));
         const country = countryComponent ? countryComponent.long_name : "Unknown";
         const name = details.name;
 
@@ -227,7 +227,7 @@ export async function getFallbackImageAction(query: string) {
 }
 
 // Helper: Check if place is open
-function isPlaceOpen(place: any, dateTime: Date): boolean {
+function isPlaceOpen(place: { openingHours: Vibe["openingHours"] }, dateTime: Date): boolean {
   if (!place.openingHours?.periods) return true; // Assume open if no data
 
   const dayIndex = dateTime.getDay(); // 0 = Sunday
@@ -235,7 +235,7 @@ function isPlaceOpen(place: any, dateTime: Date): boolean {
 
   const periods = place.openingHours.periods;
 
-  return periods.some((period: any) => {
+  return periods.some((period) => {
     if (period.open.day === dayIndex) {
       const openTime = parseInt(period.open.time);
       if (!period.close) return true; // 24h?
@@ -272,7 +272,7 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
   } else {
     // If no activities, try to find city center or use first activity of previous day?
     // For now, let's just use the city object to find center if possible, or skip distance scoring
-    const city = (await db.select().from(cities).where(eq(cities.id, cityId)).limit(1))[0];
+    await db.select().from(cities).where(eq(cities.id, cityId)).limit(1);
     // We don't have city lat/lng in types easily, but let's assume 0,0 implies "don't score distance"
   }
 
@@ -352,7 +352,7 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
       }
 
       // Construct Vibe object
-      const vibe: any = {
+      const vibe: Vibe = {
         id: p.id,
         title: p.name,
         description: p.address || "",
@@ -362,7 +362,7 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
         tags: [],
         lat: pLat,
         lng: pLng,
-        rating: p.rating,
+        rating: p.rating || undefined,
         openingHours: openingHours,
         distanceFromContext: dist, // Helper property for UI
       };

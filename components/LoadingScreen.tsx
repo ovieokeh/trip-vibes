@@ -1,5 +1,4 @@
-import React from "react";
-import { Loader2, MapPin, Search, Clock, Sparkles, CheckCircle2 } from "lucide-react";
+import { Loader2, MapPin, Search, Clock, Sparkles } from "lucide-react";
 
 interface LoadingScreenProps {
   message: string;

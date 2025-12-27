@@ -2,12 +2,11 @@
 
 import { useState, useCallback } from "react";
 import { Itinerary, TripActivity, Vibe } from "@/lib/types";
-import { getActivitySuggestionsAction, saveItineraryAction, getFallbackImageAction } from "@/lib/db-actions";
+import { getActivitySuggestionsAction, saveItineraryAction } from "@/lib/db-actions";
 import { getTransitNote } from "@/lib/geo";
 import ItineraryDay from "@/components/ItineraryDay";
 import AlertModal from "@/components/AlertModal";
 import AddActivityModal from "@/components/AddActivityModal";
-import { useRouter } from "next/navigation";
 
 interface ItineraryEditorProps {
   initialItinerary: Itinerary;
@@ -16,7 +15,6 @@ interface ItineraryEditorProps {
 }
 
 export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode = false }: ItineraryEditorProps) {
-  const router = useRouter();
   const [itinerary, setItinerary] = useState<Itinerary>(initialItinerary);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -55,7 +53,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
     const startInt = parseInt(startTime.replace(":", ""));
 
     const periods = vibe.openingHours.periods;
-    return periods.some((period: any) => {
+    return periods.some((period) => {
       if (period.open.day !== dayIndex) return false;
       const openTime = parseInt(period.open.time);
       if (!period.close) return true;
@@ -127,7 +125,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
     setItinerary({ ...itinerary, days: newDays });
   };
 
-  const handleActivityUpdate = (dayId: string, activityId: string, updates: any) => {
+  const handleActivityUpdate = (dayId: string, activityId: string, updates: Partial<TripActivity>) => {
     const newDays = itinerary.days.map((day) => {
       if (day.id !== dayId) return day;
       const newActivities = day.activities.map((act) => {
@@ -210,7 +208,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
     try {
       await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
       setAlert({ isOpen: true, title: "Success", message: "Itinerary saved successfully!", type: "success" });
-    } catch (e) {
+    } catch {
       setAlert({ isOpen: true, title: "Error", message: "Failed to save itinerary.", type: "error" });
     } finally {
       setIsSaving(false);

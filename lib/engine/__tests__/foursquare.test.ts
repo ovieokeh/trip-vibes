@@ -1,9 +1,21 @@
-import axios from "axios";
 import * as dotenv from "dotenv";
 dotenv.config();
 
 // Mock function representing the logic we will implement in engine.ts
-function processFoursquareResult(fsqPlace: any) {
+interface FsqPlace {
+  fsq_id?: string;
+  fsq_place_id?: string;
+  name: string;
+  location?: { formatted_address?: string };
+  latitude?: number;
+  longitude?: number;
+  geocodes?: { main?: { latitude: number; longitude: number } };
+  categories?: Array<{ name: string }>;
+  website?: string;
+  tel?: string;
+}
+
+function processFoursquareResult(fsqPlace: FsqPlace) {
   // 1. ID handling: fsq_place_id seems to be the one returned by this endpoint
   const id = fsqPlace.fsq_id || fsqPlace.fsq_place_id;
   if (!id) throw new Error("Missing ID in Foursquare result");
@@ -33,7 +45,7 @@ function processFoursquareResult(fsqPlace: any) {
   const imageUrl = null;
 
   // 5. Metadata
-  const categories = fsqPlace.categories?.map((c: any) => c.name) || [];
+  const categories = fsqPlace.categories?.map((c: { name: string }) => c.name) || [];
 
   return {
     foursquareId: id,

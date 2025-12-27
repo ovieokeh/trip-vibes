@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
-import {
-  generateItineraryAction,
-  saveItineraryAction,
-  getFallbackImageAction,
-  getActivitySuggestionsAction,
-} from "@/lib/db-actions";
+import { saveItineraryAction, getActivitySuggestionsAction } from "@/lib/db-actions";
 import { Itinerary, TripActivity, Vibe } from "@/lib/types";
 import ItineraryDay from "@/components/ItineraryDay";
 import AlertModal from "@/components/AlertModal";
@@ -26,7 +21,6 @@ export default function ItineraryPage() {
   const prefs = useStore();
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasSaved, setHasSaved] = useState(false);
 
   // Add Activity Modal State
   const [addModal, setAddModal] = useState<{
@@ -105,8 +99,8 @@ export default function ItineraryPage() {
                     type: "error",
                   });
                 }
-              } catch (e) {
-                console.error("Error parsing stream chunk", e);
+              } catch (_e) {
+                console.error("Error parsing stream chunk", _e);
               }
             }
           }
@@ -142,7 +136,7 @@ export default function ItineraryPage() {
     // Check if there is ANY period open today covering start time
     // This is a simplified check
     const periods = vibe.openingHours.periods;
-    const isOpen = periods.some((period: any) => {
+    const isOpen = periods.some((period) => {
       if (period.open.day !== dayIndex) return false;
       const openTime = parseInt(period.open.time);
 
@@ -339,7 +333,7 @@ export default function ItineraryPage() {
     setAddModal({ ...addModal, isOpen: false });
   };
 
-  const handleActivityUpdate = (dayId: string, activityId: string, updates: any) => {
+  const handleActivityUpdate = (dayId: string, activityId: string, updates: Partial<TripActivity>) => {
     if (!itinerary) return;
 
     const newDays = itinerary.days.map((day) => {
@@ -395,35 +389,30 @@ export default function ItineraryPage() {
       <div className="divider my-8">End of Trip</div>
 
       <div className="flex justify-center gap-4 pb-8">
-        {!hasSaved ? (
-          <button
-            className="btn btn-primary"
-            disabled={isSaving}
-            onClick={async () => {
-              if (!itinerary) return;
-              setIsSaving(true);
-              try {
-                // Persist the current state of the itinerary including edits
-                await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
-                router.push(`/saved/${itinerary.id}`);
-              } catch (e) {
-                setAlert({
-                  isOpen: true,
-                  title: "Save Failed",
-                  message: "Could not save your trip. Please try again.",
-                  type: "error",
-                });
-                setIsSaving(false);
-              }
-            }}
-          >
-            {isSaving ? "Saving..." : "Save Trip"}
-          </button>
-        ) : (
-          <button className="btn btn-success" disabled>
-            Saved!
-          </button>
-        )}
+        <button
+          className="btn btn-primary"
+          disabled={isSaving}
+          onClick={async () => {
+            if (!itinerary) return;
+            setIsSaving(true);
+            try {
+              // Persist the current state of the itinerary including edits
+              await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
+              router.push(`/saved/${itinerary.id}`);
+            } catch (e) {
+              setAlert({
+                isOpen: true,
+                title: "Save Failed",
+                message: "Could not save your trip. Please try again.",
+                type: "error",
+              });
+              setIsSaving(false);
+            }
+          }}
+        >
+          {isSaving ? "Saving..." : "Save Trip"}
+        </button>
+
         <button
           className="btn btn-neutral btn-outline"
           onClick={() => {

@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { cities, archetypes, places, archetypesToPlaces } from "./schema";
+import { cities, archetypes } from "./schema";
 import { eq } from "drizzle-orm";
 
 export async function seed() {

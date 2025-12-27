@@ -11,7 +11,7 @@ async function reset() {
   for (const table of tables) {
     // Using sql directly to ensure proper truncation with CASCADE for Postgres
     // Drizzle's delete() doesn't always support CASCADE easily in all flavors
-    const tableName = (table as any)[Symbol.for("drizzle:Name")];
+    const tableName = (table as unknown as Record<symbol, string>)[Symbol.for("drizzle:Name")];
     console.log(`Clearing ${tableName}...`);
     await db.execute(sql.raw(`TRUNCATE TABLE "${tableName}" RESTART IDENTITY CASCADE`));
   }

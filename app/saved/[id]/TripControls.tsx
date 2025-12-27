@@ -35,7 +35,7 @@ export default function TripControls({ id, initialName }: { id: string; initialN
         <div className="flex items-center gap-1 join">
           <input
             type="text"
-            className="input input-sm input-bordered join-item w-40 sm:w-64"
+            className="input input-bordered join-item w-40 sm:w-64"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={loading}

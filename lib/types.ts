@@ -44,6 +44,7 @@ export interface Vibe {
   }>;
   rating?: number;
   address?: string;
+  distanceFromContext?: number;
 }
 
 export interface TransitDetails {
@@ -91,4 +92,64 @@ export interface UserPreferences {
   budget: "low" | "medium" | "high";
   likedVibes: string[]; // IDs of liked vibes
   dislikedVibes: string[];
+}
+
+export interface GooglePlacePrediction {
+  description: string;
+  place_id: string;
+  structured_formatting?: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
+
+export interface GoogleAddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+export interface GooglePlaceDetails {
+  address_components: GoogleAddressComponent[];
+  formatted_address: string;
+  name: string;
+  geometry: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+}
+
+export interface EngineCandidate {
+  id: string;
+  googlePlacesId: string | null;
+  cityId: string;
+  name: string;
+  address: string | null;
+  lat: number;
+  lng: number;
+  rating: number | null;
+  website: string | null;
+  phone: string | null;
+  imageUrl: string | null;
+  photos?: Array<{
+    height: number;
+    width: number;
+    html_attributions: string[];
+    photo_reference: string;
+    url?: string | undefined;
+  }>;
+  openingHours?: {
+    open_now: boolean;
+    periods: Array<{ close: { day: number; time: string }; open: { day: number; time: string } }>;
+    weekday_text: string[];
+  };
+  metadata: {
+    categories: string[];
+    source: string;
+    website: string | null;
+    phone: string | null;
+    neighborhood?: string;
+  };
 }

@@ -1,8 +1,9 @@
 import axios from "axios";
+import { GooglePlacePrediction, GooglePlaceDetails } from "./types";
 
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
-export async function searchGoogleCities(query: string) {
+export async function searchGoogleCities(query: string): Promise<GooglePlacePrediction[]> {
   if (!GOOGLE_PLACES_API_KEY) {
     console.warn("GOOGLE_PLACES_API_KEY missing");
     return [];
@@ -29,7 +30,7 @@ export async function searchGoogleCities(query: string) {
   }
 }
 
-export async function getGooglePlaceDetails(placeId: string) {
+export async function getGooglePlaceDetails(placeId: string): Promise<GooglePlaceDetails | null> {
   if (!GOOGLE_PLACES_API_KEY) return null;
 
   try {

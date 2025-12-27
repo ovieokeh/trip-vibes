@@ -1,9 +1,7 @@
 "use client";
-
-import { useEffect, useState } from "react";
 import { Vibe } from "@/lib/types";
-import { Star, MapPin, Clock } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Star, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface AddActivityModalProps {
   isOpen: boolean;
@@ -71,10 +69,10 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
                         </span>
                       )}
                     </div>
-                    {(vibe as any).distanceFromContext && (vibe as any).distanceFromContext > 0 && (
+                    {vibe.distanceFromContext && vibe.distanceFromContext > 0 && (
                       <div className="text-[10px] flex items-center gap-1 opacity-60">
                         <MapPin className="w-3 h-3" />
-                        <span>{(vibe as any).distanceFromContext.toFixed(1)} km away</span>
+                        <span>{vibe.distanceFromContext.toFixed(1)} km away</span>
                       </div>
                     )}
                   </div>

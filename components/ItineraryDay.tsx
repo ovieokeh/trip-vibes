@@ -1,6 +1,6 @@
 "use client";
 
-import { DayPlan, Vibe } from "@/lib/types";
+import { DayPlan, Vibe, TripActivity } from "@/lib/types";
 import { motion } from "framer-motion";
 import { Star, Globe, Phone, ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -29,7 +29,13 @@ function VibeImage({ vibe }: { vibe: Vibe }) {
 
 import { estimateTravelTime } from "@/lib/geo";
 
-function TransitIndicator({ activity, onUpdate }: { activity: any; onUpdate?: (actId: string, updates: any) => void }) {
+function TransitIndicator({
+  activity,
+  onUpdate,
+}: {
+  activity: TripActivity;
+  onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
+}) {
   const details = activity.transitDetails;
 
   // If no details, fallback to string parsing or static
@@ -175,7 +181,7 @@ export default function ItineraryDay({
   onSwap?: (id: string) => void;
   onRemove?: (id: string) => void;
   onAdd?: () => void;
-  onUpdate?: (actId: string, updates: any) => void;
+  onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
 }) {
   // Get day name for opening hours lookup, e.g. "Monday"
   // Parse date securely to avoid timezone shifts (YYYY-MM-DD to local time)
@@ -198,9 +204,7 @@ export default function ItineraryDay({
       <div className="flex flex-col gap-0">
         {day.activities.map((act, index) => {
           // Find opening hours for this day
-          const hoursToday = act.vibe.openingHours?.weekday_text
-            ?.find((t: string) => t.startsWith(dayName))
-            ?.split(": ")[1];
+          const hoursToday = act.vibe.openingHours?.weekday_text?.find((t) => t.startsWith(dayName))?.split(": ")[1];
 
           return (
             <div key={act.id}>

@@ -1,9 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 import { getSavedItinerariesAction } from "@/lib/db-actions";
+
+export const dynamic = "force-dynamic";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 export const metadata: Metadata = {
   title: {
@@ -16,14 +25,17 @@ export const metadata: Metadata = {
     siteName: "TripVibes",
     locale: "en_US",
     type: "website",
+    title: "TripVibes - Curated Travel Itineraries",
+    description: "Convert aesthetic preferences into a geographically optimized itinerary.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TripVibes",
+    title: "TripVibes - Curated Travel Itineraries",
+    description: "Convert aesthetic preferences into a geographically optimized itinerary.",
     creator: "@tripvibes",
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.png",
   },
 };
 

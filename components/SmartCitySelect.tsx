@@ -105,7 +105,7 @@ export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCit
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-base-content/50"
+                  className="flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-base-content/50"
                   placeholder="Search city (e.g. Tokyo, London)..."
                   autoFocus
                 />

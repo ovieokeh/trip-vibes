@@ -18,7 +18,7 @@ async function searchGoogleCities(query: string) {
       },
     });
     return response.data.predictions || [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }
@@ -65,7 +65,9 @@ async function test() {
   console.log("Details found?", !!details);
   if (details) {
     console.log("Name:", details.name);
-    const country = details.address_components.find((c: any) => c.types.includes("country"));
+    const country = details.address_components.find((c: { types: string[]; long_name: string }) =>
+      c.types.includes("country")
+    );
     console.log("Country:", country?.long_name);
   }
 }

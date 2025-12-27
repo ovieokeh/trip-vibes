@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
-      const sendEvent = (data: any) => {
+      const sendEvent = (data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
 
@@ -81,9 +81,10 @@ export async function GET(req: NextRequest) {
 
         sendEvent({ type: "result", data: itinerary });
         controller.close();
-      } catch (error: any) {
-        console.error("Stream error:", error);
-        sendEvent({ type: "error", message: error.message || "An unexpected error occurred" });
+      } catch (error) {
+        const err = error as Error;
+        console.error("Stream error:", err);
+        sendEvent({ type: "error", message: err.message || "An unexpected error occurred" });
         controller.close(); // Finish stream even on error so client disconnects
       }
     },

@@ -25,6 +25,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `Check out this trip to ${cityName} on TripVibes!`;
   const firstImage = itinerary.days.find((day) => day.activities.length > 0)?.activities[0].vibe.imageUrl;
 
+  // Get the base URL for absolute paths
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  
+  // Convert image URL to absolute if it's a relative API route
+  // Social platforms like WhatsApp can't access relative URLs
+  let absoluteImageUrl = `${baseUrl}/og-image.jpg`; // fallback
+  if (firstImage) {
+    // If it starts with /api/, make it absolute
+    if (firstImage.startsWith("/")) {
+      absoluteImageUrl = `${baseUrl}${firstImage}`;
+    } else if (firstImage.startsWith("http")) {
+      // Already absolute (e.g., Unsplash URLs from seed data)
+      absoluteImageUrl = firstImage;
+    }
+  }
+
   return {
     title,
     description,
@@ -32,29 +48,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: "article",
-      images: firstImage
-        ? [
-            {
-              url: firstImage,
-              width: 1200,
-              height: 630,
-            },
-          ]
-        : [],
+      url: `${baseUrl}/saved/${id}`,
+      siteName: "TripVibes",
+      images: [
+        {
+          url: absoluteImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: firstImage
-        ? [
-            {
-              url: firstImage,
-              width: 1200,
-              height: 630,
-            },
-          ]
-        : [],
+      images: [absoluteImageUrl],
     },
   };
 }

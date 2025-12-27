@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange, DayPicker } from "react-day-picker";
 import { clsx } from "clsx";
-// import "react-day-picker/style.css"; // Removed to avoid conflict with Tailwind classes
 
 interface DateRangePickerProps {
   startDate: string; // YYYY-MM-DD
@@ -57,7 +56,7 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
       </div>
 
       <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box max-w-2xl p-0 overflow-hidden bg-base-100">
+        <div className="modal-box max-w-2xl p-0 overflow-y-auto max-h-[90vh] bg-base-100">
           <div className="p-4 bg-base-200/50 border-b border-base-200 flex justify-between items-center">
             <h3 className="font-bold text-lg">Select Dates</h3>
             <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={() => modalRef.current?.close()}>
