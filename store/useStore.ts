@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { UserPreferences } from "@/lib/types";
 
+import { DeckEngine } from "@/lib/vibes/deck";
+import { VibeProfile } from "@/lib/vibes/types";
+
 interface AppState extends UserPreferences {
   // Actions
   setCity: (cityId: string) => void;
@@ -19,6 +22,7 @@ const initialState: UserPreferences = {
   budget: "medium",
   likedVibes: [],
   dislikedVibes: [],
+  vibeProfile: { weights: {}, swipes: 0 },
 };
 
 export const useStore = create<AppState>()(
@@ -28,8 +32,16 @@ export const useStore = create<AppState>()(
       setCity: (cityId) => set({ cityId }),
       setDates: (start, end) => set({ startDate: start, endDate: end }),
       setBudget: (budget) => set({ budget }),
-      addLike: (vibeId) => set((state) => ({ likedVibes: [...state.likedVibes, vibeId] })),
-      addDislike: (vibeId) => set((state) => ({ dislikedVibes: [...state.dislikedVibes, vibeId] })),
+      addLike: (vibeId) =>
+        set((state) => ({
+          likedVibes: [...state.likedVibes, vibeId],
+          vibeProfile: DeckEngine.updateProfile(state.vibeProfile, vibeId, true),
+        })),
+      addDislike: (vibeId) =>
+        set((state) => ({
+          dislikedVibes: [...state.dislikedVibes, vibeId],
+          vibeProfile: DeckEngine.updateProfile(state.vibeProfile, vibeId, false),
+        })),
       reset: () => set(initialState),
     }),
     {

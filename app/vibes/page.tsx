@@ -1,105 +1,152 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/store/useStore";
-import { getVibeArchetypes } from "@/lib/db-actions";
 import SwipeCard from "@/components/SwipeCard";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Vibe } from "@/lib/types";
+import { DeckEngine } from "@/lib/vibes/deck";
+import { getFallbackImageAction } from "@/lib/db-actions";
 
 export default function VibesPage() {
   const router = useRouter();
-  const { cityId, addLike, addDislike } = useStore();
-  const [cards, setCards] = useState<Vibe[]>([]);
+  const { cityId, addLike, addDislike, vibeProfile, likedVibes, dislikedVibes } = useStore();
+  const [currentCard, setCurrentCard] = useState<AppVibe | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFinishing, setIsFinishing] = useState(false);
 
+  // Initialize Engine
+  const engine = useMemo(() => {
+    return new DeckEngine([...likedVibes, ...dislikedVibes]);
+  }, [likedVibes, dislikedVibes]);
+
+  // Load next card
   useEffect(() => {
-    async function fetchVibes() {
-      try {
-        const archs = await getVibeArchetypes();
-        // Convert DB archetypes to frontend Vibe type
-        const vibes: Vibe[] = archs.map((a) => ({
-          id: a.id,
-          title: a.title,
-          description: a.description,
-          imageUrl: a.imageUrl,
-          category: a.category,
-          tags: a.searchTags.split(","),
-          cityId: cityId || "", // Archetypes are city-agnostic in search phase
-        }));
-        setCards(vibes);
-      } catch (error) {
-        console.error("Failed to fetch vibes:", error);
-      } finally {
+    if (!cityId) return;
+
+    // Safety check: if we have done 6 swipes, finish
+    if (vibeProfile.swipes >= 6) {
+      finishVibeCheck();
+      return;
+    }
+
+    const nextArchetype = engine.getNextCard(vibeProfile);
+
+    if (nextArchetype) {
+      setLoading(true);
+      // Async fetch image
+      getFallbackImageAction(nextArchetype.imageUrl).then((url) => {
+        const vibe: AppVibe = {
+          id: nextArchetype.id,
+          title: nextArchetype.title,
+          description: nextArchetype.description,
+          imageUrl: url || "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1", // Fallback
+          category: nextArchetype.category,
+          cityId: cityId,
+          tags: nextArchetype.tags,
+          lat: 0,
+          lng: 0,
+        };
+        setCurrentCard(vibe);
         setLoading(false);
-      }
+      });
+    } else {
+      // No more cards
+      finishVibeCheck();
     }
-    fetchVibes();
-  }, [cityId]);
+  }, [vibeProfile, engine, cityId]);
 
-  // If no city selected (e.g. refresh), redirect home
-  useEffect(() => {
-    if (!cityId) {
-      router.push("/");
-    }
-  }, [cityId, router]);
+  const finishVibeCheck = () => {
+    setIsFinishing(true);
+    setTimeout(() => {
+      router.push("/itinerary");
+    }, 1500);
+  };
 
-  const handleSwipe = (id: string, direction: "left" | "right") => {
+  const handleSwipe = (direction: "left" | "right") => {
+    if (!currentCard) return;
+
+    // Optimistic UI: Remove card immediately
+    const id = currentCard.id;
+    setCurrentCard(null); // Clear to trigger next load
+    setLoading(true);
+
     if (direction === "right") {
       addLike(id);
     } else {
       addDislike(id);
     }
-
-    // Remove card from stack
-    setCards((prev) => prev.filter((c) => c.id !== id));
   };
 
-  // When stack is empty, go to itinerary
+  // Vibe Meter Logic
+  const topTraits = Object.entries(vibeProfile.weights)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3);
+
+  // Redirect if no city
   useEffect(() => {
-    if (!loading && cityId && cards.length === 0) {
-      // Small delay for UX
-      const timeout = setTimeout(() => {
-        router.push("/itinerary");
-      }, 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [cards, cityId, router, loading]);
+    if (!cityId) router.push("/");
+  }, [cityId, router]);
 
   if (!cityId) return null;
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden">
-      {!loading && cards.length > 0 ? (
-        <div className="relative w-full max-w-sm h-[60vh]">
-          <AnimatePresence>
-            {cards.map(
-              (vibe, index) =>
-                // Only render top 2 cards for performance, but we need to reverse map to show top first in DOM stacking?
-                // Actually absolute positioning stacks them. Last in DOM is on top.
-                // So we want the first element of array to be on top? Or last?
-                // Let's assume cards[0] is top.
-                // We only render the first one or two.
-                index <= 1 && (
-                  <SwipeCard
-                    key={vibe.id}
-                    vibe={vibe}
-                    onSwipe={(dir) => handleSwipe(vibe.id, dir)}
-                    style={{ zIndex: cards.length - index }}
-                  />
-                )
-            )}
-          </AnimatePresence>
+  if (isFinishing) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
+        <h2 className="text-3xl font-bold mb-4">Vibe Check Complete!</h2>
+        <div className="text-xl opacity-80 mb-8">Building your unique itinerary...</div>
+        <div className="flex gap-2 flex-wrap justify-center">
+          {topTraits.map(([trait, score]) => (
+            <span key={trait} className="badge badge-lg badge-primary capitalize">
+              {trait}
+            </span>
+          ))}
         </div>
-      ) : (
-        <div className="flex flex-col items-center gap-4 animate-pulse">
-          <span className="loading loading-spinner loading-lg"></span>
-          <p className="text-xl font-medium">Generating your itinerary...</p>
-        </div>
-      )}
+        <span className="loading loading-dots loading-lg mt-8"></span>
+      </div>
+    );
+  }
 
-      <div className="mt-8 text-center text-sm opacity-50">Swipe right to like, left to pass</div>
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden relative">
+      <div className="absolute top-4 w-full px-4 flex justify-between items-center text-xs opacity-50 uppercase tracking-widest">
+        <span>Vibe Check</span>
+        <span>{vibeProfile.swipes} / 6</span>
+      </div>
+
+      <div className="absolute top-12 w-full flex justify-center gap-2 px-4 h-8">
+        <AnimatePresence>
+          {topTraits.map(([trait, score], i) => (
+            <motion.div
+              key={trait}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0 }}
+              className={`badge badge-ghost transition-colors duration-300 ${score > 5 ? "badge-primary" : ""}`}
+            >
+              {trait}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      <div className="relative w-full max-w-sm h-[60vh] mt-8">
+        <AnimatePresence mode="wait">
+          {!loading && currentCard && <SwipeCard key={currentCard.id} vibe={currentCard} onSwipe={handleSwipe} />}
+          {loading && !isFinishing && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="loading loading-spinner text-primary"></span>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {!loading && currentCard && (
+        <div className="mt-8 text-center text-sm opacity-50 animate-pulse">Swipe right for YES, left for NO</div>
+      )}
     </div>
   );
 }
+
+interface AppVibe extends Vibe {}
