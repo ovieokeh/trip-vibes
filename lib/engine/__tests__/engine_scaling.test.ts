@@ -58,7 +58,7 @@ describe("MatchingEngine Scaling Integration", () => {
     await engine.generate();
 
     // 3 Days * 4 = 12 each
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 12, minActivities: 12 });
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 12, minActivities: 12 }, undefined);
   });
 
   it("should calculate correct minCandidates for a long trip (7 days)", async () => {
@@ -75,7 +75,7 @@ describe("MatchingEngine Scaling Integration", () => {
     await engine.generate();
 
     // 7 Days * 4 = 28 each
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 28, minActivities: 28 });
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 28, minActivities: 28 }, undefined);
   });
 
   it("should handle single day trip (1 day)", async () => {
@@ -92,7 +92,7 @@ describe("MatchingEngine Scaling Integration", () => {
     await engine.generate();
 
     // 1 Day * 4 = 4 items
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 4, minActivities: 4 });
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 4, minActivities: 4 }, undefined);
   });
 
   it("should handle lopsided candidate pools (e.g. all activities, no meals)", async () => {
@@ -116,6 +116,6 @@ describe("MatchingEngine Scaling Integration", () => {
 
     // 2 Days * 4 meals = 8 meals min
     // 2 Days * 4 activities = 8 activities min
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 8, minActivities: 8 });
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 8, minActivities: 8 }, undefined);
   });
 });

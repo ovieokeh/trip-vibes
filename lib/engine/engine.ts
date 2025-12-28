@@ -44,7 +44,7 @@ export class MatchingEngine {
 
     this.onProgress(`Scouting vibes in ${city.name} for ${dayCount} days`);
     const discovery = new DiscoveryEngine(this.prefs);
-    let candidates = await discovery.findCandidates(city, { minMeals, minActivities });
+    let candidates = await discovery.findCandidates(city, { minMeals, minActivities }, this.prefs.forceRefresh);
 
     // 2. Scoring & Ranking
     this.onProgress("Synthesizing vibe profile...");

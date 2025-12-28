@@ -16,7 +16,8 @@ interface AppState extends UserPreferences {
   addLike: (vibeId: string) => void;
   addDislike: (vibeId: string) => void;
   setActiveDeck: (id: string | null) => void;
-  loadFromDeck: (likedVibes: string[], vibeProfile: VibeProfile) => void;
+  loadFromDeck: (likedVibes: string[], vibeProfile: VibeProfile, forceRefresh?: boolean) => void;
+  setForceRefresh: (value: boolean) => void;
   clearVibes: () => void;
   reset: () => void;
 }
@@ -30,6 +31,7 @@ const initialState: UserPreferences & { activeDeckId: string | null } = {
   dislikedVibes: [],
   vibeProfile: { weights: {}, swipes: 0 },
   activeDeckId: null,
+  forceRefresh: false,
 };
 
 export const useStore = create<AppState>()(
@@ -50,18 +52,21 @@ export const useStore = create<AppState>()(
           vibeProfile: DeckEngine.updateProfile(state.vibeProfile, vibeId, false),
         })),
       setActiveDeck: (id) => set({ activeDeckId: id }),
-      loadFromDeck: (likedVibes, vibeProfile) =>
+      loadFromDeck: (likedVibes, vibeProfile, forceRefresh = true) =>
         set({
           likedVibes,
           dislikedVibes: [], // Clear dislikes when loading a deck
           vibeProfile,
+          forceRefresh, // Default to true for fresh results when loading a saved deck
         }),
+      setForceRefresh: (value) => set({ forceRefresh: value }),
       clearVibes: () =>
         set({
           likedVibes: [],
           dislikedVibes: [],
           vibeProfile: { weights: {}, swipes: 0 },
           activeDeckId: null,
+          forceRefresh: false,
         }),
       reset: () => set(initialState),
     }),

@@ -55,10 +55,12 @@ export class DiscoveryEngine {
    * Primary method to find candidates.
    * 1. Search DB for matching categories.
    * 2. If insufficient, fetch from Foursquare using geo-exploration (or name fallback).
+   * @param forceRefresh - When true, always fetch fresh results from Foursquare
    */
   async findCandidates(
     city: { id: string; name: string; slug: string; country: string; lat?: number | null; lng?: number | null },
-    requirements: { minMeals: number; minActivities: number }
+    requirements: { minMeals: number; minActivities: number },
+    forceRefresh: boolean = false
   ): Promise<EngineCandidate[]> {
     // 1. Identify relevant category IDs based on user vibes
     const targetCategoryIds = this.mapVibesToCategoryIds();
@@ -73,10 +75,15 @@ export class DiscoveryEngine {
     const needsMeals = meals.length < requirements.minMeals;
     const needsActivities = activities.length < requirements.minActivities;
 
-    if ((needsMeals || needsActivities) && process.env.FOURSQUARE_API_KEY) {
-      console.log(
-        `[Discovery] Insufficient balance. Meals: ${meals.length}/${requirements.minMeals}, Activities: ${activities.length}/${requirements.minActivities}`
-      );
+    // Fetch from Foursquare if we need more candidates OR if forceRefresh is requested
+    if ((forceRefresh || needsMeals || needsActivities) && process.env.FOURSQUARE_API_KEY) {
+      if (forceRefresh) {
+        console.log(`[Discovery] Force refresh requested for ${city.name}`);
+      } else {
+        console.log(
+          `[Discovery] Insufficient balance. Meals: ${meals.length}/${requirements.minMeals}, Activities: ${activities.length}/${requirements.minActivities}`
+        );
+      }
 
       // Use geo-exploration if city has coordinates
       if (city.lat && city.lng) {

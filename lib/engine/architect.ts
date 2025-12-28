@@ -79,6 +79,12 @@ export async function cacheItinerary(cityId: string, prefs: UserPreferences, iti
 }
 
 export async function getCachedItinerary(cityId: string, prefs: UserPreferences) {
+  // If forceRefresh is requested, skip cache lookup entirely
+  if (prefs.forceRefresh) {
+    console.log(`[Architect] Force refresh requested, skipping itinerary cache`);
+    return undefined;
+  }
+
   const prefsHash = crypto
     .createHash("sha256")
     .update(

@@ -92,6 +92,8 @@ export default function ItineraryPage() {
                   if (event.step) setCurrentStep(event.step);
                 } else if (event.type === "result") {
                   setItinerary(event.data);
+                  // Reset forceRefresh after successful generation
+                  prefs.setForceRefresh(false);
                 } else if (event.type === "error") {
                   setAlert({
                     isOpen: true,
