@@ -16,18 +16,50 @@ function deg2rad(deg: number): number {
   return deg * (Math.PI / 180);
 }
 
+/**
+ * Circuity factor: ratio of actual road/path distance to straight-line distance.
+ * Research shows urban areas typically have 1.2-1.4 circuity.
+ * We use 1.3 as a balanced default that matches Google Maps well in most cities.
+ *
+ * Source: Urban planning studies show average circuity of ~1.3 for walking
+ * and ~1.25 for driving in developed cities.
+ */
+const CIRCUITY_FACTOR = 1.3;
+
+/**
+ * Buffer time (minutes) added to account for:
+ * - Traffic lights and crossings
+ * - Wayfinding/navigation in unfamiliar areas
+ * - Building entry/exit (finding entrance, elevators, etc.)
+ */
+const WALKING_BUFFER_MIN = 2;
+const DRIVING_BUFFER_MIN = 3; // Parking + walking from car
+
 export function estimateTravelTime(distanceKm: number, mode: "walking" | "driving" | "transit"): number {
-  // Average speeds
-  const walkingSpeedKmH = 5.0;
-  const drivingSpeedKmH = 30.0; // Inner city average
-  const transitSpeedKmH = 15.0; // Bus/Tram with stops
+  // More conservative speeds based on real-world urban travel
+  const walkingSpeedKmH = 4.5; // Tourist pace, not commuter pace
+  const drivingSpeedKmH = 25.0; // Urban average including traffic lights
+  const transitSpeedKmH = 18.0; // Bus/metro with stops and transfers
 
   let speed = walkingSpeedKmH;
-  if (mode === "driving") speed = drivingSpeedKmH;
-  if (mode === "transit") speed = transitSpeedKmH;
+  let bufferMin = WALKING_BUFFER_MIN;
 
-  const timeHours = distanceKm / speed;
-  return Math.ceil(timeHours * 60); // Return minutes
+  if (mode === "driving") {
+    speed = drivingSpeedKmH;
+    bufferMin = DRIVING_BUFFER_MIN;
+  }
+  if (mode === "transit") {
+    speed = transitSpeedKmH;
+    bufferMin = WALKING_BUFFER_MIN; // Still need to walk to/from stops
+  }
+
+  // Apply circuity factor to convert straight-line to estimated route distance
+  const routeDistanceKm = distanceKm * CIRCUITY_FACTOR;
+  const timeHours = routeDistanceKm / speed;
+  const travelMinutes = Math.ceil(timeHours * 60);
+
+  // Add buffer and ensure minimum reasonable time
+  return Math.max(travelMinutes + bufferMin, mode === "walking" ? 3 : 5);
 }
 
 /**
