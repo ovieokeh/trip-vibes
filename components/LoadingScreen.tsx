@@ -9,12 +9,22 @@ interface LoadingScreenProps {
 export default function LoadingScreen({ message, step }: LoadingScreenProps) {
   const t = useTranslations("Loading");
 
-  // Determine icon based on message content (simple heuristic)
+  // Determine icon based on step (language agnostic)
   let Icon = Loader2;
-  if (message.includes("Scouting") || message.includes("Search")) Icon = Search;
-  if (message.includes("Verifying") || message.includes("hours")) Icon = Clock;
-  if (message.includes("Crafting") || message.includes("AI")) Icon = Sparkles;
-  if (message.includes("vibes")) Icon = MapPin;
+  switch (step) {
+    case "init":
+      Icon = MapPin;
+      break;
+    case "engine":
+      Icon = Search;
+      break;
+    case "enrich":
+      Icon = Sparkles;
+      break;
+    case "finalize":
+      Icon = Clock;
+      break;
+  }
 
   // Calculate progress index
   const steps = ["init", "engine", "enrich", "finalize", "done"];

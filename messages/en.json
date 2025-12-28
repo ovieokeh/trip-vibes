@@ -182,5 +182,20 @@
     "of": "of",
     "viewMap": "View Map",
     "call": "Call"
+  },
+  "LoadingSteps": {
+    "checking_cache": "Checking local cache...",
+    "found_cached": "Found cached itinerary!",
+    "initializing": "Initializing engine...",
+    "expanding_search": "Expanding search (Attempt {attempt}/{total})...",
+    "scouting_vibes": "Scouting vibes in {city} for {days} days",
+    "ranking_options": "Ranking {count} options...",
+    "checking_details": "Checking details...",
+    "checking_details_progress": "Checking details ({current}/{total})...",
+    "assembling_journey": "Assembling your journey...",
+    "crafting_descriptions": "Crafting custom descriptions with AI...",
+    "personalizing_activity": "Personalizing activity {current}/{total}...",
+    "finalizing": "Finalizing details...",
+    "generic_error": "An unexpected error occurred"
   }
 }

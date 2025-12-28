@@ -180,5 +180,20 @@
     "of": "van",
     "viewMap": "Bekijk kaart",
     "call": "Bellen"
+  },
+  "LoadingSteps": {
+    "checking_cache": "Lokale cache controleren...",
+    "found_cached": "Gecachte route gevonden!",
+    "initializing": "Engine initialiseren...",
+    "expanding_search": "Zoekopdracht uitbreiden (Poging {attempt}/{total})...",
+    "scouting_vibes": "Vibes verkennen in {city} voor {days} dagen",
+    "ranking_options": "{count} opties rangschikken...",
+    "checking_details": "Details controleren...",
+    "checking_details_progress": "Details controleren ({current}/{total})...",
+    "assembling_journey": "Je reis samenstellen...",
+    "crafting_descriptions": "Aangepaste beschrijvingen maken met AI...",
+    "personalizing_activity": "Activiteit personaliseren {current}/{total}...",
+    "finalizing": "Details afronden...",
+    "generic_error": "Er is een onverwachte fout opgetreden"
   }
 }

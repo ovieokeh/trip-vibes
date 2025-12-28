@@ -177,16 +177,25 @@ export async function generateItineraryAction(prefs: UserPreferences): Promise<I
   return itinerary;
 }
 
+import { getLocale } from "next-intl/server";
+
 export async function saveItineraryAction(id: string, name?: string, itineraryData?: Itinerary) {
   let finalName = name;
+  const locale = await getLocale();
 
   // Generate default name if missing
   if (!finalName && itineraryData) {
-    const city = (await db.select().from(cities).where(eq(cities.id, itineraryData.cityId)).limit(1))[0];
+    const cityResult = await db.select().from(cities).where(eq(cities.id, itineraryData.cityId)).limit(1);
+    const city = cityResult[0];
     if (city) {
-      finalName = generateDefaultTripName(city.name, itineraryData.startDate || "", itineraryData.endDate || "");
+      finalName = generateDefaultTripName(
+        city.name,
+        itineraryData.startDate || "",
+        itineraryData.endDate || "",
+        locale
+      );
     } else {
-      finalName = "My Trip";
+      finalName = locale === "el" ? "Το Ταξίδι μου" : "My Trip";
     }
   }
 
@@ -194,7 +203,7 @@ export async function saveItineraryAction(id: string, name?: string, itineraryDa
     .update(itineraries)
     .set({
       isSaved: true,
-      name: finalName || "My Trip",
+      name: finalName || (locale === "el" ? "Το Ταξίδι μου" : "My Trip"),
       ...(itineraryData ? { data: JSON.stringify(itineraryData) } : {}),
     })
     .where(eq(itineraries.id, id));

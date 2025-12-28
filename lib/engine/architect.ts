@@ -9,17 +9,39 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy-key",
 });
 
-export async function getVibeDescription(vibeId: string, placeId: string, placeName: string, vibeTitle: string) {
+export async function getVibeDescription(
+  vibeId: string,
+  placeId: string,
+  placeName: string,
+  vibeTitle: string,
+  locale: string = "en"
+) {
   // 1. Check Cache
   const cached = (
     await db
       .select()
       .from(vibeDescriptionsCache)
-      .where(and(eq(vibeDescriptionsCache.vibeId, vibeId), eq(vibeDescriptionsCache.placeId, placeId)))
+      .where(
+        and(
+          eq(vibeDescriptionsCache.vibeId, vibeId),
+          eq(vibeDescriptionsCache.placeId, placeId),
+          eq(vibeDescriptionsCache.locale, locale)
+        )
+      )
       .limit(1)
   )[0];
 
   if (cached) return cached;
+
+  // Map locale to common name for LLM if needed, though ISO codes often work well.
+  const languageNames: Record<string, string> = {
+    en: "English",
+    el: "Greek",
+    nl: "Dutch",
+    es: "Spanish",
+    de: "German",
+  };
+  const targetLanguage = languageNames[locale] || "English";
 
   // 2. Generate with OpenAI
   const prompt = `You are a travel 'vibe' architect. 
@@ -28,6 +50,8 @@ export async function getVibeDescription(vibeId: string, placeId: string, placeN
   
   Write a short, punchy 'vibe note' (max 20 words) explaining why this place matches that vibe. 
   Also suggest a 'vibe alternative' (max 10 words) if they want something similar nearby.
+  
+  CRITICAL: You MUST write your response in ${targetLanguage}.
   
   Format as JSON: { "note": "...", "alternative": "..." }`;
 
@@ -44,6 +68,7 @@ export async function getVibeDescription(vibeId: string, placeId: string, placeN
     const newEntry = {
       vibeId,
       placeId,
+      locale,
       note: result.note || "A perfect match for your vibe.",
       alternativeNote: result.alternative || "Check out nearby spots.",
     };
@@ -52,7 +77,14 @@ export async function getVibeDescription(vibeId: string, placeId: string, placeN
     return inserted;
   } catch (error) {
     console.error("OpenAI Error:", error);
-    return { note: "A local gem matching your preferences.", alternativeNote: "Explore the vicinity." };
+    return {
+      note:
+        locale === "el"
+          ? "Ένα τοπικό διαμάντι που ταιριάζει στις προτιμήσεις σας."
+          : "A local gem matching your preferences.",
+      alternativeNote: locale === "el" ? "Εξερευνήστε τη γύρω περιοχή." : "Explore the vicinity.",
+      locale,
+    };
   }
 }
 

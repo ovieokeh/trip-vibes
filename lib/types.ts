@@ -93,6 +93,7 @@ export interface UserPreferences {
   likedVibes: string[]; // IDs of liked vibes (Keep for legacy/debugging)
   dislikedVibes: string[];
   vibeProfile: VibeProfile; // The new weighted profile
+  locale?: string; // Optional locale for backend translations
   forceRefresh?: boolean; // When true, bypass caches and fetch fresh results
 }
 

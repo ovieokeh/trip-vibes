@@ -1,10 +1,10 @@
-export function formatDateRange(startDateStr: string, endDateStr: string): string {
+export function formatDateRange(startDateStr: string, endDateStr: string, locale: string = "en"): string {
   const start = new Date(startDateStr);
   const end = new Date(endDateStr);
 
-  const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+  const startMonth = start.toLocaleDateString(locale, { month: "short" });
   const startDay = start.getDate();
-  const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+  const endMonth = end.toLocaleDateString(locale, { month: "short" });
   const endDay = end.getDate();
 
   if (startMonth === endMonth) {
@@ -13,7 +13,12 @@ export function formatDateRange(startDateStr: string, endDateStr: string): strin
   return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
 }
 
-export function generateDefaultTripName(city: string, startDateStr: string, endDateStr: string): string {
-  if (!startDateStr || !endDateStr) return `${city} Trip`;
-  return `${city} • ${formatDateRange(startDateStr, endDateStr)}`;
+export function generateDefaultTripName(
+  city: string,
+  startDateStr: string,
+  endDateStr: string,
+  locale: string = "en"
+): string {
+  if (!startDateStr || !endDateStr) return city; // Simplified to just city name if dates missing
+  return `${city} • ${formatDateRange(startDateStr, endDateStr, locale)}`;
 }

@@ -104,6 +104,7 @@ export const vibeDescriptionsCache = pgTable("vibe_descriptions_cache", {
   id: uuid("id").primaryKey().defaultRandom(),
   vibeId: text("vibe_id").notNull(), // This might be an archetype ID (uuid) or internal ID
   placeId: uuid("place_id").notNull(),
+  locale: text("locale").notNull().default("en"),
   note: text("note").notNull(),
   alternativeNote: text("alternative_note"),
   createdAt: timestamp("created_at").defaultNow(),

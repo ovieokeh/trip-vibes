@@ -180,5 +180,20 @@
     "of": "de",
     "viewMap": "Ver mapa",
     "call": "Llamar"
+  },
+  "LoadingSteps": {
+    "checking_cache": "Comprobando el caché local...",
+    "found_cached": "¡Ruta en caché encontrada!",
+    "initializing": "Inicializando el motor...",
+    "expanding_search": "Ampliando la búsqueda (Intento {attempt}/{total})...",
+    "scouting_vibes": "Explorando el ambiente en {city} para {days} días",
+    "ranking_options": "Clasificando {count} opciones...",
+    "checking_details": "Verificando detalles...",
+    "checking_details_progress": "Verificando detalles ({current}/{total})...",
+    "assembling_journey": "Organizando tu viaje...",
+    "crafting_descriptions": "Creando descripciones personalizadas con IA...",
+    "personalizing_activity": "Personalizando actividad {current}/{total}...",
+    "finalizing": "Finalizando detalles...",
+    "generic_error": "Ha ocurrido un error inesperado"
   }
 }

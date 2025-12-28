@@ -180,5 +180,20 @@
     "of": "von",
     "viewMap": "Karte anzeigen",
     "call": "Anrufen"
+  },
+  "LoadingSteps": {
+    "checking_cache": "Lokalen Cache prüfen...",
+    "found_cached": "Gecachter Reiseplan gefunden!",
+    "initializing": "Engine wird initialisiert...",
+    "expanding_search": "Suche wird erweitert (Versuch {attempt}/{total})...",
+    "scouting_vibes": "Vibes erkunden in {city} für {days} Tage",
+    "ranking_options": "{count} Optionen werden bewertet...",
+    "checking_details": "Details werden geprüft...",
+    "checking_details_progress": "Details werden geprüft ({current}/{total})...",
+    "assembling_journey": "Deine Reise wird zusammengestellt...",
+    "crafting_descriptions": "KI-generierte Beschreibungen werden erstellt...",
+    "personalizing_activity": "Aktivität wird personalisiert {current}/{total}...",
+    "finalizing": "Details werden finalisiert...",
+    "generic_error": "Ein unerwarteter Fehler ist aufgetreden"
   }
 }

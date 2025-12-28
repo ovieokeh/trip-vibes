@@ -9,15 +9,15 @@ import { isMeal, isActivity } from "./utils";
 
 export class MatchingEngine {
   private prefs: UserPreferences;
-  private onProgress: (msg: string) => void;
+  private onProgress: (key: string, params?: Record<string, any>) => void;
 
-  constructor(prefs: UserPreferences, onProgress?: (msg: string) => void) {
+  constructor(prefs: UserPreferences, onProgress?: (key: string, params?: Record<string, any>) => void) {
     this.prefs = prefs;
     this.onProgress = onProgress || (() => {});
   }
 
   async generate(): Promise<Itinerary> {
-    this.onProgress("Initializing engine...");
+    this.onProgress("initializing");
 
     // Resolve City - single query with OR for both id and slug lookup
     const cityResult = await db
@@ -54,13 +54,19 @@ export class MatchingEngine {
 
     while (retryCount <= MAX_RETRIES) {
       if (retryCount > 0) {
-        this.onProgress(`Expanding search (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})...`);
+        this.onProgress("expanding_search", {
+          attempt: retryCount + 1,
+          total: MAX_RETRIES + 1,
+        });
         // Dynamic increase on retry
         minActivities += dayCount * 5;
         minMeals += dayCount * 2;
       }
 
-      this.onProgress(`Scouting vibes in ${city.name} for ${dayCount} days`);
+      this.onProgress("scouting_vibes", {
+        city: city.name,
+        days: dayCount,
+      });
       const discovery = new DiscoveryEngine(this.prefs);
 
       // Fetch with forceRefresh on retry to ensure we get new Foursquare data
@@ -71,7 +77,7 @@ export class MatchingEngine {
       );
 
       // 2. Scoring
-      this.onProgress(`Ranking ${candidates.length} options...`);
+      this.onProgress("ranking_options", { count: candidates.length });
       const scoring = new ScoringEngine(this.prefs);
       const rankedCandidates = scoring.rankCandidates(candidates);
 
@@ -93,17 +99,22 @@ export class MatchingEngine {
         topCandidates = [...topCandidates, ...remainingMeals];
       }
 
-      this.onProgress("Checking details...");
+      this.onProgress("checking_details");
       // Parallel enrichment with batching
       const batchSize = 10;
       for (let i = 0; i < topCandidates.length; i += batchSize) {
-        if (i % 20 === 0) this.onProgress(`Checking details (${i}/${topCandidates.length})...`);
+        if (i % 20 === 0) {
+          this.onProgress("checking_details_progress", {
+            current: i,
+            total: topCandidates.length,
+          });
+        }
         const batch = topCandidates.slice(i, i + batchSize);
         await Promise.all(batch.map((c) => discovery.enrichFromGoogle(c)));
       }
 
       // 4. Scheduling
-      this.onProgress("Assembling your journey...");
+      this.onProgress("assembling_journey");
       const scheduler = new SchedulerEngine(this.prefs);
       itinerary = await scheduler.assembleItinerary(topCandidates);
 
@@ -128,7 +139,7 @@ export class MatchingEngine {
 
     if (!itinerary) throw new Error("Failed to generate itinerary");
 
-    this.onProgress("Finalizing details...");
+    this.onProgress("finalizing");
     return itinerary;
   }
 }

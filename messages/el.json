@@ -182,5 +182,20 @@
     "of": "από",
     "viewMap": "Δες το χάρτη",
     "call": "Τηλέφωνο"
+  },
+  "LoadingSteps": {
+    "checking_cache": "Ψάχνουμε στο αρχείο...",
+    "found_cached": "Το βρήκαμε έτοιμο!",
+    "initializing": "Ξεκινάμε τη μηχανή...",
+    "expanding_search": "Ψάχνουμε ξανά (Προσπάθεια {attempt}/{total})...",
+    "scouting_vibes": "Ψάχνουμε στη/στο {city} για {days} μέρες",
+    "ranking_options": "Βαθμολογούμε {count} επιλογές...",
+    "checking_details": "Ελέγχουμε τις λεπτομέρειες...",
+    "checking_details_progress": "Ελέγχουμε τις λεπτομέρειες ({current}/{total})...",
+    "assembling_journey": "Φτιάχνουμε το πρόγραμμά σου...",
+    "crafting_descriptions": "Γράφουμε τις περιγραφές με AI...",
+    "personalizing_activity": "Προσαρμόζουμε τη δραστηριότητα {current}/{total}...",
+    "finalizing": "Τελειοποιούμε τις λεπτομέρειες...",
+    "generic_error": "Παρουσιάστηκε ένα απρόσμενο σφάλμα"
   }
 }

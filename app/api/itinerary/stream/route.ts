@@ -27,24 +27,24 @@ export async function GET(req: NextRequest) {
 
       try {
         // 1. Check Cache
-        sendEvent({ type: "progress", message: "Checking local cache...", step: "init" });
+        sendEvent({ type: "progress", key: "checking_cache", step: "init" });
         const cached = await getCachedItinerary(prefs.cityId, prefs);
         if (cached) {
-          sendEvent({ type: "progress", message: "Found cached itinerary!", step: "done" });
+          sendEvent({ type: "progress", key: "found_cached", step: "done" });
           sendEvent({ type: "result", data: JSON.parse(cached.data) });
           controller.close();
           return;
         }
 
         // 2. Run Engine with Progress
-        const engine = new MatchingEngine(prefs, (msg) => {
-          sendEvent({ type: "progress", message: msg, step: "engine" });
+        const engine = new MatchingEngine(prefs, (key, params) => {
+          sendEvent({ type: "progress", key, params, step: "engine" });
         });
 
         const itinerary = await engine.generate();
 
         // 3. Enrich with AI Descriptive Layer
-        sendEvent({ type: "progress", message: "Crafting custom descriptions with AI...", step: "enrich" });
+        sendEvent({ type: "progress", key: "crafting_descriptions", step: "enrich" });
 
         let actCount = 0;
         const totalActivities = itinerary.days.reduce((acc, d) => acc + d.activities.length, 0);
@@ -55,7 +55,8 @@ export async function GET(req: NextRequest) {
             if (actCount % 2 === 0 || actCount === 1) {
               sendEvent({
                 type: "progress",
-                message: `Personalizing activity ${actCount}/${totalActivities}...`,
+                key: "personalizing_activity",
+                params: { current: actCount, total: totalActivities },
                 step: "enrich",
               });
             }
@@ -76,7 +77,7 @@ export async function GET(req: NextRequest) {
         }
 
         // 4. Cache full itinerary
-        sendEvent({ type: "progress", message: "Finalizing your trip...", step: "finalize" });
+        sendEvent({ type: "progress", key: "finalizing", step: "finalize" });
         await cacheItinerary(prefs.cityId, prefs, itinerary);
 
         sendEvent({ type: "result", data: itinerary });
@@ -84,7 +85,7 @@ export async function GET(req: NextRequest) {
       } catch (error) {
         const err = error as Error;
         console.error("Stream error:", err);
-        sendEvent({ type: "error", message: err.message || "An unexpected error occurred" });
+        sendEvent({ type: "error", key: "generic_error", message: err.message });
         controller.close(); // Finish stream even on error so client disconnects
       }
     },

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/routing";
+import { useParams } from "next/navigation";
 import { useStore } from "@/store/useStore";
 import { saveItineraryAction, getActivitySuggestionsAction } from "@/lib/db-actions";
 import { Itinerary, TripActivity, Vibe } from "@/lib/types";
@@ -19,14 +20,24 @@ import { useTranslations } from "next-intl";
 // The saved page (app/saved/[id]) handles the shareable metadata.
 
 export default function ItineraryPage() {
+  const params = useParams();
+  const locale = params.locale as string;
   const t = useTranslations("Itinerary");
   const tl = useTranslations("Loading");
+  const tloading = useTranslations("LoadingSteps");
   const router = useRouter();
   const prefs = useStore();
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Add Activity Modal State
+  // Sync locale to store for backend actions
+  useEffect(() => {
+    if (locale && prefs.locale !== locale) {
+      prefs.setLocale(locale);
+    }
+  }, [locale, prefs.locale, prefs.setLocale]);
+
+  // ... (Add Activity Modal State, alert State, currentStep)
   const [addModal, setAddModal] = useState<{
     isOpen: boolean;
     dayId: string | null;
@@ -93,7 +104,9 @@ export default function ItineraryPage() {
                 const event = JSON.parse(part.slice(6));
 
                 if (event.type === "progress") {
-                  setLoadingMessage(event.message);
+                  // event.key is the translation key, event.params are the interpolation values
+                  const localizedMessage = tloading(event.key, event.params);
+                  setLoadingMessage(localizedMessage);
                   if (event.step) setCurrentStep(event.step);
                 } else if (event.type === "result") {
                   setItinerary(event.data);
@@ -104,7 +117,7 @@ export default function ItineraryPage() {
                   setAlert({
                     isOpen: true,
                     title: t("errors.generation"),
-                    message: event.message,
+                    message: event.key ? tloading(event.key, event.params) : event.message,
                     type: "error",
                   });
                 }
@@ -129,7 +142,7 @@ export default function ItineraryPage() {
     if (!itinerary) {
       generate();
     }
-  }, [prefs, router, itinerary, t]); // Added itinerary to deps to prevent re-run if set
+  }, [prefs, router, itinerary, t, tloading]); // Added itinerary to deps to prevent re-run if set
 
   if (!itinerary) {
     return <LoadingScreen message={loadingMessage} step={currentStep} />;

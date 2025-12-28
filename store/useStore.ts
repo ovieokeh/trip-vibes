@@ -13,6 +13,7 @@ interface AppState extends UserPreferences {
   setCity: (cityId: string) => void;
   setDates: (start: string, end: string) => void;
   setBudget: (budget: "low" | "medium" | "high") => void;
+  setLocale: (locale: string) => void;
   addLike: (vibeId: string) => void;
   addDislike: (vibeId: string) => void;
   setActiveDeck: (id: string | null) => void;
@@ -32,6 +33,7 @@ const initialState: UserPreferences & { activeDeckId: string | null } = {
   vibeProfile: { weights: {}, swipes: 0 },
   activeDeckId: null,
   forceRefresh: false,
+  locale: "en",
 };
 
 export const useStore = create<AppState>()(
@@ -41,6 +43,7 @@ export const useStore = create<AppState>()(
       setCity: (cityId) => set({ cityId }),
       setDates: (start, end) => set({ startDate: start, endDate: end }),
       setBudget: (budget) => set({ budget }),
+      setLocale: (locale) => set({ locale }),
       addLike: (vibeId) =>
         set((state) => ({
           likedVibes: [...state.likedVibes, vibeId],
@@ -61,13 +64,14 @@ export const useStore = create<AppState>()(
         }),
       setForceRefresh: (value) => set({ forceRefresh: value }),
       clearVibes: () =>
-        set({
+        set((state) => ({
           likedVibes: [],
           dislikedVibes: [],
           vibeProfile: { weights: {}, swipes: 0 },
           activeDeckId: null,
           forceRefresh: false,
-        }),
+          locale: state.locale, // Preserve locale
+        })),
       reset: () => set(initialState),
     }),
     {
