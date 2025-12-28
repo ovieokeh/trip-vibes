@@ -3,7 +3,7 @@ import { SchedulerEngine } from "../scheduler";
 import { UserPreferences } from "../../types";
 
 describe("SchedulerEngine", () => {
-  it("should distribute activities evenly across days", () => {
+  it("should distribute activities evenly across days", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -37,7 +37,7 @@ describe("SchedulerEngine", () => {
       { id: "a8", name: "Temple One", metadata: { categories: ["Temple"] }, lat: 0, lng: 0, cityId: "c1" },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
 
     expect(itinerary).toBeDefined();
     expect(itinerary.days).toHaveLength(2);
@@ -53,7 +53,7 @@ describe("SchedulerEngine", () => {
     expect(Math.abs(day1Count - day2Count)).toBeLessThanOrEqual(3);
   });
 
-  it("should populate alternative items and transit details", () => {
+  it("should populate alternative items and transit details", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -77,7 +77,7 @@ describe("SchedulerEngine", () => {
       { id: "6", name: "Club", metadata: { categories: ["Nightclub"] }, lat: 10, lng: 10, cityId: "c1" },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const activities = itinerary.days[0].activities;
 
     // Check that we got activities
@@ -96,7 +96,7 @@ describe("SchedulerEngine", () => {
     }
   });
 
-  it("should not schedule a restaurant as both meal and activity", () => {
+  it("should not schedule a restaurant as both meal and activity", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -126,7 +126,7 @@ describe("SchedulerEngine", () => {
       { id: "a2", name: "Art Museum", metadata: { categories: ["Museum"] }, lat: 0, lng: 0, cityId: "c1" },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const activities = itinerary.days[0].activities;
 
     // Count how many times each ID appears
@@ -156,7 +156,7 @@ describe("SchedulerEngine", () => {
     expect(activityNames.length).toBeGreaterThan(0);
   });
 
-  it("should enforce variety by penalizing repetitive categories", () => {
+  it("should enforce variety by penalizing repetitive categories", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -189,7 +189,7 @@ describe("SchedulerEngine", () => {
     // but the logic relies on isMeal/isActivity which depends on categories.
     // Park/Museum are activities, Restaurant is meal.
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const activities = itinerary.days[0].activities;
 
     // Filter to just our activities (exclude meals)
@@ -204,7 +204,7 @@ describe("SchedulerEngine", () => {
     expect(scheduledNames[0]).toBe("Park 1"); // Highest score (100)
     expect(scheduledNames[1]).toBe("Museum 1"); // 80 > (95 - 30 = 65)
   });
-  it("should prioritize geographic clustering while maintaining variety", () => {
+  it("should prioritize geographic clustering while maintaining variety", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -271,7 +271,7 @@ describe("SchedulerEngine", () => {
     // Wait... if Park 2 is 90 vs Museum 100, Museum wins.
     // This confirms Variety > Clustering in this specific tuning (30 penalty > 20 boost).
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const activities = itinerary.days[0].activities; // .filter(a => !isMeal(a.vibe));
 
     const scheduledNames = activities

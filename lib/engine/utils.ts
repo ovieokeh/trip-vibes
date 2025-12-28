@@ -23,7 +23,7 @@ const ACTIVITY_PATTERN =
 // Food establishments - for meal slots
 // Based on real categories: "Thai Restaurant", "Bakery", "Fast Food Restaurant"
 const FOOD_PATTERN =
-  /restaurant|café|cafe|bakery|bistro|diner|steakhouse|pizzeria|buffet|gastropub|food truck|breakfast spot|snack|sandwich spot|joint|eatery|grill|ice cream|dessert|pastry|donut|bagel|cupcake|pie shop|soup spot|deli|noodle|ramen|sushi|taco|burrito|falafel|dumpling/i;
+  /restaurant|café|cafe|bakery|bistro|diner|steakhouse|pizzeria|buffet|gastropub|food truck|breakfast spot|snack|sandwich spot|joint|eatery|grill|ice cream|dessert|pastry|donut|bagel|cupcake|pie shop|soup spot|deli\b|noodle|ramen|sushi|taco|burrito|falafel|dumpling/i;
 
 // Nightlife - evening entertainment that ALSO serves food/drinks
 // Use word boundary for "bar" to avoid matching "Barbershop"

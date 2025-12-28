@@ -4,7 +4,7 @@ import { calculateTransit } from "../../activity";
 import { UserPreferences } from "../../types";
 
 describe("Reproduction: Itinerary Issues", () => {
-  it("should fail to schedule generic restaurants for breakfast/dinner if strict matching causes missing meals", () => {
+  it("should fail to schedule generic restaurants for breakfast/dinner if strict matching causes missing meals", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -53,7 +53,7 @@ describe("Reproduction: Itinerary Issues", () => {
       { id: "a2", name: "Museum", metadata: { categories: ["Museum"] }, lat: 0, lng: 0, cityId: "c1" },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const activities = itinerary.days[0].activities;
 
     // We expect Breakfast to be defined (fallback works)
@@ -62,7 +62,7 @@ describe("Reproduction: Itinerary Issues", () => {
     expect(breakfast?.vibe.title).toBeDefined();
   });
 
-  it("should allow Nightlife/Bars for Dinner slot (but not Breakfast)", () => {
+  it("should allow Nightlife/Bars for Dinner slot (but not Breakfast)", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -97,7 +97,7 @@ describe("Reproduction: Itinerary Issues", () => {
       },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const activities = itinerary.days[0].activities;
 
     // Dinner is at 19:30

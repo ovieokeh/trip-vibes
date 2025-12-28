@@ -63,11 +63,23 @@ export class MatchingEngine {
       const scoring = new ScoringEngine(this.prefs);
       const rankedCandidates = scoring.rankCandidates(candidates);
 
-      // 3. Enrichment
-      // We enrich a generous buffer of top candidates to ensure the scheduler has good data
-      // Limit to avoid excessive Google API costs
-      const enrichLimit = minMeals + minActivities + 30;
-      const topCandidates = rankedCandidates.slice(0, enrichLimit);
+      // 3. Enrichment & Balancing
+      // We need to ensure we have enough meal candidates for the scheduler, even if they aren't in the top N
+      const requiredMealsPerDay = 2; // Breakfast + Dinner
+      const requiredMeals = dayCount * requiredMealsPerDay * 2; // 2x buffer
+
+      let topCandidates = rankedCandidates.slice(0, minMeals + minActivities + 30);
+      const mealsInTop = topCandidates.filter(isMeal);
+
+      if (mealsInTop.length < requiredMeals) {
+        process.env.NODE_ENV !== "test" &&
+          console.log(`[Engine] Supplementing meals. Top had ${mealsInTop.length}, need ${requiredMeals}`);
+        const remainingMeals = rankedCandidates
+          .slice(topCandidates.length)
+          .filter(isMeal)
+          .slice(0, requiredMeals - mealsInTop.length);
+        topCandidates = [...topCandidates, ...remainingMeals];
+      }
 
       this.onProgress("Checking details...");
       // Parallel enrichment with batching
@@ -81,7 +93,7 @@ export class MatchingEngine {
       // 4. Scheduling
       this.onProgress("Assembling your journey...");
       const scheduler = new SchedulerEngine(this.prefs);
-      itinerary = scheduler.assembleItinerary(topCandidates);
+      itinerary = await scheduler.assembleItinerary(topCandidates);
 
       // 5. Sparse Day Check
       // A day is sparse if it ends before 5:00 PM (17:00)

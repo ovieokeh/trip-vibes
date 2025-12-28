@@ -13,7 +13,7 @@ const MOCK_PREFS = {
 };
 
 describe("SchedulerEngine Deduplication", () => {
-  it("should not use the same place twice in the itinerary (by ID)", () => {
+  it("should not use the same place twice in the itinerary (by ID)", async () => {
     const candidate: EngineCandidate = {
       id: "place-1",
       foursquareId: "fsq-1",
@@ -32,7 +32,7 @@ describe("SchedulerEngine Deduplication", () => {
 
     const candidates = [candidate, candidate, candidate]; // Duplicates
     const scheduler = new SchedulerEngine(MOCK_PREFS);
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
 
     // Count occurrences of "place-1" in whole itinerary
     let count = 0;
@@ -46,7 +46,7 @@ describe("SchedulerEngine Deduplication", () => {
     expect(count).toBe(1);
   });
 
-  it("should not use different candidates with same foursquareId twice", () => {
+  it("should not use different candidates with same foursquareId twice", async () => {
     const c1: EngineCandidate = {
       id: "place-1",
       foursquareId: "fsq-common",
@@ -70,7 +70,7 @@ describe("SchedulerEngine Deduplication", () => {
 
     const candidates = [c1, c2];
     const scheduler = new SchedulerEngine(MOCK_PREFS);
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
 
     let count = 0;
     itinerary.days.forEach((day) => {

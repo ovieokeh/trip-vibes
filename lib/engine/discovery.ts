@@ -508,6 +508,7 @@ export class DiscoveryEngine {
       ...row,
       metadata: meta,
       openingHours: row.openingHours ? JSON.parse(row.openingHours) : undefined,
+      imageUrl: row.imageUrl,
       photoUrls: !isRich ? photoData : [],
       photos: isRich ? photoData : [],
     } as EngineCandidate;

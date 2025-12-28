@@ -3,7 +3,7 @@ import { SchedulerEngine } from "../scheduler";
 import { UserPreferences } from "../../types";
 
 describe("Restaurant Integration Logic", () => {
-  it("should find meals at breakfast (8:00) and dinner (19:30) times", () => {
+  it("should find meals at breakfast (8:00) and dinner (19:30) times", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -28,7 +28,7 @@ describe("Restaurant Integration Logic", () => {
       { id: "a4", name: "Plaza Four", metadata: { categories: ["Plaza"] }, lat: 0, lng: 0, cityId: "c1" },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const day1 = itinerary.days[0];
 
     const startTimes = day1.activities.map((a) => a.startTime);
@@ -43,7 +43,7 @@ describe("Restaurant Integration Logic", () => {
     expect(nonMealActivities.length).toBeGreaterThan(0);
   });
 
-  it("should exclude pure food places from activity slots", () => {
+  it("should exclude pure food places from activity slots", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -60,7 +60,7 @@ describe("Restaurant Integration Logic", () => {
       { id: "2", name: "Park", metadata: { categories: ["Park"] }, lat: 0, lng: 0, cityId: "c1" },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const day1 = itinerary.days[0];
 
     // Get all activity slots (not meal times)
@@ -73,7 +73,7 @@ describe("Restaurant Integration Logic", () => {
     expect(activityTitles).not.toContain("Steakhouse");
   });
 
-  it("should exclude bars/nightlife from activity slots (they count toward food limit)", () => {
+  it("should exclude bars/nightlife from activity slots (they count toward food limit)", async () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
@@ -98,7 +98,7 @@ describe("Restaurant Integration Logic", () => {
       { id: "a2", name: "City Park", metadata: { categories: ["Park"] }, lat: 0, lng: 0, cityId: "c1" },
     ] as any[];
 
-    const itinerary = scheduler.assembleItinerary(candidates);
+    const itinerary = await scheduler.assembleItinerary(candidates);
     const day1 = itinerary.days[0];
     const mealTimes = ["08:00", "19:30"];
     const nightlifeNames = ["Wine Bar", "Cocktail Lounge", "The Pub"];
