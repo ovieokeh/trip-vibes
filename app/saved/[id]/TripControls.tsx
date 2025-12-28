@@ -3,11 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { renameItineraryAction, deleteItineraryAction } from "@/lib/db-actions";
-import { MoreVertical, Pencil, Trash2, X, Check } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, X, Check, FileDown, Calendar } from "lucide-react";
+import { Itinerary } from "@/lib/types";
+import { generateItineraryPDF } from "@/lib/export/pdf";
+import { generateCalendarFile } from "@/lib/export/calendar";
 
 import ConfirmModal from "@/components/ConfirmModal";
 
-export default function TripControls({ id, initialName }: { id: string; initialName: string }) {
+interface TripControlsProps {
+  id: string;
+  initialName: string;
+  itinerary: Itinerary;
+  cityName: string;
+}
+
+export default function TripControls({ id, initialName, itinerary, cityName }: TripControlsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(initialName);
   const [loading, setLoading] = useState(false);
@@ -37,6 +47,22 @@ export default function TripControls({ id, initialName }: { id: string; initialN
       setLoading(false);
       setShowDeleteConfirm(false);
       alert("Failed to delete trip");
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      await generateItineraryPDF(itinerary, cityName);
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+    }
+  };
+
+  const handleSyncCalendar = () => {
+    try {
+      generateCalendarFile(itinerary, cityName);
+    } catch (error) {
+      console.error("Failed to generate calendar file:", error);
     }
   };
 
@@ -78,6 +104,17 @@ export default function TripControls({ id, initialName }: { id: string; initialN
                   <Pencil className="w-4 h-4" /> Rename Trip
                 </button>
               </li>
+              <li>
+                <button onClick={handleDownloadPDF}>
+                  <FileDown className="w-4 h-4" /> Download PDF
+                </button>
+              </li>
+              <li>
+                <button onClick={handleSyncCalendar}>
+                  <Calendar className="w-4 h-4" /> Sync to Calendar
+                </button>
+              </li>
+              <div className="divider my-1"></div>
               <li>
                 <button className="text-error" onClick={handleDeleteClick}>
                   <Trash2 className="w-4 h-4" /> Delete Trip

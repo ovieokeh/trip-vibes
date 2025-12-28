@@ -104,7 +104,12 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
           </Link>
           <h1 className="text-sm font-bold opacity-70 uppercase tracking-widest">SAVED TRIP</h1>
         </div>
-        <TripControls id={id} initialName={itinerary.name || `${cityName} Trip`} />
+        <TripControls
+          id={id}
+          initialName={itinerary.name || `${cityName} Trip`}
+          itinerary={itinerary}
+          cityName={cityName}
+        />
       </div>
 
       <div className="text-center mb-8">
