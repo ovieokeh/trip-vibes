@@ -93,7 +93,7 @@ export default function SetupForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="card-body gap-5">
           <div className="form-control w-full">
             <label className="label pt-0">
-              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-60">Destination</span>
+              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">Destination</span>
             </label>
             <Controller
               name="cityId"
@@ -105,7 +105,7 @@ export default function SetupForm() {
 
           <div className="form-control w-full">
             <label className="label pt-0">
-              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-60">Dates</span>
+              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">Dates</span>
             </label>
             <Controller
               name="startDate"
@@ -136,7 +136,7 @@ export default function SetupForm() {
 
           <div className="form-control">
             <label className="label pt-0">
-              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-60">Budget</span>
+              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">Budget</span>
             </label>
             <Controller
               name="budget"

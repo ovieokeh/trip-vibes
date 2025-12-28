@@ -45,7 +45,7 @@ export default function LoadingScreen({ message, step }: LoadingScreenProps) {
         ))}
       </div>
 
-      <div className="text-xs opacity-70 font-mono uppercase tracking-widest mt-2">
+      <div className="text-xs opacity-80 font-mono uppercase tracking-widest mt-2">
         Step {Math.max(1, currentStepIdx + 1)} of 4
       </div>
     </div>

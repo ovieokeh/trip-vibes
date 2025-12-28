@@ -90,7 +90,7 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 mt-2 text-xs opacity-70">
+                <div className="flex items-center gap-2 mt-2 text-xs opacity-80">
                   <Calendar className="w-3 h-3" />
                   <span>
                     {trip.startDate ? new Date(trip.startDate).toLocaleDateString() : "No date"}

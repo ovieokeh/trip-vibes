@@ -33,7 +33,13 @@ export class MatchingEngine {
     // 1. Setup Time Budget
     const start = new Date(this.prefs.startDate);
     const end = new Date(this.prefs.endDate);
-    const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
+    let dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
+
+    // Enforce 14-day limit
+    if (dayCount > 14) {
+      console.log(`[Engine] Capping trip from ${dayCount} to 14 days`);
+      dayCount = 14;
+    }
 
     // START: Smart Retry Logic
     // Scale candidates by trip length

@@ -27,11 +27,13 @@ export default function ItineraryPage() {
   const [addModal, setAddModal] = useState<{
     isOpen: boolean;
     dayId: string | null;
+    afterIndex: number | null; // Insert after this index, null = append to end
     suggestions: Vibe[];
     isLoading: boolean;
   }>({
     isOpen: false,
     dayId: null,
+    afterIndex: null,
     suggestions: [],
     isLoading: false,
   });
@@ -93,7 +95,8 @@ export default function ItineraryPage() {
                 } else if (event.type === "result") {
                   setItinerary(event.data);
                   // Reset forceRefresh after successful generation
-                  prefs.setForceRefresh(false);
+                  // Defer to next tick to avoid triggering re-render during current render
+                  setTimeout(() => prefs.setForceRefresh(false), 0);
                 } else if (event.type === "error") {
                   setAlert({
                     isOpen: true,
@@ -153,76 +156,6 @@ export default function ItineraryPage() {
     return isOpen;
   };
 
-  const handleSwap = (dayId: string, activityId: string) => {
-    if (!itinerary) return;
-
-    let warningMessage = "";
-
-    const newDays = itinerary.days.map((day) => {
-      if (day.id !== dayId) return day;
-
-      const activityIndex = day.activities.findIndex((a) => a.id === activityId);
-      if (activityIndex === -1) return day;
-
-      const act = day.activities[activityIndex];
-      if (!act.alternative) return day;
-
-      // 1. Swap Logic
-      const oldVibe = act.vibe;
-      const newVibe = act.alternative;
-
-      // 2. Check Opening Hours
-      const isOpen = checkIsOpen(newVibe, day.date, act.startTime);
-      if (!isOpen) {
-        warningMessage = `${newVibe.title} might be closed at ${act.startTime} on this day.`;
-      }
-
-      const newActivity = {
-        ...act,
-        vibe: newVibe,
-        alternative: oldVibe,
-        note: newVibe.description,
-      };
-
-      // 3. Recalculate Transit for THIS activity (from PREV)
-      // Check previous activity
-      if (activityIndex > 0) {
-        const prevAct = day.activities[activityIndex - 1];
-        if (prevAct.vibe.lat && prevAct.vibe.lng && newVibe.lat && newVibe.lng) {
-          newActivity.transitNote = getTransitNote(prevAct.vibe.lat, prevAct.vibe.lng, newVibe.lat, newVibe.lng);
-        }
-      }
-
-      const updatedActivities = [...day.activities];
-      updatedActivities[activityIndex] = newActivity;
-
-      // 4. Recalculate Transit for NEXT activity (from THIS)
-      if (activityIndex < updatedActivities.length - 1) {
-        const nextAct = updatedActivities[activityIndex + 1];
-        if (newVibe.lat && newVibe.lng && nextAct.vibe.lat && nextAct.vibe.lng) {
-          const newTransit = getTransitNote(newVibe.lat, newVibe.lng, nextAct.vibe.lat, nextAct.vibe.lng);
-          updatedActivities[activityIndex + 1] = { ...nextAct, transitNote: newTransit };
-        }
-      }
-
-      return {
-        ...day,
-        activities: updatedActivities,
-      };
-    });
-
-    setItinerary({ ...itinerary, days: newDays });
-
-    if (warningMessage) {
-      setAlert({
-        isOpen: true,
-        title: "Opening Hours Warning",
-        message: warningMessage,
-        type: "warning",
-      });
-    }
-  };
-
   const handleRemove = (dayId: string, activityId: string) => {
     if (!itinerary) return;
     const newDays = itinerary.days.map((day) => {
@@ -246,11 +179,12 @@ export default function ItineraryPage() {
     setItinerary({ ...itinerary, days: newDays });
   };
 
-  const handleOpenAddModal = async (dayId: string) => {
+  const handleOpenAddModal = async (dayId: string, afterIndex?: number) => {
     // Open modal immediately with loading state
     setAddModal({
       isOpen: true,
       dayId,
+      afterIndex: afterIndex ?? null,
       suggestions: [],
       isLoading: true,
     });
@@ -275,25 +209,28 @@ export default function ItineraryPage() {
     if (!itinerary || !addModal.dayId) return;
 
     const dayId = addModal.dayId;
-
-    // Infer time from last activity or default
+    const afterIndex = addModal.afterIndex;
     const day = itinerary.days.find((d) => d.id === dayId);
+    if (!day) return;
+
+    // Determine reference activity for time calculation
+    const refIndex = afterIndex !== null ? afterIndex : day.activities.length - 1;
+    const refActivity = refIndex >= 0 ? day.activities[refIndex] : null;
+
+    // Calculate start/end times based on reference activity
     let startTime = "12:00";
     let endTime = "13:30";
 
-    if (day && day.activities.length > 0) {
-      const lastAct = day.activities[day.activities.length - 1];
-      // Simple time math: Add 30 mins travel + 90 mins duration
-      const [h, m] = lastAct.endTime.split(":").map(Number);
-      let newH = h + 1; // Basic increment
-      let newM = m + 30; // Travel buffer
+    if (refActivity) {
+      const [h, m] = refActivity.endTime.split(":").map(Number);
+      let newH = h + 1;
+      let newM = m + 30;
       if (newM >= 60) {
         newH++;
         newM -= 60;
       }
       startTime = `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
 
-      // End time + 1.5h
       let endH = newH + 1;
       let endM = newM + 30;
       if (endM >= 60) {
@@ -309,26 +246,27 @@ export default function ItineraryPage() {
       vibe: vibe,
       startTime,
       endTime,
-      note: vibe.description, // Or "Added manually"
-      isAlternative: false,
-      transitNote: "", // Will calculate below
+      note: vibe.description,
+      transitNote: "",
     };
 
     // Calculate transit from previous
-    if (day && day.activities.length > 0) {
-      const lastAct = day.activities[day.activities.length - 1];
-      if (lastAct.vibe.lat && lastAct.vibe.lng && vibe.lat && vibe.lng) {
-        newActivity.transitNote = getTransitNote(lastAct.vibe.lat, lastAct.vibe.lng, vibe.lat, vibe.lng);
-      }
-    } else {
+    if (refActivity && refActivity.vibe.lat && refActivity.vibe.lng && vibe.lat && vibe.lng) {
+      newActivity.transitNote = getTransitNote(refActivity.vibe.lat, refActivity.vibe.lng, vibe.lat, vibe.lng);
+    } else if (refIndex < 0) {
       newActivity.transitNote = "Start of day";
     }
 
     const newDays = itinerary.days.map((d) => {
       if (d.id !== dayId) return d;
+
+      // Insert at the correct position
+      const insertIndex = afterIndex !== null ? afterIndex + 1 : d.activities.length;
+      const newActivities = [...d.activities.slice(0, insertIndex), newActivity, ...d.activities.slice(insertIndex)];
+
       return {
         ...d,
-        activities: [...d.activities, newActivity],
+        activities: newActivities,
       };
     });
 
@@ -381,9 +319,8 @@ export default function ItineraryPage() {
           <ItineraryDay
             key={day.id}
             day={day}
-            onSwap={(actId) => handleSwap(day.id, actId)}
             onRemove={(actId) => handleRemove(day.id, actId)}
-            onAdd={() => handleOpenAddModal(day.id)}
+            onAdd={(afterIndex) => handleOpenAddModal(day.id, afterIndex)}
             onUpdate={(actId, updates) => handleActivityUpdate(day.id, actId, updates)}
           />
         ))}

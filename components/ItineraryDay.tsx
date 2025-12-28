@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Star, Globe, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import VibeImage from "./VibeImage";
+import PhotoGalleryModal from "./PhotoGalleryModal";
 
 import { estimateTravelTime } from "@/lib/geo";
 
@@ -151,7 +152,6 @@ function TransitIndicator({
 
 export default function ItineraryDay({
   day,
-  onSwap,
   onRemove,
   onAdd,
   onUpdate,
@@ -159,10 +159,31 @@ export default function ItineraryDay({
 }: {
   day: DayPlan;
   onRemove?: (id: string) => void;
-  onAdd?: () => void;
+  onAdd?: (afterIndex?: number) => void;
   onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
   onMoveActivity?: (actId: string) => void;
 }) {
+  // Gallery modal state
+  const [galleryState, setGalleryState] = useState<{
+    isOpen: boolean;
+    photos: { url?: string }[];
+    initialIndex: number;
+    title: string;
+  }>({
+    isOpen: false,
+    photos: [],
+    initialIndex: 0,
+    title: "",
+  });
+
+  const openGallery = (photos: { url?: string }[], index: number, title: string) => {
+    setGalleryState({ isOpen: true, photos, initialIndex: index, title });
+  };
+
+  const closeGallery = () => {
+    setGalleryState((prev) => ({ ...prev, isOpen: false }));
+  };
+
   console.log("Rendering ItineraryDay for day:", day);
   // Get day name for opening hours lookup, e.g. "Monday"
   // Parse date securely to avoid timezone shifts (YYYY-MM-DD to local time)
@@ -173,88 +194,139 @@ export default function ItineraryDay({
   const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
   return (
-    <div className="mb-8 pl-4 border-l-2 border-base-300 relative">
-      <div className="absolute -left-[9px] top-2 w-4 h-4 rounded-full bg-primary ring-4 ring-base-100"></div>
-      <h3 className="flex items-center gap-2 text-xl font-bold mb-4">
-        {formattedDate}{" "}
-        <span className="text-sm opacity-70 font-normal">
-          {dayName}, Day {day.dayNumber}
-        </span>
-      </h3>
+    <>
+      <PhotoGalleryModal
+        isOpen={galleryState.isOpen}
+        photos={galleryState.photos}
+        initialIndex={galleryState.initialIndex}
+        title={galleryState.title}
+        onClose={closeGallery}
+      />
 
-      <div className="flex flex-col gap-0">
-        {day.activities.map((act, index) => {
-          // Find opening hours for this day
-          const hoursToday = act.vibe.openingHours?.weekday_text?.find((t) => t.startsWith(dayName))?.split(": ")[1];
+      <div className="mb-8 pl-4 border-l-2 border-base-300 relative">
+        <div className="absolute -left-[9px] top-2 w-4 h-4 rounded-full bg-primary ring-4 ring-base-100"></div>
+        <h3 className="flex items-center gap-2 text-xl font-bold mb-4">
+          {formattedDate}{" "}
+          <span className="text-sm opacity-70 font-normal">
+            {dayName}, Day {day.dayNumber}
+          </span>
+        </h3>
 
-          return (
-            <div key={act.id}>
-              {(act.transitNote || act.transitDetails) && index > 0 && (
-                <div className="flex items-center gap-2 py-4 ml-6 border-l border-dashed border-base-300">
-                  <div className="w-2 h-2 rounded-full bg-accent -ml-[4.5px]"></div>
-                  <TransitIndicator activity={act} onUpdate={onUpdate} />
-                </div>
-              )}
+        <div className="flex flex-col gap-0">
+          {day.activities.map((act, index) => {
+            // Find opening hours for this day
+            const hoursToday = act.vibe.openingHours?.weekday_text?.find((t) => t.startsWith(dayName))?.split(": ")[1];
 
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="card bg-base-100 shadow-sm border border-base-200 mb-2 overflow-hidden"
-              >
-                <div className="flex flex-col sm:flex-row">
-                  {/* Photo Section */}
+            return (
+              <div key={act.id}>
+                {(act.transitNote || act.transitDetails) && index > 0 && (
+                  <div className="flex items-center gap-2 py-4 ml-6 border-l border-dashed border-base-300">
+                    <div className="w-2 h-2 rounded-full bg-accent -ml-[4.5px]"></div>
+                    <TransitIndicator activity={act} onUpdate={onUpdate} />
+                  </div>
+                )}
+
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="card bg-base-100 shadow-sm border border-base-200 mb-2 overflow-hidden"
+                >
+                  {/* Mobile: Horizontal carousel at top */}
                   {act.vibe.photos && act.vibe.photos.length > 0 ? (
-                    <div className="h-40 sm:h-auto sm:w-40 shrink-0 overflow-x-auto carousel carousel-center bg-base-300 space-x-0 relative scrollbar-hide">
-                      {act.vibe.photos.map((p, i) => (
-                        <div key={i} className="carousel-item w-40 h-full">
-                          <img src={p.url} className="w-full h-full object-cover" alt={act.vibe.title} />
+                    <>
+                      {/* Mobile Layout - Horizontal Carousel */}
+                      <div className="sm:hidden h-40 overflow-x-auto carousel carousel-center bg-base-300 space-x-0 scrollbar-hide">
+                        {act.vibe.photos.map((p, i) => (
+                          <div
+                            key={i}
+                            className="carousel-item w-full h-full cursor-pointer"
+                            onClick={() => openGallery(act.vibe.photos!, i, act.vibe.title)}
+                          >
+                            <img src={p.url} className="w-full h-full object-cover" alt={act.vibe.title} />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Desktop Layout - Photo Grid */}
+                      <div className="hidden sm:block">
+                        <div
+                          className={`grid gap-1 h-48 ${
+                            act.vibe.photos.length === 1
+                              ? "grid-cols-1"
+                              : act.vibe.photos.length === 2
+                              ? "grid-cols-2"
+                              : act.vibe.photos.length === 3
+                              ? "grid-cols-3"
+                              : "grid-cols-4"
+                          }`}
+                        >
+                          {act.vibe.photos.slice(0, 4).map((p, i) => (
+                            <div
+                              key={i}
+                              className={`relative overflow-hidden cursor-pointer ${
+                                act.vibe.photos!.length === 3 && i === 0 ? "row-span-1" : ""
+                              }`}
+                              onClick={() => openGallery(act.vibe.photos!, i, act.vibe.title)}
+                            >
+                              <img
+                                src={p.url}
+                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                alt={`${act.vibe.title} ${i + 1}`}
+                              />
+                              {/* Show remaining count on last visible image */}
+                              {i === 3 && act.vibe.photos!.length > 4 && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
+                                  <span className="text-white font-bold text-lg">+{act.vibe.photos!.length - 4}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    </>
                   ) : (
-                    <VibeImage vibe={act.vibe} className="h-40 sm:h-auto sm:w-40" />
+                    <VibeImage vibe={act.vibe} className="h-40 sm:h-48 w-full" />
                   )}
 
-                  <div className="card-body p-3 flex-1 min-w-0">
+                  <div className="card-body p-4">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="badge badge-sm badge-neutral">{act.startTime}</span>
-                          <span className="text-[10px] uppercase tracking-wider font-bold opacity-70">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="badge badge-sm badge-neutral font-mono">{act.startTime}</span>
+                          <span className="badge badge-sm badge-ghost uppercase tracking-wider text-[10px]">
                             {act.vibe.category}
                           </span>
                         </div>
-                        <h4 className="font-bold text-sm sm:text-base leading-tight">{act.vibe.title}</h4>
-                        <p className="text-xs sm:text-sm text-base-content/80 mt-1 line-clamp-2">{act.note}</p>
-                        {act.vibe.address && (
-                          <p className="text-xs opacity-70 mt-0.5 truncate max-w-[200px]">{act.vibe.address}</p>
-                        )}
+                        <h4 className="font-bold text-base sm:text-lg leading-tight">{act.vibe.title}</h4>
+                        <p className="text-sm text-base-content/70 mt-1 line-clamp-2">{act.note}</p>
+                        {act.vibe.address && <p className="text-xs opacity-80 mt-1 truncate">{act.vibe.address}</p>}
 
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
+                        <div className="flex flex-wrap items-center gap-3 mt-3">
                           {act.vibe.rating && (
-                            <div className="flex items-center gap-1 text-xs font-bold bg-base-200 px-1.5 py-0.5 rounded">
-                              <Star className="w-3 h-3 fill-warning text-warning" />
+                            <div className="flex items-center gap-1 text-xs font-bold bg-warning/10 text-warning px-2 py-1 rounded-full">
+                              <Star className="w-3.5 h-3.5 fill-warning" />
                               <span>{act.vibe.rating}</span>
                             </div>
                           )}
 
                           {hoursToday && (
-                            <div className="text-[10px] border border-base-300 px-1.5 py-0.5 rounded opacity-70">
-                              {hoursToday === "Closed" ? (
-                                <span className="text-error">Closed</span>
-                              ) : (
-                                <span>{hoursToday}</span>
-                              )}
+                            <div
+                              className={`text-xs px-2 py-1 rounded-full ${
+                                hoursToday === "Closed" ? "bg-error/10 text-error" : "bg-success/10 text-success"
+                              }`}
+                            >
+                              {hoursToday === "Closed" ? "Closed" : hoursToday}
                             </div>
                           )}
                         </div>
                       </div>
+
                       <div className="dropdown dropdown-end">
-                        <div tabIndex={0} role="button" className="btn btn-xs btn-ghost btn-square">
+                        <div tabIndex={0} role="button" className="btn btn-sm btn-ghost btn-square">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4"
+                            className="h-5 w-5"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -269,12 +341,10 @@ export default function ItineraryDay({
                         </div>
                         <ul
                           tabIndex={0}
-                          className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 text-xs"
+                          className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-40 text-sm border border-base-200"
                         >
                           <li>
-                            <a onClick={() => onMoveActivity?.(act.id)} className="">
-                              Move to Day...
-                            </a>
+                            <a onClick={() => onMoveActivity?.(act.id)}>Move to Day...</a>
                           </li>
                           <li>
                             <a onClick={() => onRemove?.(act.id)} className="text-error">
@@ -284,24 +354,23 @@ export default function ItineraryDay({
                         </ul>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-dashed border-base-200">
+
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-base-200">
                       {act.vibe.website && (
                         <a
                           href={act.vibe.website}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-xs btn-ghost gap-1 opacity-70 hover:opacity-100 px-1 h-6 min-h-0"
+                          className="btn btn-sm btn-ghost gap-1.5"
                         >
-                          <Globe className="w-3 h-3" />
+                          <Globe className="w-4 h-4" />
                           Website
                         </a>
                       )}
                       {act.vibe.phone && (
-                        <a
-                          href={`tel:${act.vibe.phone}`}
-                          className="btn btn-xs btn-ghost gap-1 opacity-70 hover:opacity-100 px-1 h-6 min-h-0"
-                        >
-                          <Phone className="w-3 h-3" />
+                        <a href={`tel:${act.vibe.phone}`} className="btn btn-sm btn-ghost gap-1.5">
+                          <Phone className="w-4 h-4" />
                           Call
                         </a>
                       )}
@@ -316,25 +385,59 @@ export default function ItineraryDay({
                               href={`https://www.google.com/maps/dir/?api=1${originParam}&destination=${act.vibe.lat},${act.vibe.lng}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="btn btn-xs btn-ghost gap-1 opacity-70 hover:opacity-100 px-1 h-6 min-h-0"
+                              className="btn btn-sm btn-ghost gap-1.5"
                             >
-                              <MapPin className="w-3 h-3" />
+                              <MapPin className="w-4 h-4" />
                               Directions
                             </a>
                           );
                         })()}
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            </div>
-          );
-        })}
-      </div>
+                </motion.div>
 
-      <button className="btn btn-dash w-full" onClick={() => onAdd?.()}>
-        + Add Activity
-      </button>
-    </div>
+                {/* Add Activity Button - appears after each item */}
+                <button
+                  className="w-full my-3 py-2 px-4 rounded-lg border-2 border-dashed border-base-300 text-base-content/50 text-sm font-medium hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-200 flex items-center justify-center gap-2"
+                  onClick={() => onAdd?.(index)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Activity
+                </button>
+              </div>
+            );
+          })}
+
+          {/* Empty day - show add button */}
+          {day.activities.length === 0 && (
+            <button
+              className="w-full py-3 px-4 rounded-lg border-2 border-dashed border-base-300 text-base-content/50 text-sm font-medium hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-200 flex items-center justify-center gap-2"
+              onClick={() => onAdd?.()}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add your first activity
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   );
 }

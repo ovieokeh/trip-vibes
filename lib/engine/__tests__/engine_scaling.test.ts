@@ -121,4 +121,20 @@ describe("MatchingEngine Scaling Integration", () => {
     // 2 days: minMeals = max(20, 8) = 20, minActivities = max(30, 10) = 30
     expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 30 }, expect.anything());
   });
+
+  it("should cap long trips to 14 days", async () => {
+    const longPrefs = createPrefs("2024-01-01", "2024-01-20"); // 20 days
+    engine = new MatchingEngine(longPrefs, vi.fn());
+
+    // Mock the internal calls to allow generate to complete
+    vi.spyOn(DiscoveryEngine.prototype, "findCandidates").mockResolvedValue([]);
+    vi.spyOn(ScoringEngine.prototype, "rankCandidates").mockReturnValue([]);
+    // @ts-ignore - Mocking partial Itinerary for test
+    vi.spyOn(SchedulerEngine.prototype, "assembleItinerary").mockResolvedValue({
+      days: Array(14).fill({ activities: [] }),
+    });
+
+    const itinerary = await engine.generate();
+    expect(itinerary.days.length).toBe(14);
+  });
 });

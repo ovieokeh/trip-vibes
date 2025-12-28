@@ -41,11 +41,13 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
   const [addModal, setAddModal] = useState<{
     isOpen: boolean;
     dayId: string | null;
+    afterIndex: number | null;
     suggestions: Vibe[];
     isLoading: boolean;
   }>({
     isOpen: false,
     dayId: null,
+    afterIndex: null,
     suggestions: [],
     isLoading: false,
   });
@@ -98,8 +100,8 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
     setValue("days", newDays, { shouldDirty: true });
   };
 
-  const handleOpenAddModal = async (dayId: string) => {
-    setAddModal({ isOpen: true, dayId, suggestions: [], isLoading: true });
+  const handleOpenAddModal = async (dayId: string, afterIndex?: number) => {
+    setAddModal({ isOpen: true, dayId, afterIndex: afterIndex ?? null, suggestions: [], isLoading: true });
     try {
       const suggestions = await getActivitySuggestionsAction(cityId, itinerary, dayId);
       setAddModal((prev) => ({ ...prev, suggestions, isLoading: false }));
@@ -218,7 +220,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
             key={day.id}
             day={day}
             onRemove={(actId) => handleRemove(day.id, actId)}
-            onAdd={() => handleOpenAddModal(day.id)}
+            onAdd={(afterIndex) => handleOpenAddModal(day.id, afterIndex)}
             onUpdate={(actId, updates) => handleActivityUpdate(day.id, actId, updates)}
             onMoveActivity={(actId) => handleOpenMoveModal(day.id, actId)}
           />

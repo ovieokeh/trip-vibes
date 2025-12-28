@@ -168,11 +168,6 @@ export async function generateItineraryAction(prefs: UserPreferences): Promise<I
       );
 
       activity.note = vibeDesc.note;
-      // If there is an alternative (set by engine), we could potentially enrich its note too, but for now let's leave it.
-      if (activity.alternative && vibeDesc.alternativeNote) {
-        // Optionally append the AI note to the alternative's description or just ignore
-        // activity.alternative.description = vibeDesc.alternativeNote;
-      }
     }
   }
 
@@ -283,7 +278,6 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
   currentItinerary.days.forEach((d) => {
     d.activities.forEach((a) => {
       excludedIds.add(a.vibe.id);
-      if (a.alternative) excludedIds.add(a.alternative.id);
     });
   });
 
@@ -295,7 +289,6 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
     .from(places)
     .where(and(eq(places.cityId, cityId)))
     .limit(50); // Fetch a decent chunk to rank
-  // In real app, might want to filter by category or something first if too many
 
   // 4. Score and Rank
   const scored = candidates
@@ -392,13 +385,91 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
         photoUrls: !hasRichPhotos && Array.isArray(photoData) ? photoData : [],
       };
 
+      const randomSeed = Math.random() * hour * 100; // = 0 to 2400
+
+      // E. Category Diversity - penalize food if itinerary already has many food places
+      const isFoodPlace =
+        catStr.includes("restaurant") ||
+        catStr.includes("cafe") ||
+        catStr.includes("food") ||
+        catStr.includes("coffee") ||
+        catStr.includes("bakery") ||
+        catStr.includes("bar") ||
+        catStr.includes("pub");
+
+      const isActivity =
+        catStr.includes("museum") ||
+        catStr.includes("gallery") ||
+        catStr.includes("park") ||
+        catStr.includes("attraction") ||
+        catStr.includes("landmark") ||
+        catStr.includes("historic") ||
+        catStr.includes("entertainment") ||
+        catStr.includes("theater") ||
+        catStr.includes("cinema") ||
+        catStr.includes("zoo") ||
+        catStr.includes("aquarium") ||
+        catStr.includes("garden") ||
+        catStr.includes("beach") ||
+        catStr.includes("sports") ||
+        catStr.includes("spa");
+
+      // Count existing food places in the day
+      const foodInDay = day.activities.filter((a) => {
+        const actCats = (a.vibe.category || "").toLowerCase();
+        return (
+          actCats.includes("restaurant") ||
+          actCats.includes("cafe") ||
+          actCats.includes("food") ||
+          actCats.includes("bar")
+        );
+      }).length;
+
+      // Penalize food places if we already have 2+ food items
+      if (isFoodPlace && foodInDay >= 2) {
+        score -= 30;
+      } else if (isFoodPlace && foodInDay >= 1) {
+        score -= 15;
+      }
+
+      // Bonus for activities/attractions to encourage variety
+      if (isActivity) {
+        score += 20;
+      }
+
+      // Randomly boost or penalize score to add some variety
+      // normalise randomSeed to -1 to 1
+      score += (randomSeed / 2400) * 10;
+
       return { vibe, score, placeRow: p, hasPhotos: hasRichPhotos };
     });
 
   // Sort by score desc
   scored.sort((a, b) => b.score - a.score);
 
-  const top5 = scored.slice(0, 5);
+  // Select top results ensuring category diversity
+  const selected: typeof scored = [];
+  const categoryCount: Record<string, number> = {};
+
+  for (const item of scored) {
+    if (selected.length >= 8) break;
+
+    const catStr = (item.vibe.category || "").toLowerCase();
+    const isFood =
+      catStr.includes("restaurant") || catStr.includes("cafe") || catStr.includes("food") || catStr.includes("coffee");
+
+    const catKey = isFood ? "food" : catStr.split(" ")[0] || "other";
+    const count = categoryCount[catKey] || 0;
+
+    // Limit food to max 3, other categories to max 2
+    const maxForCategory = catKey === "food" ? 3 : 2;
+    if (count < maxForCategory) {
+      selected.push(item);
+      categoryCount[catKey] = count + 1;
+    }
+  }
+
+  const top = selected.slice(0, 3);
 
   // 5. On-demand Google enrichment for suggestions without photos
   // This ensures the Add Activity modal shows images
@@ -414,7 +485,7 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
       vibeProfile: { weights: {}, swipes: 0 },
     });
 
-    const needsEnrichment = top5.filter((s) => !s.hasPhotos);
+    const needsEnrichment = top.filter((s) => !s.hasPhotos);
     if (needsEnrichment.length > 0) {
       // Enrich in parallel (limit to 5 at a time to be nice to Google API)
       const toEnrich = needsEnrichment.slice(0, 5);
@@ -447,7 +518,7 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
         .where(sql`${places.id} IN (${sql.join(enrichedIds, sql`, `)})`);
 
       for (const ep of enrichedPlaces) {
-        const idx = top5.findIndex((s) => s.placeRow.id === ep.id);
+        const idx = top.findIndex((s) => s.placeRow.id === ep.id);
         if (idx !== -1) {
           let photoData: any[] = [];
           try {
@@ -455,19 +526,19 @@ export async function getActivitySuggestionsAction(cityId: string, currentItiner
           } catch (e) {}
           const hasRichPhotos = photoData.length > 0 && typeof photoData[0] === "object";
 
-          top5[idx].vibe.photos = hasRichPhotos
+          top[idx].vibe.photos = hasRichPhotos
             ? photoData.map((photo: any) => ({
                 ...photo,
                 url: photo.url || (photo.photo_reference ? `/api/places/photo?ref=${photo.photo_reference}` : ""),
               }))
             : [];
-          top5[idx].vibe.rating = ep.rating || top5[idx].vibe.rating;
+          top[idx].vibe.rating = ep.rating || top[idx].vibe.rating;
         }
       }
     }
   }
 
-  return top5.map((s) => s.vibe);
+  return top.map((s) => s.vibe);
 }
 
 // ==================== VIBE DECKS ====================

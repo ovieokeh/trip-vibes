@@ -101,6 +101,16 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
             />
           </div>
 
+          {selectedRange?.from && selectedRange?.to && (
+            <div className="px-4 pb-2">
+              {Math.ceil((selectedRange.to.getTime() - selectedRange.from.getTime()) / 86400000) + 1 > 14 && (
+                <div className="alert alert-warning py-2 px-3 text-xs">
+                  <span>Itineraries are limited to 2 weeks. Only the first 14 days will be generated.</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="p-4 border-t border-base-200 bg-base-100 flex justify-end">
             <button type="button" className="btn btn-primary" onClick={() => modalRef.current?.close()}>
               Done
