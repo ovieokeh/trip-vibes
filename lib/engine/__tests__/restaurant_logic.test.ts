@@ -3,13 +3,13 @@ import { SchedulerEngine } from "../scheduler";
 import { UserPreferences } from "../../types";
 
 describe("Restaurant Integration Logic", () => {
-  it("should find meals even with unconventional categories", () => {
+  it("should find meals at fixed meal times", () => {
     const mockPrefs: UserPreferences = {
       cityId: "city-123",
       startDate: "2025-06-01",
       endDate: "2025-06-01",
       budget: "medium",
-      likedVibes: ["nature-lover"], // No foodie vibes
+      likedVibes: ["nature-lover"],
       dislikedVibes: [],
       vibeProfile: { weights: { nature: 10 }, swipes: 0 },
     };
@@ -32,11 +32,15 @@ describe("Restaurant Integration Logic", () => {
     const day1 = itinerary.days[0];
 
     const startTimes = day1.activities.map((a) => a.startTime);
-    expect(startTimes).toContain("09:00");
-    expect(startTimes).toContain("10:30");
-    expect(startTimes).toContain("13:00");
-    expect(startTimes).toContain("15:00");
-    expect(startTimes).toContain("19:30");
+
+    // Meals at fixed times
+    expect(startTimes).toContain("09:00"); // Breakfast
+    expect(startTimes).toContain("13:00"); // Lunch
+    expect(startTimes).toContain("19:30"); // Dinner
+
+    // At least some activities should be scheduled
+    const nonMealActivities = day1.activities.filter((a) => !["09:00", "13:00", "19:30"].includes(a.startTime));
+    expect(nonMealActivities.length).toBeGreaterThan(0);
   });
 
   it("should exclude pure food places from activity slots", () => {
@@ -57,10 +61,16 @@ describe("Restaurant Integration Logic", () => {
     ] as any[];
 
     const itinerary = scheduler.assembleItinerary(candidates);
-    const activity = itinerary.days[0].activities.find((a) => a.startTime === "10:30");
+    const day1 = itinerary.days[0];
 
-    expect(activity?.vibe.title).toBe("Park");
-    expect(activity?.vibe.title).not.toBe("Steakhouse");
+    // Get all activity slots (not meal times)
+    const mealTimes = ["09:00", "13:00", "19:30"];
+    const activitySlotActivities = day1.activities.filter((a) => !mealTimes.includes(a.startTime));
+
+    // Park should be in an activity slot, not Steakhouse
+    const activityTitles = activitySlotActivities.map((a) => a.vibe.title);
+    expect(activityTitles).toContain("Park");
+    expect(activityTitles).not.toContain("Steakhouse");
   });
 
   it("should exclude wine bars and nightlife venues from meal slots", () => {
@@ -91,25 +101,23 @@ describe("Restaurant Integration Logic", () => {
 
     const itinerary = scheduler.assembleItinerary(candidates);
     const day1 = itinerary.days[0];
-    const mealSlots = ["09:00", "13:00", "19:30"];
+    const mealTimes = ["09:00", "13:00", "19:30"];
     const nightlifeNames = ["Wine Bar", "Cocktail Lounge", "The Pub"];
 
     // None of the meal slots should contain nightlife venues
-    for (const mealTime of mealSlots) {
+    for (const mealTime of mealTimes) {
       const activity = day1.activities.find((a) => a.startTime === mealTime);
       if (activity) {
         expect(nightlifeNames).not.toContain(activity.vibe.title);
       }
     }
 
-    // Nightlife venues should appear in activity slots (10:30, 15:00, or 22:00)
-    const activitySlots = ["10:30", "15:00", "22:00"];
-    const allActivityTitles = day1.activities
-      .filter((a) => activitySlots.includes(a.startTime))
-      .map((a) => a.vibe.title);
+    // Nightlife venues should appear in activity slots (any non-meal time)
+    const activitySlotActivities = day1.activities.filter((a) => !mealTimes.includes(a.startTime));
+    const activityTitles = activitySlotActivities.map((a) => a.vibe.title);
 
-    // At least one nightlife venue should be in an activity slot
-    const hasNightlifeInActivitySlot = nightlifeNames.some((name) => allActivityTitles.includes(name));
-    expect(hasNightlifeInActivitySlot).toBe(true);
+    // At least one nightlife venue should be scheduled as an activity
+    const hasNightlife = nightlifeNames.some((name) => activityTitles.includes(name));
+    expect(hasNightlife).toBe(true);
   });
 });

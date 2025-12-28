@@ -16,6 +16,11 @@ export function parseTimeToMinutes(time: string): number {
 }
 
 /**
+ * Alias for parseTimeToMinutes for more readable code.
+ */
+export const timeToMinutes = parseTimeToMinutes;
+
+/**
  * Converts total minutes (can exceed 1440) to "HH:MM" format.
  * Handles midnight rollover by wrapping to next day.
  *

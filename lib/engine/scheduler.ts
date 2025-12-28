@@ -2,44 +2,75 @@ import { EngineCandidate, Itinerary, UserPreferences, DayPlan, TripActivity, Vib
 import { v4 as uuidv4 } from "uuid";
 import { isMeal, isActivity, matchesNightlifePattern } from "./utils";
 import { isPlaceOpenAt, calculateTransit } from "../activity";
-import { addMinutesToTime } from "../time";
+import { addMinutesToTime, timeToMinutes, minutesToTime } from "../time";
+import { getDurationForCandidate, getTimeWindows } from "./durations";
 
-interface TimeSlot {
+/**
+ * Fixed meal slot definition.
+ */
+interface MealSlot {
   name: string;
   time: string;
-  type: "meal" | "activity";
   durationMinutes: number;
-  requiredTags?: string[]; // e.g. "breakfast"
+  requiredTags: string[];
+}
+
+/**
+ * Time window for dynamic activity filling.
+ */
+interface TimeWindow {
+  name: string;
+  startTime: string;
+  endTime: string;
   optional?: boolean;
 }
+
+const TRANSIT_BUFFER_MINUTES = 15;
 
 export class SchedulerEngine {
   private prefs: UserPreferences;
 
-  // Using the North Star structure: [Breakfast, Activities, Lunch, Activities, Dinner, Activities]
-  private readonly DAILY_TEMPLATE: TimeSlot[] = [
+  /**
+   * Fixed meal slots - users can remove manually but we always suggest them.
+   */
+  private readonly MEAL_SLOTS: MealSlot[] = [
     {
       name: "Breakfast",
       time: "09:00",
-      type: "meal",
       durationMinutes: 60,
       requiredTags: ["breakfast", "cafe", "bakery"],
     },
-    { name: "Morning Discovery", time: "10:30", type: "activity", durationMinutes: 120 },
-    { name: "Lunch", time: "13:00", type: "meal", durationMinutes: 90, requiredTags: ["restaurant", "food", "diner"] },
-    { name: "Afternoon Adventure", time: "15:00", type: "activity", durationMinutes: 180 },
+    {
+      name: "Lunch",
+      time: "13:00",
+      durationMinutes: 75,
+      requiredTags: ["restaurant", "food", "diner"],
+    },
     {
       name: "Dinner",
       time: "19:30",
-      type: "meal",
-      durationMinutes: 120,
+      durationMinutes: 90,
       requiredTags: ["restaurant", "dinner", "steakhouse"],
     },
-    { name: "Evening Vibe", time: "22:00", type: "activity", durationMinutes: 120, optional: true },
   ];
 
   constructor(prefs: UserPreferences) {
     this.prefs = prefs;
+  }
+
+  /**
+   * Get activity time windows based on user's vibe profile.
+   */
+  private getActivityWindows(): TimeWindow[] {
+    const nightlifeWeight = this.prefs.vibeProfile?.weights?.nightlife || 0;
+    const { preMorning, postDinner } = getTimeWindows(nightlifeWeight);
+
+    return [
+      { name: "Early Morning", startTime: preMorning.start, endTime: preMorning.end, optional: true },
+      { name: "Morning", startTime: "10:00", endTime: "13:00" },
+      { name: "Afternoon", startTime: "14:15", endTime: "19:30" },
+      { name: "Evening", startTime: postDinner.start, endTime: postDinner.end, optional: true },
+    ];
   }
 
   public assembleItinerary(candidates: EngineCandidate[]): Itinerary {
@@ -48,11 +79,13 @@ export class SchedulerEngine {
     const end = new Date(this.prefs.endDate);
     const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
 
-    const usedIds = new Set<string>();
-    const usedExternalIds = new Set<string>();
+    // Pre-allocate candidates evenly across days to ensure balanced distribution
+    const { mealCandidates, activityCandidates } = this.splitCandidates(candidates);
+    const mealsPerDay = this.distributeCandidates(mealCandidates, dayCount);
+    const activitiesPerDay = this.distributeCandidates(activityCandidates, dayCount);
 
-    // Deep copy candidates to avoid mutation issues if any
-    const availableCandidates = [...candidates];
+    const globalUsedIds = new Set<string>();
+    const globalUsedExternalIds = new Set<string>();
 
     for (let i = 0; i < dayCount; i++) {
       const date = new Date(start);
@@ -61,40 +94,71 @@ export class SchedulerEngine {
       const dayActivities: TripActivity[] = [];
       let previousLocation: { lat: number; lng: number } | null = null;
 
-      for (const slot of this.DAILY_TEMPLATE) {
-        const selection = this.selectForSlot(slot, availableCandidates, usedIds, usedExternalIds, date);
+      // Use day-specific candidate pools
+      const dayMeals = mealsPerDay[i] || [];
+      const dayActivityPool = activitiesPerDay[i] || [];
 
-        // Skip optional slots if no candidates found
-        if (!selection && slot.optional) {
-          continue;
-        }
+      const usedIds = new Set<string>(globalUsedIds);
+      const usedExternalIds = new Set<string>(globalUsedExternalIds);
 
-        if (selection && selection.primary) {
+      // 1. Schedule meals first (fixed times)
+      for (const meal of this.MEAL_SLOTS) {
+        const selection = this.selectMealCandidate(meal, dayMeals, usedIds, usedExternalIds, date);
+
+        if (selection) {
           usedIds.add(selection.primary.id);
-          if (selection.primary.foursquareId) usedExternalIds.add(selection.primary.foursquareId);
-
+          globalUsedIds.add(selection.primary.id);
+          if (selection.primary.foursquareId) {
+            usedExternalIds.add(selection.primary.foursquareId);
+            globalUsedExternalIds.add(selection.primary.foursquareId);
+          }
           if (selection.alternative) {
             usedIds.add(selection.alternative.id);
-            if (selection.alternative.foursquareId) usedExternalIds.add(selection.alternative.foursquareId);
+            globalUsedIds.add(selection.alternative.id);
+            if (selection.alternative.foursquareId) {
+              usedExternalIds.add(selection.alternative.foursquareId);
+              globalUsedExternalIds.add(selection.alternative.foursquareId);
+            }
           }
 
-          const activity = this.createActivity(selection.primary, slot, selection.alternative, previousLocation);
+          dayActivities.push(this.createMealActivity(selection.primary, meal, selection.alternative, previousLocation));
 
-          dayActivities.push(activity);
-
-          // Update previous location to the current activity's location
-          if (activity.vibe.lat && activity.vibe.lng) {
-            previousLocation = { lat: activity.vibe.lat, lng: activity.vibe.lng };
+          if (selection.primary.lat && selection.primary.lng) {
+            previousLocation = { lat: selection.primary.lat, lng: selection.primary.lng };
           }
         }
       }
+
+      // 2. Fill activity windows dynamically (using day's allocation)
+      const windows = this.getActivityWindows();
+      for (const window of windows) {
+        const windowActivities = this.fillTimeWindow(
+          window,
+          dayActivityPool,
+          usedIds,
+          usedExternalIds,
+          date,
+          previousLocation
+        );
+
+        for (const act of windowActivities) {
+          dayActivities.push(act);
+          globalUsedIds.add(act.vibe.id);
+          if (act.vibe.lat && act.vibe.lng) {
+            previousLocation = { lat: act.vibe.lat, lng: act.vibe.lng };
+          }
+        }
+      }
+
+      // 3. Sort activities by start time
+      dayActivities.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
       days.push({
         id: uuidv4(),
         dayNumber: i + 1,
         date: date.toISOString().split("T")[0],
         activities: dayActivities,
-        neighborhood: "City Center", // TODO: Dynamic neighborhood grouping
+        neighborhood: "City Center",
       });
     }
 
@@ -106,14 +170,105 @@ export class SchedulerEngine {
     };
   }
 
-  private selectForSlot(
-    slot: TimeSlot,
+  /**
+   * Split candidates into meal and activity pools.
+   */
+  private splitCandidates(candidates: EngineCandidate[]): {
+    mealCandidates: EngineCandidate[];
+    activityCandidates: EngineCandidate[];
+  } {
+    const mealCandidates: EngineCandidate[] = [];
+    const activityCandidates: EngineCandidate[] = [];
+
+    for (const c of candidates) {
+      if (isMeal(c) && !matchesNightlifePattern(c)) {
+        mealCandidates.push(c);
+      }
+      if (isActivity(c)) {
+        activityCandidates.push(c);
+      }
+    }
+
+    return { mealCandidates, activityCandidates };
+  }
+
+  /**
+   * Distribute candidates evenly across days using round-robin allocation.
+   */
+  private distributeCandidates(candidates: EngineCandidate[], dayCount: number): EngineCandidate[][] {
+    const perDay: EngineCandidate[][] = Array.from({ length: dayCount }, () => []);
+
+    candidates.forEach((candidate, index) => {
+      const dayIndex = index % dayCount;
+      perDay[dayIndex].push(candidate);
+    });
+
+    return perDay;
+  }
+
+  /**
+   * Dynamically fills a time window with activities based on their durations.
+   */
+  private fillTimeWindow(
+    window: TimeWindow,
+    candidates: EngineCandidate[],
+    usedIds: Set<string>,
+    usedExternalIds: Set<string>,
+    date: Date,
+    previousLocation: { lat: number; lng: number } | null
+  ): TripActivity[] {
+    const activities: TripActivity[] = [];
+    let currentMinutes = timeToMinutes(window.startTime);
+    const endMinutes = timeToMinutes(window.endTime);
+
+    while (currentMinutes < endMinutes) {
+      const currentTime = minutesToTime(currentMinutes);
+
+      const selection = this.selectActivityCandidate(candidates, usedIds, usedExternalIds, date, currentTime);
+
+      if (!selection) break;
+
+      const duration = getDurationForCandidate(selection.primary);
+
+      if (currentMinutes + duration > endMinutes) break;
+
+      usedIds.add(selection.primary.id);
+      if (selection.primary.foursquareId) usedExternalIds.add(selection.primary.foursquareId);
+      if (selection.alternative) {
+        usedIds.add(selection.alternative.id);
+        if (selection.alternative.foursquareId) usedExternalIds.add(selection.alternative.foursquareId);
+      }
+
+      const activity = this.createDynamicActivity(
+        selection.primary,
+        currentTime,
+        duration,
+        selection.alternative,
+        previousLocation
+      );
+
+      activities.push(activity);
+
+      if (selection.primary.lat && selection.primary.lng) {
+        previousLocation = { lat: selection.primary.lat, lng: selection.primary.lng };
+      }
+
+      currentMinutes += duration + TRANSIT_BUFFER_MINUTES;
+    }
+
+    return activities;
+  }
+
+  /**
+   * Select a meal candidate for a fixed meal slot.
+   */
+  private selectMealCandidate(
+    meal: MealSlot,
     candidates: EngineCandidate[],
     usedIds: Set<string>,
     usedExternalIds: Set<string>,
     date: Date
   ): { primary: EngineCandidate; alternative?: EngineCandidate } | null {
-    // Filter candidates valid for this slot
     const pool = candidates.filter((c) => {
       if (usedIds.has(c.id)) return false;
       if (c.foursquareId && usedExternalIds.has(c.foursquareId)) return false;
@@ -123,39 +278,25 @@ export class SchedulerEngine {
     let primary: EngineCandidate | null = null;
     let alternative: EngineCandidate | null = null;
 
-    // Priority 1: High Score + Matches Slot Type + Open
     for (const c of pool) {
-      if (this.matchesSlotType(c, slot) && this.isOpen(c, date, slot.time)) {
+      if (this.matchesMealSlot(c, meal) && this.isOpen(c, date, meal.time)) {
         if (!primary) {
           primary = c;
-        } else {
-          // Check if distinct from primary
-          if (c.id === primary.id) continue;
-          if (c.foursquareId && primary.foursquareId && c.foursquareId === primary.foursquareId) continue;
-
+        } else if (!alternative && c.id !== primary.id) {
           alternative = c;
-          break; // Found both
+          break;
         }
       }
     }
 
-    if (!primary || !alternative) {
-      // Priority 2: Matches Slot Type, IGNORE opening hours entirely
-      // This is a fallback when Priority 1's strict opening hours filter was too restrictive
+    if (!primary) {
       for (const c of pool) {
-        if (this.matchesSlotType(c, slot)) {
+        if (this.matchesMealSlot(c, meal)) {
           if (!primary) {
             primary = c;
-          } else {
-            // Must be distinct
-            if (c.id === primary.id) continue;
-            if (c.foursquareId && primary.foursquareId && c.foursquareId === primary.foursquareId) continue;
-
-            // Avoid overwriting if we already found a valid alternative in Priority 1
-            if (!alternative) {
-              alternative = c;
-              break;
-            }
+          } else if (!alternative && c.id !== primary.id) {
+            alternative = c;
+            break;
           }
         }
       }
@@ -164,43 +305,74 @@ export class SchedulerEngine {
     return primary ? { primary, alternative: alternative || undefined } : null;
   }
 
-  private matchesSlotType(c: EngineCandidate, slot: TimeSlot): boolean {
-    if (slot.type === "meal") {
-      // Exclude nightlife venues from meal slots (bars, pubs, clubs should be activities)
-      if (matchesNightlifePattern(c)) return false;
-
-      const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
-      const name = c.name.toLowerCase();
-      const combined = [...cats, name].join(" ");
-
-      if (slot.requiredTags) {
-        if (slot.requiredTags.some((tag) => combined.includes(tag))) return true;
-      }
-      return isMeal(c);
-    } else {
+  /**
+   * Select an activity candidate for dynamic window filling.
+   */
+  private selectActivityCandidate(
+    candidates: EngineCandidate[],
+    usedIds: Set<string>,
+    usedExternalIds: Set<string>,
+    date: Date,
+    time: string
+  ): { primary: EngineCandidate; alternative?: EngineCandidate } | null {
+    const pool = candidates.filter((c) => {
+      if (usedIds.has(c.id)) return false;
+      if (c.foursquareId && usedExternalIds.has(c.foursquareId)) return false;
       return isActivity(c);
+    });
+
+    let primary: EngineCandidate | null = null;
+    let alternative: EngineCandidate | null = null;
+
+    for (const c of pool) {
+      if (this.isOpen(c, date, time)) {
+        if (!primary) {
+          primary = c;
+        } else if (!alternative && c.id !== primary.id) {
+          alternative = c;
+          break;
+        }
+      }
     }
+
+    if (!primary) {
+      for (const c of pool) {
+        if (!primary) {
+          primary = c;
+        } else if (!alternative && c.id !== primary.id) {
+          alternative = c;
+          break;
+        }
+      }
+    }
+
+    return primary ? { primary, alternative: alternative || undefined } : null;
   }
 
-  /**
-   * Check if a candidate is open at the given date and time.
-   * Uses the shared isPlaceOpenAt utility for consistent behavior.
-   */
+  private matchesMealSlot(c: EngineCandidate, meal: MealSlot): boolean {
+    if (matchesNightlifePattern(c)) return false;
+
+    const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
+    const name = c.name.toLowerCase();
+    const combined = [...cats, name].join(" ");
+
+    if (meal.requiredTags.some((tag) => combined.includes(tag))) return true;
+    return isMeal(c);
+  }
+
   private isOpen(candidate: EngineCandidate, date: Date, timeStr: string): boolean {
-    // Delegate to shared utility
     return isPlaceOpenAt(candidate.openingHours, date, timeStr);
   }
 
-  private createActivity(
+  private createMealActivity(
     c: EngineCandidate,
-    slot: TimeSlot,
+    meal: MealSlot,
     alternativeCandidate?: EngineCandidate,
     previousLocation?: { lat: number; lng: number } | null
   ): TripActivity {
     let transitDetails = undefined;
     let transitNote = undefined;
 
-    // Use shared transit calculation
     if (previousLocation && c.lat && c.lng) {
       const transit = calculateTransit(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
       transitDetails = transit.transitDetails;
@@ -210,9 +382,38 @@ export class SchedulerEngine {
     return {
       id: uuidv4(),
       vibe: this.mapCandidateToVibe(c),
-      startTime: slot.time,
-      endTime: addMinutesToTime(slot.time, slot.durationMinutes), // Use shared utility
-      note: `Enjoy ${slot.name} at ${c.name}.`,
+      startTime: meal.time,
+      endTime: addMinutesToTime(meal.time, meal.durationMinutes),
+      note: `Enjoy ${meal.name} at ${c.name}.`,
+      isAlternative: false,
+      transitNote,
+      transitDetails,
+      alternative: alternativeCandidate ? this.mapCandidateToVibe(alternativeCandidate) : undefined,
+    };
+  }
+
+  private createDynamicActivity(
+    c: EngineCandidate,
+    startTime: string,
+    durationMinutes: number,
+    alternativeCandidate?: EngineCandidate,
+    previousLocation?: { lat: number; lng: number } | null
+  ): TripActivity {
+    let transitDetails = undefined;
+    let transitNote = undefined;
+
+    if (previousLocation && c.lat && c.lng) {
+      const transit = calculateTransit(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
+      transitDetails = transit.transitDetails;
+      transitNote = transit.transitNote;
+    }
+
+    return {
+      id: uuidv4(),
+      vibe: this.mapCandidateToVibe(c),
+      startTime,
+      endTime: addMinutesToTime(startTime, durationMinutes),
+      note: `Explore ${c.name}.`,
       isAlternative: false,
       transitNote,
       transitDetails,

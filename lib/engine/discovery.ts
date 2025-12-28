@@ -1,6 +1,6 @@
 import { db } from "../db";
 import { places } from "../db/schema";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, or, sql, inArray } from "drizzle-orm";
 import { EngineCandidate, UserPreferences } from "../types";
 import { ARCHETYPES } from "../archetypes";
 import { CATEGORIES } from "../categories";
@@ -264,7 +264,8 @@ export class DiscoveryEngine {
 
   /**
    * Geo-exploration: Fetches candidates by searching multiple zones around city center.
-   * Stops early when requirements are met to save API calls.
+   * Uses hybrid parallel approach: batches of 2 zones with early exit checks.
+   * This balances speed (parallel) with cost savings (early exit).
    */
   private async fetchWithGeoExploration(
     city: { id: string; name: string; country: string; lat?: number | null; lng?: number | null },
@@ -276,45 +277,82 @@ export class DiscoveryEngine {
     const zones = generateSearchZones(city.lat, city.lng, 6); // 6km offset
     const idsToSearch = this.prepareCategoryIds(categoryIds);
 
-    console.log(`[Geo-Exploration] Starting with ${zones.length} zones for ${city.name}`);
+    // Batch zones into groups of 2 for parallel fetching with early exit
+    const BATCH_SIZE = 2;
+    const zoneBatches = this.chunkArray(zones, BATCH_SIZE);
 
-    for (const zone of zones) {
-      // Check if we already have enough candidates
+    console.log(
+      `[Geo-Exploration] Starting with ${zones.length} zones in ${zoneBatches.length} batches for ${city.name}`
+    );
+
+    for (const batch of zoneBatches) {
+      // Check if we already have enough candidates (early exit check)
       const currentCandidates = await this.searchDB(city.id, categoryIds);
       const meals = currentCandidates.filter(isMeal);
       const activities = currentCandidates.filter(isActivity);
 
       if (meals.length >= requirements.minMeals && activities.length >= requirements.minActivities) {
         console.log(
-          `[Geo-Exploration] Requirements met after zone "${zone.id}". Meals: ${meals.length}, Activities: ${activities.length}`
+          `[Geo-Exploration] Requirements met. Meals: ${meals.length}, Activities: ${activities.length}. Skipping remaining batches.`
         );
         break;
       }
 
-      console.log(`[Geo-Exploration] Searching zone: ${zone.id} (${zone.lat.toFixed(4)}, ${zone.lng.toFixed(4)})`);
+      console.log(`[Geo-Exploration] Fetching batch of ${batch.length} zones in parallel...`);
 
-      try {
-        const res = await axios.get<{ results: FoursquarePlace[] }>("https://places-api.foursquare.com/places/search", {
-          params: {
-            ll: `${zone.lat},${zone.lng}`,
-            radius: 5000, // 5km radius per zone
-            limit: 50,
-            categories: idsToSearch,
-          },
-          headers: {
-            Authorization: `Bearer ${process.env.FOURSQUARE_API_KEY}`,
-            "x-places-api-version": "2025-06-17",
-          },
-        });
+      // Fetch all zones in this batch in parallel
+      const batchResults = await Promise.allSettled(
+        batch.map(async (zone) => {
+          try {
+            const res = await axios.get<{ results: FoursquarePlace[] }>(
+              "https://places-api.foursquare.com/places/search",
+              {
+                params: {
+                  ll: `${zone.lat},${zone.lng}`,
+                  radius: 5000,
+                  limit: 50,
+                  categories: idsToSearch,
+                },
+                headers: {
+                  Authorization: `Bearer ${process.env.FOURSQUARE_API_KEY}`,
+                  "x-places-api-version": "2025-06-17",
+                },
+              }
+            );
+            console.log(`[Geo-Exploration] Zone "${zone.id}": ${res.data.results.length} places`);
+            return { zone, places: res.data.results };
+          } catch (e) {
+            console.error(`[Geo-Exploration] Error fetching zone ${zone.id}:`, e);
+            return { zone, places: [] };
+          }
+        })
+      );
 
-        console.log(`[Geo-Exploration] Zone "${zone.id}": ${res.data.results.length} places`);
+      // Collect all places from successful fetches
+      const allPlaces: FoursquarePlace[] = [];
+      for (const result of batchResults) {
+        if (result.status === "fulfilled" && result.value.places.length > 0) {
+          allPlaces.push(...result.value.places);
+        }
+      }
 
-        // Save in parallel
-        await Promise.all(res.data.results.map((fsq) => this.savePlace(fsq, city.id)));
-      } catch (e) {
-        console.error(`[Geo-Exploration] Error fetching zone ${zone.id}:`, e);
+      // Batch save all places at once
+      if (allPlaces.length > 0) {
+        await this.savePlacesBatch(allPlaces, city.id);
+        console.log(`[Geo-Exploration] Batch saved ${allPlaces.length} places`);
       }
     }
+  }
+
+  /**
+   * Splits an array into chunks of specified size.
+   */
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
   }
 
   /**
@@ -375,53 +413,65 @@ export class DiscoveryEngine {
     return currentId;
   }
 
-  private async savePlace(fsq: FoursquarePlace, cityId: string) {
-    if (!fsq.fsq_place_id) return;
+  /**
+   * Batch save multiple places at once for better performance.
+   * Uses a single query to check for existing places, then bulk inserts new ones.
+   */
+  private async savePlacesBatch(fsqPlaces: FoursquarePlace[], cityId: string) {
+    if (fsqPlaces.length === 0) return;
 
-    const metadata = {
-      categories: fsq.categories?.map((c: any) => c.name) || [], // Store names for now (legacy compat)
-      categoryIds: fsq.categories?.map((c: any) => c.id) || [], // NEW: Store IDs
-      source: "foursquare",
-      social: fsq.social_media,
-    };
+    // Filter out invalid places
+    const validPlaces = fsqPlaces.filter((fsq) => fsq.fsq_place_id);
+    if (validPlaces.length === 0) return;
 
-    // UPSERT LOGIC (Manual check since no unique constraint on foursquareId yet)
+    // Get all foursquare IDs we're trying to save
+    const fsqIds = validPlaces.map((fsq) => fsq.fsq_place_id!);
+
+    // Single query to find all existing places
     const existing = await db
-      .select({ id: places.id })
+      .select({ foursquareId: places.foursquareId })
       .from(places)
-      .where(and(eq(places.foursquareId, fsq.fsq_place_id), eq(places.cityId, cityId)))
-      .limit(1);
+      .where(and(inArray(places.foursquareId, fsqIds), eq(places.cityId, cityId)));
 
-    if (existing.length > 0) {
-      // Update existing
-      await db
-        .update(places)
-        .set({
-          name: fsq.name, // in case it changed
-          address: fsq.location?.formatted_address,
-          lat: fsq.latitude ?? 0,
-          lng: fsq.longitude ?? 0,
-          metadata: JSON.stringify(metadata),
-          website: fsq.website || undefined,
-          phone: fsq.tel || undefined,
-        })
-        .where(eq(places.id, existing[0].id));
-    } else {
-      // Insert new
-      await db.insert(places).values({
-        id: uuidv4(),
-        foursquareId: fsq.fsq_place_id,
-        name: fsq.name,
-        address: fsq.location?.formatted_address,
-        lat: fsq.latitude ?? 0,
-        lng: fsq.longitude ?? 0,
-        cityId: cityId,
-        metadata: JSON.stringify(metadata),
-        website: fsq.website,
-        phone: fsq.tel,
-        rating: null,
-      });
+    const existingIds = new Set(existing.map((e) => e.foursquareId));
+
+    // Filter to only new places (not already in DB)
+    const newPlaces = validPlaces.filter((fsq) => !existingIds.has(fsq.fsq_place_id!));
+
+    if (newPlaces.length === 0) {
+      console.log(`[Discovery] All ${validPlaces.length} places already cached`);
+      return;
     }
+
+    // Bulk insert new places
+    const insertValues = newPlaces.map((fsq) => ({
+      id: uuidv4(),
+      foursquareId: fsq.fsq_place_id!,
+      name: fsq.name,
+      address: fsq.location?.formatted_address,
+      lat: fsq.latitude ?? 0,
+      lng: fsq.longitude ?? 0,
+      cityId: cityId,
+      metadata: JSON.stringify({
+        categories: fsq.categories?.map((c: any) => c.name) || [],
+        categoryIds: fsq.categories?.map((c: any) => c.id) || [],
+        source: "foursquare",
+        social: fsq.social_media,
+      }),
+      website: fsq.website,
+      phone: fsq.tel,
+      rating: null,
+    }));
+
+    await db.insert(places).values(insertValues);
+    console.log(`[Discovery] Inserted ${newPlaces.length} new places (${existingIds.size} already cached)`);
+  }
+
+  /**
+   * Single place save (kept for backwards compatibility with name-based search).
+   */
+  private async savePlace(fsq: FoursquarePlace, cityId: string) {
+    await this.savePlacesBatch([fsq], cityId);
   }
 
   private mapRowToCandidate(row: typeof places.$inferSelect): EngineCandidate {
