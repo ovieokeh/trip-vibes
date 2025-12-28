@@ -73,7 +73,10 @@
     "empty": "Noch keine gespeicherten Reisen.",
     "planNow": "Jetzt eine Reise planen",
     "untitledTrip": "Unbenannte Reise",
-    "noDate": "Keine Daten"
+    "noDate": "Keine Daten",
+    "savedTripHeader": "GESPEICHERTE REISE",
+    "notFound": "Reise nicht gefunden",
+    "backToSaved": "Zurück zu gespeicherten Reisen"
   },
   "Loading": {
     "buildingTrip": "Erstelle deine Reise",
@@ -165,5 +168,17 @@
     "loading": "Lädt...",
     "itinerary": "Reiseplan",
     "close": "Schließen"
+  },
+  "TripControls": {
+    "rename": "Reise umbenennen",
+    "delete": "Reise löschen"
+  },
+  "PDF": {
+    "day": "Tag",
+    "generatedBy": "Erstellt von TripVibes",
+    "page": "Seite",
+    "of": "von",
+    "viewMap": "Karte anzeigen",
+    "call": "Anrufen"
   }
 }

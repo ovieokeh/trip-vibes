@@ -73,7 +73,10 @@
     "empty": "Nog geen opgeslagen reizen.",
     "planNow": "Plan nu een reis",
     "untitledTrip": "Naamloze Reis",
-    "noDate": "Geen data"
+    "noDate": "Geen data",
+    "savedTripHeader": "OPGESLAGEN REIS",
+    "notFound": "Reis niet gevonden",
+    "backToSaved": "Terug naar opgeslagen reizen"
   },
   "Loading": {
     "buildingTrip": "Je reis opbouwen",
@@ -165,5 +168,17 @@
     "loading": "Laden...",
     "itinerary": "Route",
     "close": "Sluiten"
+  },
+  "TripControls": {
+    "rename": "Naam wijzigen",
+    "delete": "Reis verwijderen"
+  },
+  "PDF": {
+    "day": "Dag",
+    "generatedBy": "Gemaakt door TripVibes",
+    "page": "Pagina",
+    "of": "van",
+    "viewMap": "Bekijk kaart",
+    "call": "Bellen"
   }
 }

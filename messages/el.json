@@ -60,6 +60,7 @@
     "saveTrip": "Φύλαξέ το",
     "saving": "Φυλάσσω...",
     "startNewTrip": "Ξεκίνα Καινούργιο",
+    "startOfDay": "Ξεκίνημα μέρας",
     "errors": {
       "generation": "Πρόβλημα στο πρόγραμμα",
       "generationFailed": "Δεν μπορέσαμε να το φτιάξουμε.",
@@ -73,11 +74,15 @@
     "empty": "Δεν έχεις φυλάξει τίποτα ακόμα.",
     "planNow": "Φτιάξε ένα τώρα",
     "untitledTrip": "Ταξίδι χωρίς όνομα",
-    "noDate": "Χωρίς μέρες"
+    "noDate": "Χωρίς μέρες",
+    "savedTripHeader": "ΦΥΛΑΓΜΕΝΟ ΤΑΞΙΔΙ",
+    "notFound": "Δεν βρέθηκε το ταξίδι",
+    "backToSaved": "Πίσω στα φυλαγμένα"
   },
   "Loading": {
     "buildingTrip": "Φτιάχνουμε το Ταξίδι",
-    "step": "Βήμα {current} από {total}"
+    "step": "Βήμα {current} από {total}",
+    "initializing": "Ξεκινάμε..."
   },
   "ItineraryDay": {
     "day": "Μέρα",
@@ -165,5 +170,17 @@
     "loading": "Φορτώνει...",
     "itinerary": "Πρόγραμμα",
     "close": "Κλείσε"
+  },
+  "TripControls": {
+    "rename": "Αλλαγή ονόματος",
+    "delete": "Σβήσιμο ταξιδιού"
+  },
+  "PDF": {
+    "day": "Μέρα",
+    "generatedBy": "Φτιάχτηκε από το TripVibes",
+    "page": "Σελίδα",
+    "of": "από",
+    "viewMap": "Δες το χάρτη",
+    "call": "Τηλέφωνο"
   }
 }

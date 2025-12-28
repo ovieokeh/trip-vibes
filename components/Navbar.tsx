@@ -5,12 +5,13 @@ import { Heart } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { useState } from "react";
 import ConfirmModal from "./ConfirmModal";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar({ savedCount = 0 }: { savedCount?: number }) {
   const t = useTranslations("Navbar");
   const tc = useTranslations("Confirmation.newTrip");
+  const formatIntl = useFormatter();
   const reset = useStore((state) => state.reset);
   const router = useRouter();
 
@@ -53,7 +54,7 @@ export default function Navbar({ savedCount = 0 }: { savedCount?: number }) {
             <Heart className={`w-5 h-5 ${savedCount > 0 ? "fill-error text-error" : ""}`} />
             {savedCount > 0 && (
               <span className="absolute top-0 right-0 badge badge-xs badge-neutral rounded-full w-4 h-4 p-0 flex items-center justify-center translate-x-1 translate-y-1">
-                {savedCount}
+                {formatIntl.number(savedCount)}
               </span>
             )}
           </Link>

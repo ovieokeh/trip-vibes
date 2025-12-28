@@ -2,7 +2,7 @@
 
 import { DayPlan } from "@/lib/types";
 import { motion } from "framer-motion";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 
 interface MoveActivityModalProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ interface MoveActivityModalProps {
 export default function MoveActivityModal({ isOpen, onClose, onMove, days, sourceDayId }: MoveActivityModalProps) {
   const t = useTranslations("MoveActivity");
   const td = useTranslations("ItineraryDay");
-  const locale = useLocale();
+  const formatIntl = useFormatter();
 
   if (!isOpen) return null;
 
@@ -48,7 +48,7 @@ export default function MoveActivityModal({ isOpen, onClose, onMove, days, sourc
               // Parse date for display
               const [y, m, d] = day.date.split("-").map(Number);
               const dateObj = new Date(y, m - 1, d);
-              const displayDate = dateObj.toLocaleDateString(locale, {
+              const displayDate = formatIntl.dateTime(dateObj, {
                 weekday: "short",
                 month: "short",
                 day: "numeric",

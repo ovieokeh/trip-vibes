@@ -20,6 +20,7 @@ import { useTranslations } from "next-intl";
 
 export default function ItineraryPage() {
   const t = useTranslations("Itinerary");
+  const tl = useTranslations("Loading");
   const router = useRouter();
   const prefs = useStore();
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
@@ -53,7 +54,7 @@ export default function ItineraryPage() {
   });
 
   // Loading State
-  const [loadingMessage, setLoadingMessage] = useState("Initializing The Architect...");
+  const [loadingMessage, setLoadingMessage] = useState(tl("initializing"));
   const [currentStep, setCurrentStep] = useState("init");
 
   useEffect(() => {
@@ -256,7 +257,7 @@ export default function ItineraryPage() {
     if (refActivity && refActivity.vibe.lat && refActivity.vibe.lng && vibe.lat && vibe.lng) {
       newActivity.transitNote = getTransitNote(refActivity.vibe.lat, refActivity.vibe.lng, vibe.lat, vibe.lng);
     } else if (refIndex < 0) {
-      newActivity.transitNote = "Start of day";
+      newActivity.transitNote = t("startOfDay");
     }
 
     const newDays = itinerary.days.map((d) => {

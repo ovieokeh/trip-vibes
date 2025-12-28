@@ -6,7 +6,7 @@ import { Star, Globe, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import VibeImage from "./VibeImage";
 import PhotoGalleryModal from "./PhotoGalleryModal";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 
 import { estimateTravelTime } from "@/lib/geo";
 
@@ -18,6 +18,7 @@ function TransitIndicator({
   onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
 }) {
   const t = useTranslations("ItineraryDay");
+  const formatIntl = useFormatter();
   const details = activity.transitDetails;
 
   // If no details, fallback to string parsing or static
@@ -124,7 +125,7 @@ function TransitIndicator({
         >
           {getIcon(details.mode)}
           <span className="text-[10px] font-bold uppercase tracking-widest">
-            {details.durationMinutes} min {t(`transit.${details.mode}` as any)}
+            {formatIntl.number(details.durationMinutes)} min {t(`transit.${details.mode}` as any)}
           </span>
         </div>
         <ul
@@ -166,7 +167,7 @@ export default function ItineraryDay({
   onMoveActivity?: (actId: string) => void;
 }) {
   const t = useTranslations("ItineraryDay");
-  const locale = useLocale();
+  const formatIntl = useFormatter();
   // Gallery modal state
   const [galleryState, setGalleryState] = useState<{
     isOpen: boolean;
@@ -188,15 +189,14 @@ export default function ItineraryDay({
     setGalleryState((prev) => ({ ...prev, isOpen: false }));
   };
 
-  console.log("Rendering ItineraryDay for day:", day);
   // Get day name for opening hours lookup, e.g. "Monday"
   // Parse date securely to avoid timezone shifts (YYYY-MM-DD to local time)
   const [year, month, d] = day.date.split("-").map(Number);
   const dateObj = new Date(year, month - 1, d);
 
   const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
-  const displayDayName = dateObj.toLocaleDateString(locale, { weekday: "long" });
-  const formattedDate = dateObj.toLocaleDateString(locale, { month: "long", day: "numeric" });
+  const displayDayName = formatIntl.dateTime(dateObj, { weekday: "long" });
+  const formattedDate = formatIntl.dateTime(dateObj, { month: "long", day: "numeric" });
 
   return (
     <>
@@ -257,10 +257,10 @@ export default function ItineraryDay({
                         {/* Thumbnails row (max 4) */}
                         {act.vibe.photos.length > 1 && (
                           <div className="grid grid-cols-4 gap-1 h-14">
-                            {act.vibe.photos.slice(1, 5).map((p, i) => {
+                            {act.vibe.photos.slice(1, 4).map((p, i) => {
                               const photoIndex = i + 1;
-                              const isLast = i === 3;
-                              const remaining = act.vibe.photos!.length - 5;
+                              const isLast = i === 2;
+                              const remaining = act.vibe.photos!.length - 4;
 
                               return (
                                 <div
@@ -343,7 +343,7 @@ export default function ItineraryDay({
                           {act.vibe.rating && (
                             <div className="flex items-center gap-1 text-xs font-bold bg-warning/10 text-warning px-2 py-1 rounded-full">
                               <Star className="w-3.5 h-3.5 fill-warning" />
-                              <span>{act.vibe.rating}</span>
+                              <span>{formatIntl.number(act.vibe.rating)}</span>
                             </div>
                           )}
 

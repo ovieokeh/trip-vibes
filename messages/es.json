@@ -73,7 +73,10 @@
     "empty": "No hay viajes guardados todavía.",
     "planNow": "Planifica un viaje ahora",
     "untitledTrip": "Viaje sin Título",
-    "noDate": "Sin fechas"
+    "noDate": "Sin fechas",
+    "savedTripHeader": "VIAJE GUARDADO",
+    "notFound": "Viaje no encontrado",
+    "backToSaved": "Volver a viajes guardados"
   },
   "Loading": {
     "buildingTrip": "Construyendo tu Viaje",
@@ -165,5 +168,17 @@
     "loading": "Cargando...",
     "itinerary": "Itinerario",
     "close": "Cerrar"
+  },
+  "TripControls": {
+    "rename": "Renombrar viaje",
+    "delete": "Eliminar viaje"
+  },
+  "PDF": {
+    "day": "Día",
+    "generatedBy": "Generado por TripVibes",
+    "page": "Página",
+    "of": "de",
+    "viewMap": "Ver mapa",
+    "call": "Llamar"
   }
 }

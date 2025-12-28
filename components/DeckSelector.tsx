@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { VibeDeck, getVibeDecksAction, deleteVibeDeckAction } from "@/lib/db-actions";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 
 interface DeckSelectorProps {
   onSelect: (deck: VibeDeck) => void;
@@ -11,6 +11,7 @@ interface DeckSelectorProps {
 
 export function DeckSelector({ onSelect, onSwipeFresh }: DeckSelectorProps) {
   const t = useTranslations("DeckSelector");
+  const formatIntl = useFormatter();
   const [decks, setDecks] = useState<VibeDeck[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -109,8 +110,8 @@ export function DeckSelector({ onSelect, onSwipeFresh }: DeckSelectorProps) {
               </div>
 
               <div className="text-xs text-base-content/50 mt-2">
-                {deck.likedVibes.length} {t("vibes")} • {t("created")}{" "}
-                {deck.createdAt ? new Date(deck.createdAt).toLocaleDateString() : t("recently")}
+                {formatIntl.number(deck.likedVibes.length)} {t("vibes")} • {t("created")}{" "}
+                {deck.createdAt ? formatIntl.dateTime(new Date(deck.createdAt)) : t("recently")}
               </div>
             </div>
           </div>

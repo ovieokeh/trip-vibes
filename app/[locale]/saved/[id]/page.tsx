@@ -1,22 +1,24 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { getItineraryByIdAction, getCityById } from "@/lib/db-actions";
 import { ChevronLeft } from "lucide-react";
 import TripControls from "./TripControls";
 import ItineraryEditor from "@/components/ItineraryEditor";
 import ItineraryActions from "@/components/ItineraryActions";
 import { Metadata } from "next";
+import { getTranslations, getFormatter } from "next-intl/server";
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; locale: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
+  const { id, locale } = await params;
   const itinerary = await getItineraryByIdAction(id);
+  const t = await getTranslations({ locale, namespace: "SavedTrips" });
 
   if (!itinerary) {
     return {
-      title: "Trip Not Found",
+      title: t("notFound"),
     };
   }
 
@@ -30,14 +32,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   // Convert image URL to absolute if it's a relative API route
-  // Social platforms like WhatsApp can't access relative URLs
   let absoluteImageUrl = `${baseUrl}/og-image.jpg`; // fallback
   if (firstImage) {
-    // If it starts with /api/, make it absolute
     if (firstImage.startsWith("/")) {
       absoluteImageUrl = `${baseUrl}${firstImage}`;
     } else if (firstImage.startsWith("http")) {
-      // Already absolute (e.g., Unsplash URLs from seed data)
       absoluteImageUrl = firstImage;
     }
   }
@@ -69,31 +68,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function SavedTripDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function SavedTripDetailsPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
+  const { id, locale } = await params;
   const itinerary = await getItineraryByIdAction(id);
   const city = await getCityById(itinerary?.cityId || "");
   const cityName = city?.name || itinerary?.cityId || "Unknown City";
 
-  // Format dates
-  const startDate = itinerary?.startDate
-    ? new Date(itinerary.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-    : "";
-  const endDate = itinerary?.endDate
-    ? new Date(itinerary.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })
-    : "";
-  const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : "";
+  const t = await getTranslations("SavedTrips");
+  const format = await getFormatter();
 
   if (!itinerary) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4">
-        <h2 className="text-2xl font-bold">Trip Not Found</h2>
+        <h2 className="text-2xl font-bold">{t("notFound")}</h2>
         <Link href="/saved" className="btn btn-primary">
-          Back to Saved Trips
+          {t("backToSaved")}
         </Link>
       </div>
     );
   }
+
+  // Format dates
+  const startDate = itinerary.startDate
+    ? format.dateTime(new Date(itinerary.startDate), { month: "short", day: "numeric" })
+    : "";
+  const endDate = itinerary.endDate
+    ? format.dateTime(new Date(itinerary.endDate), { month: "short", day: "numeric" })
+    : "";
+  const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : "";
 
   return (
     <div className="max-w-xl mx-auto pb-12 px-4">
@@ -102,7 +104,7 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
           <Link href="/saved" className="btn btn-ghost btn-circle btn-sm">
             <ChevronLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-sm font-bold opacity-70 uppercase tracking-widest">SAVED TRIP</h1>
+          <h1 className="text-sm font-bold opacity-70 uppercase tracking-widest">{t("savedTripHeader")}</h1>
         </div>
         <TripControls
           id={id}

@@ -7,6 +7,7 @@ import { MoreVertical, Pencil, Trash2, X, Check, FileDown, Calendar } from "luci
 import { Itinerary } from "@/lib/types";
 import { generateItineraryPDF } from "@/lib/export/pdf";
 import { generateCalendarFile } from "@/lib/export/calendar";
+import { useTranslations, useLocale } from "next-intl";
 
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -18,6 +19,11 @@ interface TripControlsProps {
 }
 
 export default function TripControls({ id, initialName, itinerary, cityName }: TripControlsProps) {
+  const t = useTranslations("TripControls");
+  const ta = useTranslations("ItineraryActions");
+  const tc = useTranslations("Confirmation.deleteTrip");
+  const tp = useTranslations("PDF");
+  const locale = useLocale();
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(initialName);
   const [loading, setLoading] = useState(false);
@@ -35,7 +41,6 @@ export default function TripControls({ id, initialName, itinerary, cityName }: T
 
   const handleDeleteClick = () => {
     setShowDeleteConfirm(true);
-    // document.activeElement instanceof HTMLElement && document.activeElement.blur(); // Close dropdown
   };
 
   const confirmDelete = async () => {
@@ -46,13 +51,19 @@ export default function TripControls({ id, initialName, itinerary, cityName }: T
     } catch {
       setLoading(false);
       setShowDeleteConfirm(false);
-      alert("Failed to delete trip");
     }
   };
 
   const handleDownloadPDF = async () => {
     try {
-      await generateItineraryPDF(itinerary, cityName);
+      await generateItineraryPDF(itinerary, cityName, locale, {
+        day: tp("day"),
+        generatedBy: tp("generatedBy"),
+        page: tp("page"),
+        of: tp("of"),
+        viewMap: tp("viewMap"),
+        call: tp("call"),
+      });
     } catch (error) {
       console.error("Failed to generate PDF:", error);
     }
@@ -101,23 +112,23 @@ export default function TripControls({ id, initialName, itinerary, cityName }: T
             <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
               <li>
                 <button onClick={() => setIsEditing(true)}>
-                  <Pencil className="w-4 h-4" /> Rename Trip
+                  <Pencil className="w-4 h-4" /> {t("rename")}
                 </button>
               </li>
               <li>
                 <button onClick={handleDownloadPDF}>
-                  <FileDown className="w-4 h-4" /> Download PDF
+                  <FileDown className="w-4 h-4" /> {ta("downloadPDF")}
                 </button>
               </li>
               <li>
                 <button onClick={handleSyncCalendar}>
-                  <Calendar className="w-4 h-4" /> Sync to Calendar
+                  <Calendar className="w-4 h-4" /> {ta("syncCalendar")}
                 </button>
               </li>
               <div className="divider my-1"></div>
               <li>
                 <button className="text-error" onClick={handleDeleteClick}>
-                  <Trash2 className="w-4 h-4" /> Delete Trip
+                  <Trash2 className="w-4 h-4" /> {t("delete")}
                 </button>
               </li>
             </ul>
@@ -127,12 +138,12 @@ export default function TripControls({ id, initialName, itinerary, cityName }: T
 
       <ConfirmModal
         isOpen={showDeleteConfirm}
-        title="Delete Trip"
-        message="Are you sure you want to delete this trip? This action cannot be undone."
+        title={tc("title")}
+        message={tc("message")}
         onConfirm={confirmDelete}
         onCancel={() => setShowDeleteConfirm(false)}
         type="danger"
-        confirmText={loading ? "Deleting..." : "Delete"}
+        confirmText={loading ? tc("deleting") : tc("confirm")}
       />
     </>
   );

@@ -5,8 +5,8 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange, DayPicker } from "react-day-picker";
 import { clsx } from "clsx";
-import { useTranslations, useLocale } from "next-intl";
-import { enUS, es, fr, de, it, ja, ko, zhCN } from "date-fns/locale";
+import { useTranslations, useFormatter, useLocale } from "next-intl";
+import { enUS, es, fr, de, it, ja, ko, zhCN, nl, el } from "date-fns/locale";
 
 interface DateRangePickerProps {
   startDate: string; // YYYY-MM-DD
@@ -24,12 +24,15 @@ const localeMap: Record<string, any> = {
   ja,
   ko,
   zh: zhCN,
+  nl,
+  el,
 };
 
 export function DateRangePicker({ startDate, endDate, onChange, className }: DateRangePickerProps) {
   const t = useTranslations("DatePicker");
-  const currentLocale = useLocale();
-  const dateLocale = localeMap[currentLocale] || enUS;
+  const formatIntl = useFormatter();
+  const locale = useLocale();
+  const dateLocale = localeMap[locale] || enUS;
   const modalRef = useRef<HTMLDialogElement>(null);
 
   const selectedRange: DateRange | undefined = useMemo(() => {
@@ -51,13 +54,25 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
 
   const displayText = useMemo(() => {
     if (!startDate) return t("pickDateRange");
-    if (!endDate) return format(new Date(startDate), "MMM d, yyyy", { locale: dateLocale });
-    return `${format(new Date(startDate), "MMM d, yyyy", { locale: dateLocale })} - ${format(
-      new Date(endDate),
-      "MMM d, yyyy",
-      { locale: dateLocale }
-    )}`;
-  }, [startDate, endDate, t, dateLocale]);
+
+    if (!endDate) {
+      return formatIntl.dateTime(new Date(startDate), {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    }
+
+    return `${formatIntl.dateTime(new Date(startDate), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })} - ${formatIntl.dateTime(new Date(endDate), {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })}`;
+  }, [startDate, endDate, t, formatIntl]);
 
   return (
     <>
@@ -92,6 +107,7 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
               onSelect={handleSelect}
               numberOfMonths={2}
               showOutsideDays={false}
+              locale={dateLocale}
               classNames={{
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-8 sm:space-y-0",
                 month: "space-y-4",

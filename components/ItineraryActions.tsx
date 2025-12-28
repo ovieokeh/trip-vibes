@@ -5,7 +5,7 @@ import { FileDown, Calendar } from "lucide-react";
 import { Itinerary } from "@/lib/types";
 import { generateItineraryPDF } from "@/lib/export/pdf";
 import { generateCalendarFile } from "@/lib/export/calendar";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 interface ItineraryActionsProps {
   itinerary: Itinerary;
@@ -14,13 +14,22 @@ interface ItineraryActionsProps {
 
 export default function ItineraryActions({ itinerary, cityName }: ItineraryActionsProps) {
   const t = useTranslations("ItineraryActions");
+  const tp = useTranslations("PDF");
+  const locale = useLocale();
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCalendar, setIsExportingCalendar] = useState(false);
 
   const handleDownloadPDF = async () => {
     setIsExportingPDF(true);
     try {
-      await generateItineraryPDF(itinerary, cityName);
+      await generateItineraryPDF(itinerary, cityName, locale, {
+        day: tp("day"),
+        generatedBy: tp("generatedBy"),
+        page: tp("page"),
+        of: tp("of"),
+        viewMap: tp("viewMap"),
+        call: tp("call"),
+      });
     } catch (error) {
       console.error("Failed to generate PDF:", error);
     } finally {

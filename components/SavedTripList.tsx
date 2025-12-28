@@ -6,7 +6,7 @@ import { Link } from "@/i18n/routing";
 import { Calendar, ChevronRight, Trash2, Map } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
 import { deleteItineraryAction } from "@/lib/db-actions";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
 
 // Create a type that matches what getSavedItinerariesAction returns
 type SavedTripSummary = {
@@ -27,6 +27,7 @@ interface SavedTripListProps {
 export default function SavedTripList({ initialTrips }: SavedTripListProps) {
   const t = useTranslations("SavedTrips");
   const tc = useTranslations("Confirmation.deleteTrip");
+  const formatIntl = useFormatter();
   const [trips, setTrips] = useState<SavedTripSummary[]>(initialTrips);
   const [tripToDelete, setTripToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -96,9 +97,13 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
                 <div className="flex items-center gap-2 mt-2 text-xs opacity-80">
                   <Calendar className="w-3 h-3" />
                   <span>
-                    {trip.startDate ? new Date(trip.startDate).toLocaleDateString() : t("noDate")}
-                    {" - "}
-                    {trip.endDate ? new Date(trip.endDate).toLocaleDateString() : ""}
+                    {trip.startDate ? formatIntl.dateTime(new Date(trip.startDate)) : t("noDate")}
+                    {trip.endDate && (
+                      <>
+                        {" - "}
+                        {formatIntl.dateTime(new Date(trip.endDate))}
+                      </>
+                    )}
                   </span>
                 </div>
               </div>
