@@ -1,0 +1,169 @@
+{
+  "Home": {
+    "title": "Μη μελετάς.",
+    "subtitle": "Άστο να τσουλήσει.",
+    "description": "Δες τσαι διάλεξε ίντα σου αρέσει. Εμείς θα σου φτιάξουμε ένα πρόγραμμα τζάμι, όλα δίπλα-δίπλα."
+  },
+  "Navbar": {
+    "newTrip": "Καινούργιο Ταξίδι",
+    "saved": "Φυλαγμένα"
+  },
+  "Confirmation": {
+    "newTrip": {
+      "title": "Να ξεκινήσουμε άλλο;",
+      "message": "Θα χαθούν αυτά που διάλεξες. Να το κάμουμε;",
+      "confirm": "Ξεκίνα καινούργιο"
+    },
+    "deleteTrip": {
+      "title": "Να το σβήσω;",
+      "message": "Είσαι σίγουρος πως θέλεις να το σβήσεις; Μετά δεν γυρίζει πίσω.",
+      "confirm": "Σβήστο",
+      "deleting": "Σβήνω..."
+    }
+  },
+  "SetupForm": {
+    "labels": {
+      "destination": "Πού πάμε;",
+      "dates": "Πότε;",
+      "budget": "Παραδάκι"
+    },
+    "placeholders": {
+      "selectCity": "Διάλεξε μια χώρα/πόλη",
+      "selectStartDate": "Πότε ξεκινάμε;",
+      "selectEndDate": "Πότε γυρνάμε;"
+    },
+    "buttons": {
+      "continue": "Πάμε παρακάτω",
+      "start": "Ξεκίνα το Vibe Check"
+    },
+    "errors": {
+      "cityRequired": "Πρέπει να πεις πού πάμε",
+      "startDateRequired": "Πότε ξεκινάμε;",
+      "endDateRequired": "Πότε γυρνάμε;"
+    }
+  },
+  "Footer": {
+    "tagline": "Trip Vibes",
+    "builtBy": "Φτιαγμένο με 🫶 από BBB τσαί HG",
+    "rights": "Όλα τα δικαιώματα δικά μας."
+  },
+  "Vibes": {
+    "complete": "Το Vibe Check τελείωσε!",
+    "building": "Φτιάχνουμε το πρόγραμμά σου...",
+    "vibeCheck": "Vibe Check",
+    "instructions": "Σύρε δεξιά για να το κρατήσεις, αριστερά για να το αφήσεις"
+  },
+  "Itinerary": {
+    "title": "Το Πρόγραμμά σου",
+    "budgetOptimized": "Φτιαγμένο για {budget} παραδάκι",
+    "endOfTrip": "Τέλος Ταξιδιού",
+    "saveTrip": "Φύλαξέ το",
+    "saving": "Φυλάσσω...",
+    "startNewTrip": "Ξεκίνα Καινούργιο",
+    "errors": {
+      "generation": "Πρόβλημα στο πρόγραμμα",
+      "generationFailed": "Δεν μπορέσαμε να το φτιάξουμε.",
+      "generationFailedMessage": "Κάτι στράβωσε. Δοκίμασε πάλι.",
+      "saveFailed": "Δεν φυλάχτηκε",
+      "saveFailedMessage": "Κάτι έγινε τσαί δεν μπορέσαμε να το φυλάξουμε. Δοκίμασε πάλι."
+    }
+  },
+  "SavedTrips": {
+    "title": "Φυλαγμένα Ταξίδια",
+    "empty": "Δεν έχεις φυλάξει τίποτα ακόμα.",
+    "planNow": "Φτιάξε ένα τώρα",
+    "untitledTrip": "Ταξίδι χωρίς όνομα",
+    "noDate": "Χωρίς μέρες"
+  },
+  "Loading": {
+    "buildingTrip": "Φτιάχνουμε το Ταξίδι",
+    "step": "Βήμα {current} από {total}"
+  },
+  "ItineraryDay": {
+    "day": "Μέρα",
+    "gettingThere": "Πώς θα πας εκεί",
+    "startOfDay": "Ξεκίνημα μέρας",
+    "closed": "Κλειστό",
+    "website": "Ιστοσελίδα",
+    "call": "Πάρε τηλέφωνο",
+    "directions": "Οδηγίες",
+    "moveToDay": "Πήγαινέ το σε άλλη μέρα...",
+    "remove": "Βγάλτο",
+    "addActivity": "Βάλε κάτι άλλο",
+    "addFirstActivity": "Βάλε την πρώτη σου βόλτα",
+    "transit": {
+      "walking": "Με τα πόδια",
+      "transit": "Λεωφορείο",
+      "driving": "Με το αμάξι"
+    }
+  },
+  "ItineraryEditor": {
+    "success": "Έγινε!",
+    "saveSuccess": "Το πρόγραμμα φυλάχτηκε",
+    "error": "Σφάλμα",
+    "saveFailed": "Δεν μπορέσαμε να το φυλάξουμε",
+    "saveChanges": "Φύλαξε τις αλλαγές"
+  },
+  "AddActivity": {
+    "title": "Βάλε Βόλτα",
+    "searching": "Ψάχνουμε τα καλύτερα μέρη...",
+    "noSuggestions": "Δεν έχει άλλα για τώρα.",
+    "noDescription": "Δεν έχει περιγραφή",
+    "add": "Βάλε"
+  },
+  "MoveActivity": {
+    "title": "Μετακίνηση",
+    "description": "Διάλεξε μέρα για να το πας.",
+    "cancel": "Άστο"
+  },
+  "DeckSelector": {
+    "title": "Τα δικά σου Vibes",
+    "empty": "Δεν έχεις φυλάξει τίποτα.",
+    "startSwiping": "Ξεκίνα να διαλέγεις",
+    "vibes": " vibes",
+    "created": "φτιάχτηκε",
+    "recently": "πρόσφατα",
+    "or": "Ή",
+    "startFresh": "Ξεκίνα από την αρχή"
+  },
+  "SaveDeck": {
+    "title": "💾 Να το φυλάξουμε;",
+    "description": "Φύλαξε αυτό το vibe για να το έχεις τσαί μετά χωρίς να ξαναδιαλέγεις.",
+    "deckName": "Όνομα",
+    "placeholder": "Το δικό μου Vibe",
+    "skip": "Άστο",
+    "saveAndContinue": "Φύλαξε τσαί προχώρα",
+    "defaultName": "Το Vibe μου",
+    "explorer": "Εξερευνητής"
+  },
+  "CitySelect": {
+    "selectCity": "Διάλεξε πόλη...",
+    "searchPlaceholder": "Ψάξε πόλη (π.χ. Τόκιο, Λονδίνο)...",
+    "typeToSearch": "Γράψε για να ψάξουμε...",
+    "noCity": "Δεν βρέθηκε τέτοια πόλη"
+  },
+  "ItineraryActions": {
+    "downloadPDF": "Κατέβασε PDF",
+    "generating": "Το φτιάχνουμε...",
+    "syncCalendar": "Βάλτο στο ημερολόγιο",
+    "exporting": "Εξαγωγή..."
+  },
+  "DatePicker": {
+    "pickDateRange": "Διάλεξε πότε θα πας",
+    "selectDates": "Διάλεξε Μέρες",
+    "done": "Έγινε",
+    "twoWeekLimit": "Τα ταξίδια είναι μέχρι 14 μέρες. Θα βγάλουμε μόνο τις πρώτες δύο εβδομάδες."
+  },
+  "Alert": {
+    "dismiss": "Εντάξει"
+  },
+  "Confirm": {
+    "confirm": "Ναι",
+    "cancel": "Όχι"
+  },
+  "Common": {
+    "loading": "Φορτώνει...",
+    "itinerary": "Πρόγραμμα",
+    "close": "Κλείσε"
+  }
+}

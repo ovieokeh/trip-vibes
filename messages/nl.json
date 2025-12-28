@@ -1,0 +1,169 @@
+{
+  "Home": {
+    "title": "Niet Plannen.",
+    "subtitle": "Gewoon Viben.",
+    "description": "Swipe door gecureerde kaarten. Wij bouwen een slimme, locatiebewuste route op basis van jouw smaak."
+  },
+  "Navbar": {
+    "newTrip": "Nieuwe Reis",
+    "saved": "Opgeslagen"
+  },
+  "Confirmation": {
+    "newTrip": {
+      "title": "Nieuwe reis starten?",
+      "message": "Dit reset je huidige selecties. Doorgaan?",
+      "confirm": "Nieuwe reis starten"
+    },
+    "deleteTrip": {
+      "title": "Reis verwijderen",
+      "message": "Weet je zeker dat je deze reis wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+      "confirm": "Verwijderen",
+      "deleting": "Verwijderen..."
+    }
+  },
+  "SetupForm": {
+    "labels": {
+      "destination": "Bestemming",
+      "dates": "Data",
+      "budget": "Budget"
+    },
+    "placeholders": {
+      "selectCity": "Selecteer een stad",
+      "selectStartDate": "Selecteer een startdatum",
+      "selectEndDate": "Selecteer een einddatum"
+    },
+    "buttons": {
+      "continue": "Doorgaan",
+      "start": "Start Vibe Check"
+    },
+    "errors": {
+      "cityRequired": "Stad is verplicht",
+      "startDateRequired": "Startdatum is verplicht",
+      "endDateRequired": "Einddatum is verplicht"
+    }
+  },
+  "Footer": {
+    "tagline": "Trip Vibes",
+    "builtBy": "Gemaakt met 🫶 door BBB & HG",
+    "rights": "Alle rechten voorbehouden."
+  },
+  "Vibes": {
+    "complete": "Vibe Check Voltooid",
+    "building": "Je aangepaste route maken...",
+    "vibeCheck": "Vibe Check",
+    "instructions": "Swipe naar rechts om te houden, links om over te slaan"
+  },
+  "Itinerary": {
+    "title": "Jouw Vibe Route",
+    "budgetOptimized": "Geoptimaliseerd voor een {budget} budget",
+    "endOfTrip": "Einde van de reis",
+    "saveTrip": "Reis opslaan",
+    "saving": "Opslaan...",
+    "startNewTrip": "Nieuwe reis starten",
+    "errors": {
+      "generation": "Route Fout",
+      "generationFailed": "We konden je route niet maken.",
+      "generationFailedMessage": "Er is iets misgegaan. Probeer het opnieuw.",
+      "saveFailed": "Opslaan mislukt",
+      "saveFailedMessage": "We konden je reis niet opslaan. Probeer het opnieuw."
+    }
+  },
+  "SavedTrips": {
+    "title": "Opgeslagen Reizen",
+    "empty": "Nog geen opgeslagen reizen.",
+    "planNow": "Plan nu een reis",
+    "untitledTrip": "Naamloze Reis",
+    "noDate": "Geen data"
+  },
+  "Loading": {
+    "buildingTrip": "Je reis opbouwen",
+    "step": "Stap {current} van {total}"
+  },
+  "ItineraryDay": {
+    "day": "Dag",
+    "gettingThere": "Erheen gaan",
+    "startOfDay": "Begin van de dag",
+    "closed": "Gesloten",
+    "website": "Website",
+    "call": "Bellen",
+    "directions": "Routebeschrijving",
+    "moveToDay": "Verplaatsen naar Dag...",
+    "remove": "Verwijderen",
+    "addActivity": "Activiteit toevoegen",
+    "addFirstActivity": "Voeg je eerste activiteit toe",
+    "transit": {
+      "walking": "Lopen",
+      "transit": "Openbaar vervoer",
+      "driving": "Rijden"
+    }
+  },
+  "ItineraryEditor": {
+    "success": "Succes",
+    "saveSuccess": "Route opgeslagen",
+    "error": "Fout",
+    "saveFailed": "Route opslaan mislukt",
+    "saveChanges": "Wijzigingen opslaan"
+  },
+  "AddActivity": {
+    "title": "Activiteit toevoegen",
+    "searching": "Zoeken naar de beste plekjes...",
+    "noSuggestions": "Geen suggesties meer beschikbaar voor dit tijdstip.",
+    "noDescription": "Geen beschrijving beschikbaar",
+    "add": "Toevoegen"
+  },
+  "MoveActivity": {
+    "title": "Activiteit verplaatsen",
+    "description": "Selecteer een dag om deze activiteit naar toe te verplaatsen.",
+    "cancel": "Annuleren"
+  },
+  "DeckSelector": {
+    "title": "Jouw Opgeslagen Vibes",
+    "empty": "Nog geen opgeslagen decks.",
+    "startSwiping": "Begin met swipen",
+    "vibes": "vibes",
+    "created": "gemaakt",
+    "recently": "onlangs",
+    "or": "OF",
+    "startFresh": "Frisse start – Opnieuw swipen"
+  },
+  "SaveDeck": {
+    "title": "💾 Je Vibes opslaan?",
+    "description": "Sla dit vibe-profiel op om later opnieuw te gebruiken — je hoeft niet opnieuw te swipen.",
+    "deckName": "Deck Naam",
+    "placeholder": "Mijn Reis Vibe",
+    "skip": "Overslaan",
+    "saveAndContinue": "Opslaan & Doorgaan",
+    "defaultName": "Mijn Vibe Deck",
+    "explorer": "Ontdekker"
+  },
+  "CitySelect": {
+    "selectCity": "Selecteer een stad...",
+    "searchPlaceholder": "Zoek stad (bijv. Tokyo, Londen)...",
+    "typeToSearch": "Typ om te zoeken...",
+    "noCity": "Geen stad gevonden"
+  },
+  "ItineraryActions": {
+    "downloadPDF": "Download PDF",
+    "generating": "Genereren...",
+    "syncCalendar": "Synchroniseer met agenda",
+    "exporting": "Exporteren..."
+  },
+  "DatePicker": {
+    "pickDateRange": "Kies een datumbereik",
+    "selectDates": "Selecteer Data",
+    "done": "Klaar",
+    "twoWeekLimit": "Routes zijn beperkt tot 14 dagen. Alleen de eerste twee weken worden opgenomen."
+  },
+  "Alert": {
+    "dismiss": "Sluiten"
+  },
+  "Confirm": {
+    "confirm": "Bevestigen",
+    "cancel": "Annuleren"
+  },
+  "Common": {
+    "loading": "Laden...",
+    "itinerary": "Route",
+    "close": "Sluiten"
+  }
+}

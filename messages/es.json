@@ -1,0 +1,169 @@
+{
+  "Home": {
+    "title": "No Planees.",
+    "subtitle": "Solo Vibe.",
+    "description": "Desliza a través de tarjetas seleccionadas. Crearemos un itinerario inteligente y consciente de la ubicación basado en tus gustos."
+  },
+  "Navbar": {
+    "newTrip": "Nuevo Viaje",
+    "saved": "Guardados"
+  },
+  "Confirmation": {
+    "newTrip": {
+      "title": "¿Iniciar Nuevo Viaje?",
+      "message": "Esto restablecerá tus selecciones actuales. ¿Continuar?",
+      "confirm": "Iniciar Nuevo Viaje"
+    },
+    "deleteTrip": {
+      "title": "Eliminar Viaje",
+      "message": "¿Estás seguro de que quieres eliminar este viaje? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar",
+      "deleting": "Eliminando..."
+    }
+  },
+  "SetupForm": {
+    "labels": {
+      "destination": "Destino",
+      "dates": "Fechas",
+      "budget": "Presupuesto"
+    },
+    "placeholders": {
+      "selectCity": "Selecciona una ciudad",
+      "selectStartDate": "Selecciona una fecha de inicio",
+      "selectEndDate": "Selecciona una fecha de finalización"
+    },
+    "buttons": {
+      "continue": "Continuar",
+      "start": "Iniciar Vibe Check"
+    },
+    "errors": {
+      "cityRequired": "La ciudad es obligatoria",
+      "startDateRequired": "La fecha de inicio es obligatoria",
+      "endDateRequired": "La fecha de finalización es obligatoria"
+    }
+  },
+  "Footer": {
+    "tagline": "Trip Vibes",
+    "builtBy": "Construido con 🫶 por BBB & HG",
+    "rights": "Todos los derechos reservados."
+  },
+  "Vibes": {
+    "complete": "Vibe Check Completado",
+    "building": "Creando tu itinerario personalizado...",
+    "vibeCheck": "Vibe Check",
+    "instructions": "Desliza a la derecha para conservar, a la izquierda para omitir"
+  },
+  "Itinerary": {
+    "title": "Tu Itinerario Vibe",
+    "budgetOptimized": "Optimizado para un presupuesto {budget}",
+    "endOfTrip": "Fin del viaje",
+    "saveTrip": "Guardar Viaje",
+    "saving": "Guardando...",
+    "startNewTrip": "Iniciar Nuevo Viaje",
+    "errors": {
+      "generation": "Error de Itinerario",
+      "generationFailed": "No pudimos crear tu itinerario.",
+      "generationFailedMessage": "Algo salió mal. Por favor, inténtalo de nuevo.",
+      "saveFailed": "Error al Guardar",
+      "saveFailedMessage": "No pudimos guardar tu viaje. Por favor, inténtalo de nuevo."
+    }
+  },
+  "SavedTrips": {
+    "title": "Viajes Guardados",
+    "empty": "No hay viajes guardados todavía.",
+    "planNow": "Planifica un viaje ahora",
+    "untitledTrip": "Viaje sin Título",
+    "noDate": "Sin fechas"
+  },
+  "Loading": {
+    "buildingTrip": "Construyendo tu Viaje",
+    "step": "Paso {current} de {total}"
+  },
+  "ItineraryDay": {
+    "day": "Día",
+    "gettingThere": "Cómo llegar",
+    "startOfDay": "Inicio del día",
+    "closed": "Cerrado",
+    "website": "Sitio web",
+    "call": "Llamar",
+    "directions": "Direcciones",
+    "moveToDay": "Mover al Día...",
+    "remove": "Eliminar",
+    "addActivity": "Añadir Actividad",
+    "addFirstActivity": "Añade tu primera actividad",
+    "transit": {
+      "walking": "Caminando",
+      "transit": "Tránsito",
+      "driving": "Conduciendo"
+    }
+  },
+  "ItineraryEditor": {
+    "success": "Éxito",
+    "saveSuccess": "Itinerario guardado",
+    "error": "Error",
+    "saveFailed": "No se pudo guardar el itinerario",
+    "saveChanges": "Guardar Cambios"
+  },
+  "AddActivity": {
+    "title": "Añadir Actividad",
+    "searching": "Buscando los mejores lugares...",
+    "noSuggestions": "No hay más sugerencias disponibles para este momento.",
+    "noDescription": "No hay descripción disponible",
+    "add": "Añadir"
+  },
+  "MoveActivity": {
+    "title": "Mover Actividad",
+    "description": "Selecciona un día para mover esta actividad.",
+    "cancel": "Cancelar"
+  },
+  "DeckSelector": {
+    "title": "Tus Vibes Guardados",
+    "empty": "No hay mazos guardados todavía.",
+    "startSwiping": "Empezar a deslizar",
+    "vibes": "vibes",
+    "created": "creado",
+    "recently": "recientemente",
+    "or": "O",
+    "startFresh": "Empezar de Cero – Desliza de Nuevo"
+  },
+  "SaveDeck": {
+    "title": "💾 ¿Guardar Tus Vibes?",
+    "description": "Guarda este perfil de vibe para usarlo en futuros viajes sin deslizar de nuevo.",
+    "deckName": "Nombre del Mazo",
+    "placeholder": "Mi Travel Vibe",
+    "skip": "Omitir",
+    "saveAndContinue": "Guardar y Continuar",
+    "defaultName": "Mi Mazo Vibe",
+    "explorer": "Explorador"
+  },
+  "CitySelect": {
+    "selectCity": "Selecciona una ciudad...",
+    "searchPlaceholder": "Buscar ciudad (ej. Tokio, Londres)...",
+    "typeToSearch": "Escribe para buscar...",
+    "noCity": "No se encontró ninguna ciudad"
+  },
+  "ItineraryActions": {
+    "downloadPDF": "Descargar PDF",
+    "generating": "Generando...",
+    "syncCalendar": "Sincronizar calendario",
+    "exporting": "Exportando..."
+  },
+  "DatePicker": {
+    "pickDateRange": "Elige un rango de fechas",
+    "selectDates": "Seleccionar Fechas",
+    "done": "Hecho",
+    "twoWeekLimit": "Los itinerarios están limitados a 14 días. Solo se incluirán las dos primeras semanas."
+  },
+  "Alert": {
+    "dismiss": "Descartar"
+  },
+  "Confirm": {
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  },
+  "Common": {
+    "loading": "Cargando...",
+    "itinerary": "Itinerario",
+    "close": "Cerrar"
+  }
+}

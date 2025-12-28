@@ -1,0 +1,169 @@
+{
+  "Home": {
+    "title": "Plane nicht.",
+    "subtitle": "Vibe einfach.",
+    "description": "Wische durch kuratierte Karten. Wir erstellen einen intelligenten, ortsbezogenen Reiseplan basierend auf deinem Geschmack."
+  },
+  "Navbar": {
+    "newTrip": "Neue Reise",
+    "saved": "Gespeichert"
+  },
+  "Confirmation": {
+    "newTrip": {
+      "title": "Neue Reise starten?",
+      "message": "Dies setzt deine aktuellen Auswahlen zurück. Fortfahren?",
+      "confirm": "Neue Reise starten"
+    },
+    "deleteTrip": {
+      "title": "Reise löschen",
+      "message": "Bist du sicher, dass du diese Reise löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirm": "Löschen",
+      "deleting": "Löschen..."
+    }
+  },
+  "SetupForm": {
+    "labels": {
+      "destination": "Ziel",
+      "dates": "Daten",
+      "budget": "Budget"
+    },
+    "placeholders": {
+      "selectCity": "Stadt auswählen",
+      "selectStartDate": "Startdatum auswählen",
+      "selectEndDate": "Enddatum auswählen"
+    },
+    "buttons": {
+      "continue": "Weiter",
+      "start": "Vibe Check starten"
+    },
+    "errors": {
+      "cityRequired": "Stadt ist erforderlich",
+      "startDateRequired": "Startdatum ist erforderlich",
+      "endDateRequired": "Enddatum ist erforderlich"
+    }
+  },
+  "Footer": {
+    "tagline": "Trip Vibes",
+    "builtBy": "Erstellt met 🫶 von BBB & HG",
+    "rights": "Alle Rechte vorbehalten."
+  },
+  "Vibes": {
+    "complete": "Vibe Check abgeschlossen",
+    "building": "Erstelle deinen individuellen Reiseplan...",
+    "vibeCheck": "Vibe Check",
+    "instructions": "Nach rechts wischen zum Behalten, nach links zum Überspringen"
+  },
+  "Itinerary": {
+    "title": "Dein Vibe-Reiseplan",
+    "budgetOptimized": "Optimiert für ein {budget} Budget",
+    "endOfTrip": "Ende der Reise",
+    "saveTrip": "Reise speichern",
+    "saving": "Speichern...",
+    "startNewTrip": "Neue Reise starten",
+    "errors": {
+      "generation": "Reiseplan-Fehler",
+      "generationFailed": "Wir konnten deinen Reiseplan nicht erstellen.",
+      "generationFailedMessage": "Etwas ist schief gelaufen. Bitte versuche es erneut.",
+      "saveFailed": "Speichern fehlgeschlagen",
+      "saveFailedMessage": "Wir konnten deine Reise nicht speichern. Bitte versuche es erneut."
+    }
+  },
+  "SavedTrips": {
+    "title": "Gespeicherte Reisen",
+    "empty": "Noch keine gespeicherten Reisen.",
+    "planNow": "Jetzt eine Reise planen",
+    "untitledTrip": "Unbenannte Reise",
+    "noDate": "Keine Daten"
+  },
+  "Loading": {
+    "buildingTrip": "Erstelle deine Reise",
+    "step": "Schritt {current} von {total}"
+  },
+  "ItineraryDay": {
+    "day": "Tag",
+    "gettingThere": "Anreise",
+    "startOfDay": "Tagesbeginn",
+    "closed": "Geschlossen",
+    "website": "Webseite",
+    "call": "Anrufen",
+    "directions": "Wegbeschreibung",
+    "moveToDay": "Auf Tag verschieben...",
+    "remove": "Entfernen",
+    "addActivity": "Aktivität hinzufügen",
+    "addFirstActivity": "Füge deine erste Aktivität hinzu",
+    "transit": {
+      "walking": "Zu Fuß",
+      "transit": "Öffentlicher Verkehr",
+      "driving": "Mit dem Auto"
+    }
+  },
+  "ItineraryEditor": {
+    "success": "Erfolg",
+    "saveSuccess": "Reiseplan gespeichert",
+    "error": "Fehler",
+    "saveFailed": "Reiseplan konnte nicht gespeichert werden",
+    "saveChanges": "Änderungen speichern"
+  },
+  "AddActivity": {
+    "title": "Aktivität hinzufügen",
+    "searching": "Suche nach den besten Orten...",
+    "noSuggestions": "Keine weiteren Vorschläge für diese Zeit verfügbar.",
+    "noDescription": "Keine Beschreibung verfügbar",
+    "add": "Hinzufügen"
+  },
+  "MoveActivity": {
+    "title": "Aktivität verschieben",
+    "description": "Wähle einen Tag aus, an den diese Aktivität verschoben werden soll.",
+    "cancel": "Abbrechen"
+  },
+  "DeckSelector": {
+    "title": "Deine gespeicherten Vibes",
+    "empty": "Noch keine gespeicherten Decks.",
+    "startSwiping": "Anfangen zu wischen",
+    "vibes": "Vibes",
+    "created": "erstellt",
+    "recently": "kürzlich",
+    "or": "ODER",
+    "startFresh": "Frischer Start – Erneut wischen"
+  },
+  "SaveDeck": {
+    "title": "💾 Deine Vibes speichern?",
+    "description": "Speichere dieses Vibe-Profil, um es für zukünftige Reisen zu verwenden, ohne erneut wischen zu müssen.",
+    "deckName": "Deck-Name",
+    "placeholder": "Mein Reise-Vibe",
+    "skip": "Überspringen",
+    "saveAndContinue": "Speichern & Weiter",
+    "defaultName": "Mein Vibe-Deck",
+    "explorer": "Entdecker"
+  },
+  "CitySelect": {
+    "selectCity": "Stadt auswählen...",
+    "searchPlaceholder": "Stadt suchen (z.B. Tokio, London)...",
+    "typeToSearch": "Tippen zum Suchen...",
+    "noCity": "Keine Stadt gefunden"
+  },
+  "ItineraryActions": {
+    "downloadPDF": "PDF herunterladen",
+    "generating": "Generiere...",
+    "syncCalendar": "Mit Kalender synchronisieren",
+    "exporting": "Exportiere..."
+  },
+  "DatePicker": {
+    "pickDateRange": "Wähle einen Zeitraum aus",
+    "selectDates": "Daten auswählen",
+    "done": "Fertig",
+    "twoWeekLimit": "Reisepläne sind auf 14 Tage begrenzt. Nur die ersten zwei Wochen werden berücksichtigt."
+  },
+  "Alert": {
+    "dismiss": "Verwerfen"
+  },
+  "Confirm": {
+    "confirm": "Bestätigen",
+    "cancel": "Abbrechen"
+  },
+  "Common": {
+    "loading": "Lädt...",
+    "itinerary": "Reiseplan",
+    "close": "Schließen"
+  }
+}

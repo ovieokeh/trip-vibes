@@ -6,6 +6,7 @@ import { useStore } from "@/store/useStore";
 import { useState } from "react";
 import ConfirmModal from "./ConfirmModal";
 import { useTranslations } from "next-intl";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar({ savedCount = 0 }: { savedCount?: number }) {
   const t = useTranslations("Navbar");
@@ -47,6 +48,7 @@ export default function Navbar({ savedCount = 0 }: { savedCount?: number }) {
           </Link>
         </div>
         <div className="flex-none flex items-center gap-2">
+          <LanguageSwitcher />
           <Link href="/saved" className="btn btn-ghost btn-circle relative" aria-label={t("saved")}>
             <Heart className={`w-5 h-5 ${savedCount > 0 ? "fill-error text-error" : ""}`} />
             {savedCount > 0 && (
