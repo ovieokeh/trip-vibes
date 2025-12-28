@@ -1,0 +1,275 @@
+import jsPDF from "jspdf";
+import { Itinerary, TripActivity } from "@/lib/types";
+
+/**
+ * CONSTANTS & CONFIGURATION
+ * Centralizing these ensures layout consistency across the document.
+ */
+const MARGIN = { TOP: 20, BOTTOM: 25, LEFT: 20, RIGHT: 20 };
+const COLORS = {
+  PRIMARY: [50, 100, 150] as [number, number, number],
+  SECONDARY: [100, 100, 100] as [number, number, number],
+  LINK: [0, 100, 200] as [number, number, number],
+  DIVIDER: [220, 220, 220] as [number, number, number],
+  TEXT: [30, 30, 30] as [number, number, number],
+};
+
+/**
+ * Shared layout state to ensure page breaks update yPos consistently
+ * across all rendering functions. This fixes the bug where ensureSpace
+ * and renderActivity had separate yPos variables causing empty pages.
+ */
+interface LayoutState {
+  yPos: number;
+  pageHeight: number;
+  contentWidth: number;
+}
+
+/**
+ * FIX: Date-Shift Bug
+ * Parsing 'YYYY-MM-DD' with 'new Date()' treats it as UTC, often shifting
+ * the date back one day in Western timezones. This manual split ensures local parsing.
+ */
+function parseSafeDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "";
+  const date = parseSafeDate(dateStr);
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatTime(time: string): string {
+  if (!time) return "";
+  const [hours, minutes] = time.split(":").map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return "";
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
+}
+
+function getGoogleMapsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
+function getTelUrl(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, "")}`;
+}
+
+/**
+ * Layout Helper: Manages page breaks.
+ * MUST be called BEFORE rendering content that needs the space.
+ */
+function ensureSpace(doc: jsPDF, state: LayoutState, neededHeight: number): void {
+  if (state.yPos + neededHeight > state.pageHeight - MARGIN.BOTTOM) {
+    doc.addPage();
+    state.yPos = MARGIN.TOP;
+  }
+}
+
+/**
+ * PDF GENERATION ENGINE
+ */
+export async function generateItineraryPDF(itinerary: Itinerary, cityName: string): Promise<void> {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentWidth = pageWidth - MARGIN.LEFT - MARGIN.RIGHT;
+
+  // Shared mutable state object - fixes the scope bug where
+  // ensureSpace and renderActivity had different yPos variables
+  const state: LayoutState = {
+    yPos: MARGIN.TOP,
+    pageHeight,
+    contentWidth,
+  };
+
+  // 1. HEADER SECTION
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(26);
+  const title = itinerary.name || `Trip to ${cityName}`;
+  const wrappedTitle = doc.splitTextToSize(title, contentWidth);
+  doc.text(wrappedTitle, pageWidth / 2, state.yPos, { align: "center" });
+  state.yPos += wrappedTitle.length * 10;
+
+  if (itinerary.startDate && itinerary.endDate) {
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.SECONDARY);
+    const dateRange = `${formatDate(itinerary.startDate)} — ${formatDate(itinerary.endDate)}`;
+    doc.text(dateRange, pageWidth / 2, state.yPos, { align: "center" });
+    state.yPos += 12;
+  }
+
+  // Divider
+  doc.setDrawColor(...COLORS.DIVIDER);
+  doc.line(MARGIN.LEFT, state.yPos, pageWidth - MARGIN.RIGHT, state.yPos);
+  state.yPos += 12;
+
+  // 2. DAYS LOOP
+  const days = itinerary.days ?? [];
+  for (const day of days) {
+    // Prevent orphaned headers: Ensure space for Header + at least one activity start
+    ensureSpace(doc, state, 45);
+
+    // Day Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...COLORS.PRIMARY);
+    doc.text(`Day ${day.dayNumber}`, MARGIN.LEFT, state.yPos);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.SECONDARY);
+    const formattedDate = formatDate(day.date);
+    if (formattedDate) {
+      doc.text(formattedDate, MARGIN.LEFT + 25, state.yPos);
+    }
+    state.yPos += 10;
+
+    // Activities
+    const activities = day.activities ?? [];
+    for (const activity of activities) {
+      renderActivity(doc, activity, state);
+    }
+
+    state.yPos += 8; // Spacer between days
+  }
+
+  // 3. FOOTER & METADATA
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(180);
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth - MARGIN.RIGHT, pageHeight - 10, { align: "right" });
+    doc.text("Generated by TripVibes", MARGIN.LEFT, pageHeight - 10);
+  }
+
+  const fileName = `${(itinerary.name || cityName).replace(/[^a-zA-Z0-9]/g, "_")}_itinerary.pdf`;
+  doc.save(fileName);
+}
+
+/**
+ * ACTIVITY RENDERER
+ * Encapsulates the logic for a single activity block.
+ * Uses shared LayoutState so page breaks update yPos correctly.
+ */
+function renderActivity(doc: jsPDF, activity: TripActivity, state: LayoutState): void {
+  const { vibe } = activity;
+
+  // Guard against missing vibe data
+  if (!vibe) return;
+
+  const textX = MARGIN.LEFT + 5;
+
+  // A. Transit Note (Pre-activity)
+  if (activity.transitNote) {
+    ensureSpace(doc, state, 6);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(120);
+    const transitText = `| ${activity.transitNote}`;
+    doc.text(transitText, textX, state.yPos);
+    state.yPos += 6;
+  }
+
+  // B. Time Range
+  const startTime = activity.startTime ? formatTime(activity.startTime) : "";
+  const endTime = activity.endTime ? formatTime(activity.endTime) : "";
+  const timeStr = startTime && endTime ? `${startTime} - ${endTime}` : startTime || endTime || "";
+
+  if (timeStr) {
+    ensureSpace(doc, state, 6);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(100);
+    doc.text(timeStr, MARGIN.LEFT, state.yPos);
+    state.yPos += 6;
+  }
+
+  // C. Title (Wrapped to prevent overflow)
+  const vibeTitle = vibe.title || "Untitled Activity";
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  const wrappedTitle = doc.splitTextToSize(vibeTitle, state.contentWidth - 10);
+  const titleHeight = wrappedTitle.length * 6;
+
+  // Ensure space BEFORE rendering
+  ensureSpace(doc, state, titleHeight);
+
+  if (vibe.website) {
+    doc.setTextColor(...COLORS.LINK);
+    // textWithLink only works with single line; for multi-line, render first line as link
+    if (wrappedTitle.length === 1) {
+      doc.textWithLink(wrappedTitle[0], textX, state.yPos, { url: vibe.website });
+    } else {
+      // First line is clickable, rest is plain text
+      doc.textWithLink(wrappedTitle[0], textX, state.yPos, { url: vibe.website });
+      doc.setTextColor(...COLORS.TEXT);
+      for (let i = 1; i < wrappedTitle.length; i++) {
+        doc.text(wrappedTitle[i], textX, state.yPos + i * 6);
+      }
+    }
+  } else {
+    doc.setTextColor(...COLORS.TEXT);
+    doc.text(wrappedTitle, textX, state.yPos);
+  }
+  state.yPos += titleHeight;
+
+  // D. Details (Category & Address)
+  const details = [vibe.category, vibe.address].filter(Boolean).join(" • ");
+  if (details) {
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...COLORS.SECONDARY);
+    const wrappedDetails = doc.splitTextToSize(details, state.contentWidth - 10);
+    const detailsHeight = wrappedDetails.length * 4.5 + 2;
+
+    ensureSpace(doc, state, detailsHeight);
+    doc.text(wrappedDetails, textX, state.yPos);
+    state.yPos += detailsHeight;
+  }
+
+  // E. Action Links (Directions / Phone)
+  const hasLinks = (vibe.lat && vibe.lng) || vibe.phone;
+  if (hasLinks) {
+    ensureSpace(doc, state, 8);
+    doc.setFontSize(8.5);
+    let xOffset = textX;
+
+    if (vibe.lat && vibe.lng) {
+      doc.setTextColor(...COLORS.LINK);
+      const label = "View Map";
+      doc.textWithLink(label, xOffset, state.yPos, { url: getGoogleMapsUrl(vibe.lat, vibe.lng) });
+      xOffset += doc.getTextWidth(label) + 4;
+    }
+
+    if (vibe.lat && vibe.lng && vibe.phone) {
+      doc.setTextColor(200);
+      doc.text("|", xOffset, state.yPos);
+      xOffset += 4;
+    }
+
+    if (vibe.phone) {
+      doc.setTextColor(...COLORS.LINK);
+      const label = `Call: ${vibe.phone}`;
+      doc.textWithLink(label, xOffset, state.yPos, { url: getTelUrl(vibe.phone) });
+    }
+    state.yPos += 8;
+  } else {
+    state.yPos += 4; // Buffer if no links
+  }
+}

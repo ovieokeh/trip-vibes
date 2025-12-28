@@ -9,6 +9,7 @@ import ItineraryDay from "@/components/ItineraryDay";
 import AlertModal from "@/components/AlertModal";
 import AddActivityModal from "@/components/AddActivityModal";
 import LoadingScreen from "@/components/LoadingScreen";
+import ItineraryActions from "@/components/ItineraryActions";
 import { getTransitNote } from "@/lib/geo";
 
 // Note: Metadata cannot be exported from a "use client" component.
@@ -388,7 +389,9 @@ export default function ItineraryPage() {
 
       <div className="divider my-8">End of Trip</div>
 
-      <div className="flex justify-center gap-4 pb-8">
+      <ItineraryActions itinerary={itinerary} cityName={prefs.cityId} />
+
+      <div className="flex justify-center gap-4 pb-8 mt-6">
         <button
           className="btn btn-primary"
           disabled={isSaving}

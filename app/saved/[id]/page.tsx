@@ -3,6 +3,7 @@ import { getItineraryByIdAction, getCityById } from "@/lib/db-actions";
 import { ChevronLeft } from "lucide-react";
 import TripControls from "./TripControls";
 import ItineraryEditor from "@/components/ItineraryEditor";
+import ItineraryActions from "@/components/ItineraryActions";
 import { Metadata } from "next";
 
 type Props = {
@@ -115,6 +116,10 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
       </div>
 
       <ItineraryEditor initialItinerary={itinerary} cityId={itinerary.cityId} isSavedMode={true} />
+
+      <div className="mt-8 pb-8">
+        <ItineraryActions itinerary={itinerary} cityName={cityName} />
+      </div>
     </div>
   );
 }
