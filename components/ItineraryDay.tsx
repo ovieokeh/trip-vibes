@@ -235,17 +235,49 @@ export default function ItineraryDay({
                   {/* Mobile: Horizontal carousel at top */}
                   {act.vibe.photos && act.vibe.photos.length > 0 ? (
                     <>
-                      {/* Mobile Layout - Horizontal Carousel */}
-                      <div className="sm:hidden h-40 overflow-x-auto carousel carousel-center bg-base-300 space-x-0 scrollbar-hide">
-                        {act.vibe.photos.map((p, i) => (
-                          <div
-                            key={i}
-                            className="carousel-item w-full h-full cursor-pointer"
-                            onClick={() => openGallery(act.vibe.photos!, i, act.vibe.title)}
-                          >
-                            <img src={p.url} className="w-full h-full object-cover" alt={act.vibe.title} />
+                      {/* Mobile Layout - Main Photo + Thumbnails Row */}
+                      <div className="sm:hidden flex flex-col gap-1">
+                        {/* Main large photo */}
+                        <div
+                          className="h-48 w-full cursor-pointer overflow-hidden"
+                          onClick={() => openGallery(act.vibe.photos!, 0, act.vibe.title)}
+                        >
+                          <img
+                            src={act.vibe.photos[0].url}
+                            className="w-full h-full object-cover active:scale-95 transition-transform"
+                            alt={act.vibe.title}
+                          />
+                        </div>
+
+                        {/* Thumbnails row (max 4) */}
+                        {act.vibe.photos.length > 1 && (
+                          <div className="grid grid-cols-4 gap-1 h-14">
+                            {act.vibe.photos.slice(1, 5).map((p, i) => {
+                              const photoIndex = i + 1;
+                              const isLast = i === 3;
+                              const remaining = act.vibe.photos!.length - 5;
+
+                              return (
+                                <div
+                                  key={i}
+                                  className="relative cursor-pointer overflow-hidden"
+                                  onClick={() => openGallery(act.vibe.photos!, photoIndex, act.vibe.title)}
+                                >
+                                  <img
+                                    src={p.url}
+                                    className="w-full h-full object-cover active:scale-95 transition-transform"
+                                    alt={`${act.vibe.title} ${photoIndex + 1}`}
+                                  />
+                                  {isLast && remaining > 0 && (
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+                                      <span className="text-white text-xs font-bold">+{remaining}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
-                        ))}
+                        )}
                       </div>
 
                       {/* Desktop Layout - Photo Grid */}
