@@ -37,7 +37,7 @@ function matchesFoodPattern(c: EngineCandidate): boolean {
 /**
  * Checks if the candidate is a nightlife place.
  */
-function matchesNightlifePattern(c: EngineCandidate): boolean {
+export function matchesNightlifePattern(c: EngineCandidate): boolean {
   const cats = (c.metadata?.categories || []).map((s: string) => s.toLowerCase());
   const name = c.name.toLowerCase();
   const combined = [...cats, name].join(" ");

@@ -1,6 +1,6 @@
 import { EngineCandidate, Itinerary, UserPreferences, DayPlan, TripActivity, Vibe } from "../types";
 import { v4 as uuidv4 } from "uuid";
-import { isMeal, isActivity } from "./utils";
+import { isMeal, isActivity, matchesNightlifePattern } from "./utils";
 import { isPlaceOpenAt, calculateTransit } from "../activity";
 import { addMinutesToTime } from "../time";
 
@@ -166,6 +166,9 @@ export class SchedulerEngine {
 
   private matchesSlotType(c: EngineCandidate, slot: TimeSlot): boolean {
     if (slot.type === "meal") {
+      // Exclude nightlife venues from meal slots (bars, pubs, clubs should be activities)
+      if (matchesNightlifePattern(c)) return false;
+
       const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
       const name = c.name.toLowerCase();
       const combined = [...cats, name].join(" ");

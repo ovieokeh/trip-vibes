@@ -21,7 +21,12 @@ async function reset() {
   // await seed(); // seeding must happen after push
 }
 
-reset().catch((err) => {
-  console.error("Reset failed:", err);
-  process.exit(1);
-});
+reset()
+  .catch((err) => {
+    console.error("Reset failed:", err);
+    process.exit(1);
+  })
+  .then(() => {
+    console.log("Reset completed successfully.");
+    process.exit(0);
+  });

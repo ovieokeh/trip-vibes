@@ -26,8 +26,13 @@ export async function seed() {
 }
 
 if (require.main === module || !require.main) {
-  seed().catch((err) => {
-    console.error("Seed failed:", err);
-    process.exit(1);
-  });
+  seed()
+    .catch((err) => {
+      console.error("Seed failed:", err);
+      process.exit(1);
+    })
+    .then(() => {
+      console.log("Seed completed successfully.");
+      process.exit(0);
+    });
 }
