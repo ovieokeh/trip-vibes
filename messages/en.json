@@ -1,0 +1,169 @@
+{
+  "Home": {
+    "title": "Don't Plan.",
+    "subtitle": "Just Vibe.",
+    "description": "Swipe through aesthetic cards. We'll build a geographically optimized itinerary for you."
+  },
+  "Navbar": {
+    "newTrip": "New Trip",
+    "saved": "Saved"
+  },
+  "Confirmation": {
+    "newTrip": {
+      "title": "Start New Trip?",
+      "message": "This will clear your current selections and start a fresh journey. Are you sure?",
+      "confirm": "Start New Trip"
+    },
+    "deleteTrip": {
+      "title": "Delete Trip",
+      "message": "Are you sure you want to delete this trip? This action cannot be undone.",
+      "confirm": "Delete",
+      "deleting": "Deleting..."
+    }
+  },
+  "SetupForm": {
+    "labels": {
+      "destination": "Destination",
+      "dates": "Dates",
+      "budget": "Budget"
+    },
+    "placeholders": {
+      "selectCity": "Please select a city",
+      "selectStartDate": "Please select a start date",
+      "selectEndDate": "Please select an end date"
+    },
+    "buttons": {
+      "continue": "Continue",
+      "start": "Start Vibe Check"
+    },
+    "errors": {
+      "cityRequired": "Please select a city",
+      "startDateRequired": "Please select a start date",
+      "endDateRequired": "Please select an end date"
+    }
+  },
+  "Footer": {
+    "tagline": "Trip Vibes",
+    "builtBy": "Built with 🫶 by BBB & HG",
+    "rights": "All rights reserved."
+  },
+  "Vibes": {
+    "complete": "Vibe Check Complete!",
+    "building": "Building your unique itinerary...",
+    "vibeCheck": "Vibe Check",
+    "instructions": "Swipe right for YES, left for NO"
+  },
+  "Itinerary": {
+    "title": "Your Vibe Itinerary",
+    "budgetOptimized": "Optimized for {budget} budget",
+    "endOfTrip": "End of Trip",
+    "saveTrip": "Save Trip",
+    "saving": "Saving...",
+    "startNewTrip": "Start New Trip",
+    "errors": {
+      "generation": "Generation Error",
+      "generationFailed": "Generation Failed",
+      "generationFailedMessage": "We couldn't generate your itinerary. Please try again.",
+      "saveFailed": "Save Failed",
+      "saveFailedMessage": "Could not save your trip. Please try again."
+    }
+  },
+  "SavedTrips": {
+    "title": "Saved Trips",
+    "empty": "No saved trips yet.",
+    "planNow": "Plan a trip now",
+    "untitledTrip": "Untitled Trip",
+    "noDate": "No date"
+  },
+  "Loading": {
+    "buildingTrip": "Building Your Trip",
+    "step": "Step {current} of {total}"
+  },
+  "ItineraryDay": {
+    "day": "Day",
+    "gettingThere": "Getting there",
+    "startOfDay": "Start of day",
+    "closed": "Closed",
+    "website": "Website",
+    "call": "Call",
+    "directions": "Directions",
+    "moveToDay": "Move to Day...",
+    "remove": "Remove",
+    "addActivity": "Add Activity",
+    "addFirstActivity": "Add your first activity",
+    "transit": {
+      "walking": "Walking",
+      "transit": "Transit",
+      "driving": "Driving"
+    }
+  },
+  "ItineraryEditor": {
+    "success": "Success",
+    "saveSuccess": "Itinerary saved successfully!",
+    "error": "Error",
+    "saveFailed": "Failed to save itinerary.",
+    "saveChanges": "Save Changes"
+  },
+  "AddActivity": {
+    "title": "Add Activity",
+    "searching": "Finding the best spots for you...",
+    "noSuggestions": "No more suggestions available for this time.",
+    "noDescription": "No description available",
+    "add": "Add"
+  },
+  "MoveActivity": {
+    "title": "Move Activity",
+    "description": "Select a day to move this activity to.",
+    "cancel": "Cancel"
+  },
+  "DeckSelector": {
+    "title": "Your Saved Vibes",
+    "empty": "No saved vibe decks yet.",
+    "startSwiping": "Start Swiping",
+    "vibes": "vibes",
+    "created": "Created",
+    "recently": "recently",
+    "or": "OR",
+    "startFresh": "Start Fresh – Swipe Again"
+  },
+  "SaveDeck": {
+    "title": "💾 Save Your Vibes?",
+    "description": "Save this vibe profile to use for future trips without swiping again.",
+    "deckName": "Deck Name",
+    "placeholder": "My Travel Vibe",
+    "skip": "Skip",
+    "saveAndContinue": "Save & Continue",
+    "defaultName": "My Vibe Deck",
+    "explorer": "Explorer"
+  },
+  "CitySelect": {
+    "selectCity": "Select a city...",
+    "searchPlaceholder": "Search city (e.g. Tokyo, London)...",
+    "typeToSearch": "Type to search...",
+    "noCity": "No city found."
+  },
+  "ItineraryActions": {
+    "downloadPDF": "Download PDF",
+    "generating": "Generating...",
+    "syncCalendar": "Sync to Calendar",
+    "exporting": "Exporting..."
+  },
+  "DatePicker": {
+    "pickDateRange": "Pick a date range",
+    "selectDates": "Select Dates",
+    "done": "Done",
+    "twoWeekLimit": "Itineraries are limited to 2 weeks. Only the first 14 days will be generated."
+  },
+  "Alert": {
+    "dismiss": "Dismiss"
+  },
+  "Confirm": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "Common": {
+    "loading": "Loading...",
+    "itinerary": "Itinerary",
+    "close": "close"
+  }
+}

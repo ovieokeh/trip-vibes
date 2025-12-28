@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { VibeDeck, getVibeDecksAction, deleteVibeDeckAction } from "@/lib/db-actions";
-import { useStore } from "@/store/useStore";
+import { useTranslations } from "next-intl";
 
 interface DeckSelectorProps {
   onSelect: (deck: VibeDeck) => void;
@@ -10,6 +10,7 @@ interface DeckSelectorProps {
 }
 
 export function DeckSelector({ onSelect, onSwipeFresh }: DeckSelectorProps) {
+  const t = useTranslations("DeckSelector");
   const [decks, setDecks] = useState<VibeDeck[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -51,9 +52,9 @@ export function DeckSelector({ onSelect, onSwipeFresh }: DeckSelectorProps) {
   if (decks.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-base-content/60 mb-4">No saved vibe decks yet.</p>
+        <p className="text-base-content/60 mb-4">{t("empty")}</p>
         <button className="btn btn-primary" onClick={onSwipeFresh}>
-          Start Swiping
+          {t("startSwiping")}
         </button>
       </div>
     );
@@ -61,7 +62,7 @@ export function DeckSelector({ onSelect, onSwipeFresh }: DeckSelectorProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-center mb-4">Your Saved Vibes</h3>
+      <h3 className="text-lg font-bold text-center mb-4">{t("title")}</h3>
 
       <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
         {decks.map((deck) => (
@@ -108,18 +109,18 @@ export function DeckSelector({ onSelect, onSwipeFresh }: DeckSelectorProps) {
               </div>
 
               <div className="text-xs text-base-content/50 mt-2">
-                {deck.likedVibes.length} vibes • Created{" "}
-                {deck.createdAt ? new Date(deck.createdAt).toLocaleDateString() : "recently"}
+                {deck.likedVibes.length} {t("vibes")} • {t("created")}{" "}
+                {deck.createdAt ? new Date(deck.createdAt).toLocaleDateString() : t("recently")}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="divider">OR</div>
+      <div className="divider">{t("or")}</div>
 
       <button className="btn btn-outline btn-block" onClick={onSwipeFresh}>
-        Start Fresh – Swipe Again
+        {t("startFresh")}
       </button>
     </div>
   );

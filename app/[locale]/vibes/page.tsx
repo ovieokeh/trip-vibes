@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useStore } from "@/store/useStore";
 import SwipeCard from "@/components/SwipeCard";
 import { AnimatePresence, motion } from "framer-motion";
 import { Vibe } from "@/lib/types";
 import { DeckEngine } from "@/lib/vibes/deck";
 import { SaveDeckModal } from "@/components/SaveDeckModal";
+import { useTranslations } from "next-intl";
 
 export default function VibesPage() {
+  const t = useTranslations("Vibes");
   const router = useRouter();
   const { cityId, addLike, addDislike, vibeProfile, likedVibes, dislikedVibes } = useStore();
   const [currentCard, setCurrentCard] = useState<AppVibe | null>(null);
@@ -97,8 +99,8 @@ export default function VibesPage() {
     return (
       <>
         <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Vibe Check Complete!</h2>
-          <div className="text-xl opacity-80 mb-8">Building your unique itinerary...</div>
+          <h2 className="text-3xl font-bold mb-4">{t("complete")}</h2>
+          <div className="text-xl opacity-80 mb-8">{t("building")}</div>
           <div className="flex gap-2 flex-wrap justify-center">
             {topTraits.map(([trait, score]) => (
               <span key={trait} className="badge badge-lg badge-primary capitalize">
@@ -122,7 +124,7 @@ export default function VibesPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden relative">
       <div className="absolute top-4 w-full px-4 flex justify-between items-center text-xs opacity-80 uppercase tracking-widest">
-        <span>Vibe Check</span>
+        <span>{t("vibeCheck")}</span>
         <span>{likedVibes.length} / 6</span>
       </div>
 
@@ -148,9 +150,7 @@ export default function VibesPage() {
         </AnimatePresence>
       </div>
 
-      {currentCard && (
-        <div className="mt-8 text-center text-sm opacity-70 animate-pulse">Swipe right for YES, left for NO</div>
-      )}
+      {currentCard && <div className="mt-8 text-center text-sm opacity-70 animate-pulse">{t("instructions")}</div>}
     </div>
   );
 }

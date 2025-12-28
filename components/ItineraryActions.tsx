@@ -5,6 +5,7 @@ import { FileDown, Calendar } from "lucide-react";
 import { Itinerary } from "@/lib/types";
 import { generateItineraryPDF } from "@/lib/export/pdf";
 import { generateCalendarFile } from "@/lib/export/calendar";
+import { useTranslations } from "next-intl";
 
 interface ItineraryActionsProps {
   itinerary: Itinerary;
@@ -12,6 +13,7 @@ interface ItineraryActionsProps {
 }
 
 export default function ItineraryActions({ itinerary, cityName }: ItineraryActionsProps) {
+  const t = useTranslations("ItineraryActions");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [isExportingCalendar, setIsExportingCalendar] = useState(false);
 
@@ -41,12 +43,12 @@ export default function ItineraryActions({ itinerary, cityName }: ItineraryActio
     <div className="flex gap-3 flex-wrap justify-center">
       <button onClick={handleDownloadPDF} disabled={isExportingPDF} className="btn btn-outline btn-sm gap-2">
         <FileDown className="w-4 h-4" />
-        {isExportingPDF ? "Generating..." : "Download PDF"}
+        {isExportingPDF ? t("generating") : t("downloadPDF")}
       </button>
 
       <button onClick={handleSyncCalendar} disabled={isExportingCalendar} className="btn btn-outline btn-sm gap-2">
         <Calendar className="w-4 h-4" />
-        {isExportingCalendar ? "Exporting..." : "Sync to Calendar"}
+        {isExportingCalendar ? t("exporting") : t("syncCalendar")}
       </button>
     </div>
   );

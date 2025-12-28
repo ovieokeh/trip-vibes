@@ -1,12 +1,14 @@
 import { getSavedItinerariesAction } from "@/lib/db-actions";
 import SavedTripList from "@/components/SavedTripList";
+import { getTranslations } from "next-intl/server";
 
 export default async function SavedTripsPage() {
+  const t = await getTranslations("SavedTrips");
   const savedTrips = await getSavedItinerariesAction();
 
   return (
     <div className="max-w-xl mx-auto px-4">
-      <h1 className="text-3xl  mb-8 px-2">Saved Trips</h1>
+      <h1 className="text-3xl  mb-8 px-2">{t("title")}</h1>
 
       <SavedTripList
         initialTrips={savedTrips.map((trip) => ({

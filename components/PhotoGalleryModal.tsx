@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface PhotoGalleryModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function PhotoGalleryModal({
   title,
   onClose,
 }: PhotoGalleryModalProps) {
+  const t = useTranslations("Common");
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
   // Reset to initial index when modal opens
@@ -112,7 +114,7 @@ export default function PhotoGalleryModal({
           >
             <img
               src={photos[currentIndex].url}
-              alt={`Photo ${currentIndex + 1}`}
+              alt={`${t("photo")} ${currentIndex + 1}`}
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
             />
           </motion.div>
@@ -155,7 +157,7 @@ export default function PhotoGalleryModal({
                     i === currentIndex ? "ring-2 ring-white scale-105" : "opacity-60 hover:opacity-100"
                   }`}
                 >
-                  <img src={photo.url} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={photo.url} alt={`${t("thumbnail")} ${i + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

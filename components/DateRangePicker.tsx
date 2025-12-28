@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange, DayPicker } from "react-day-picker";
 import { clsx } from "clsx";
+import { useTranslations, useLocale } from "next-intl";
+import { enUS, es, fr, de, it, ja, ko, zhCN } from "date-fns/locale";
 
 interface DateRangePickerProps {
   startDate: string; // YYYY-MM-DD
@@ -13,7 +15,21 @@ interface DateRangePickerProps {
   className?: string;
 }
 
+const localeMap: Record<string, any> = {
+  en: enUS,
+  es,
+  fr,
+  de,
+  it,
+  ja,
+  ko,
+  zh: zhCN,
+};
+
 export function DateRangePicker({ startDate, endDate, onChange, className }: DateRangePickerProps) {
+  const t = useTranslations("DatePicker");
+  const currentLocale = useLocale();
+  const dateLocale = localeMap[currentLocale] || enUS;
   const modalRef = useRef<HTMLDialogElement>(null);
 
   const selectedRange: DateRange | undefined = useMemo(() => {
@@ -34,10 +50,14 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
   };
 
   const displayText = useMemo(() => {
-    if (!startDate) return "Pick a date range";
-    if (!endDate) return format(new Date(startDate), "MMM d, yyyy");
-    return `${format(new Date(startDate), "MMM d, yyyy")} - ${format(new Date(endDate), "MMM d, yyyy")}`;
-  }, [startDate, endDate]);
+    if (!startDate) return t("pickDateRange");
+    if (!endDate) return format(new Date(startDate), "MMM d, yyyy", { locale: dateLocale });
+    return `${format(new Date(startDate), "MMM d, yyyy", { locale: dateLocale })} - ${format(
+      new Date(endDate),
+      "MMM d, yyyy",
+      { locale: dateLocale }
+    )}`;
+  }, [startDate, endDate, t, dateLocale]);
 
   return (
     <>
@@ -58,7 +78,7 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
       <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
         <div className="modal-box max-w-2xl p-0 overflow-y-auto max-h-[90vh] bg-base-100">
           <div className="p-4 bg-base-200/50 border-b border-base-200 flex justify-between items-center">
-            <h3 className="font-bold text-lg">Select Dates</h3>
+            <h3 className="font-bold text-lg">{t("selectDates")}</h3>
             <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={() => modalRef.current?.close()}>
               ✕
             </button>
@@ -105,7 +125,7 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
             <div className="px-4 pb-2">
               {Math.ceil((selectedRange.to.getTime() - selectedRange.from.getTime()) / 86400000) + 1 > 14 && (
                 <div className="alert alert-warning py-2 px-3 text-xs">
-                  <span>Itineraries are limited to 2 weeks. Only the first 14 days will be generated.</span>
+                  <span>{t("twoWeekLimit")}</span>
                 </div>
               )}
             </div>
@@ -113,7 +133,7 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
 
           <div className="p-4 border-t border-base-200 bg-base-100 flex justify-end">
             <button type="button" className="btn btn-primary" onClick={() => modalRef.current?.close()}>
-              Done
+              {t("done")}
             </button>
           </div>
         </div>

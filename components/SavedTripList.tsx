@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 // import { Itinerary } from "@/lib/types"; // Adjust if Itinerary type is different for list view
 import { Calendar, ChevronRight, Trash2, Map } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
 import { deleteItineraryAction } from "@/lib/db-actions";
+import { useTranslations } from "next-intl";
 
 // Create a type that matches what getSavedItinerariesAction returns
 type SavedTripSummary = {
@@ -24,6 +25,8 @@ interface SavedTripListProps {
 }
 
 export default function SavedTripList({ initialTrips }: SavedTripListProps) {
+  const t = useTranslations("SavedTrips");
+  const tc = useTranslations("Confirmation.deleteTrip");
   const [trips, setTrips] = useState<SavedTripSummary[]>(initialTrips);
   const [tripToDelete, setTripToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -63,9 +66,9 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
     return (
       <div className="text-center py-12">
         <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p className="opacity-70">No saved trips yet.</p>
+        <p className="opacity-70">{t("empty")}</p>
         <Link href="/" className="btn btn-link">
-          Plan a trip now
+          {t("planNow")}
         </Link>
       </div>
     );
@@ -83,7 +86,7 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
               <div className="card-body p-4 sm:p-6 flex-1">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="card-title text-lg">{trip.name || "Untitled Trip"}</h2>
+                    <h2 className="card-title text-lg">{trip.name || t("untitledTrip")}</h2>
                     <p className="text-sm text-base-content/70 font-medium">
                       {trip.city}, {trip.country}
                     </p>
@@ -93,7 +96,7 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
                 <div className="flex items-center gap-2 mt-2 text-xs opacity-80">
                   <Calendar className="w-3 h-3" />
                   <span>
-                    {trip.startDate ? new Date(trip.startDate).toLocaleDateString() : "No date"}
+                    {trip.startDate ? new Date(trip.startDate).toLocaleDateString() : t("noDate")}
                     {" - "}
                     {trip.endDate ? new Date(trip.endDate).toLocaleDateString() : ""}
                   </span>
@@ -109,7 +112,7 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
             <button
               onClick={(e) => handleDeleteClick(e, trip.id)}
               className="absolute right-4 top-1/2 -translate-y-1/2 btn btn-ghost btn-circle btn-sm text-error opacity-0 group-hover:opacity-100 transition-opacity z-10"
-              title="Delete Trip"
+              title={tc("title")}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -119,12 +122,12 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
 
       <ConfirmModal
         isOpen={!!tripToDelete}
-        title="Delete Trip"
-        message="Are you sure you want to delete this trip? This action cannot be undone."
+        title={tc("title")}
+        message={tc("message")}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
         type="danger"
-        confirmText={isDeleting ? "Deleting..." : "Delete"}
+        confirmText={isDeleting ? tc("deleting") : tc("confirm")}
       />
     </>
   );

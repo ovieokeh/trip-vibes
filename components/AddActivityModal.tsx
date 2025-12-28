@@ -3,6 +3,7 @@ import { Vibe } from "@/lib/types";
 import { Star, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import VibeImage from "./VibeImage";
+import { useTranslations } from "next-intl";
 
 interface AddActivityModalProps {
   isOpen: boolean;
@@ -14,6 +15,8 @@ interface AddActivityModalProps {
 }
 
 export default function AddActivityModal({ isOpen, onClose, onSelect, suggestions, isLoading }: AddActivityModalProps) {
+  const t = useTranslations("AddActivity");
+
   if (!isOpen) return null;
 
   return (
@@ -30,7 +33,7 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
       >
         {/* Header */}
         <div className="p-4 border-b border-base-200 flex justify-between items-center">
-          <h2 className="text-xl font-bold">Add Activity</h2>
+          <h2 className="text-xl font-bold">{t("title")}</h2>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">
             ✕
           </button>
@@ -41,11 +44,11 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-70">
               <span className="loading loading-spinner loading-md"></span>
-              <span>Finding the best spots for you...</span>
+              <span>{t("searching")}</span>
             </div>
           ) : suggestions.length === 0 ? (
             <div className="text-center py-12 opacity-70">
-              <p>No more suggestions available for this time.</p>
+              <p>{t("noSuggestions")}</p>
             </div>
           ) : (
             suggestions.map((vibe) => (
@@ -83,7 +86,7 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
                       </div>
 
                       <p className="text-xs text-base-content/60 mt-1 line-clamp-2 leading-relaxed">
-                        {vibe.description || vibe.address || "No description available"}
+                        {vibe.description || vibe.address || t("noDescription")}
                       </p>
                     </div>
 
@@ -117,7 +120,7 @@ export default function AddActivityModal({ isOpen, onClose, onSelect, suggestion
                     className="btn btn-sm btn-primary shrink-0 self-center"
                     aria-label={`Add ${vibe.title}`}
                   >
-                    Add
+                    {t("add")}
                   </button>
                 </div>
               </div>

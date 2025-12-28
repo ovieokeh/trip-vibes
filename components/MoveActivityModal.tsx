@@ -2,6 +2,7 @@
 
 import { DayPlan } from "@/lib/types";
 import { motion } from "framer-motion";
+import { useTranslations, useLocale } from "next-intl";
 
 interface MoveActivityModalProps {
   isOpen: boolean;
@@ -12,6 +13,10 @@ interface MoveActivityModalProps {
 }
 
 export default function MoveActivityModal({ isOpen, onClose, onMove, days, sourceDayId }: MoveActivityModalProps) {
+  const t = useTranslations("MoveActivity");
+  const td = useTranslations("ItineraryDay");
+  const locale = useLocale();
+
   if (!isOpen) return null;
 
   return (
@@ -28,8 +33,8 @@ export default function MoveActivityModal({ isOpen, onClose, onMove, days, sourc
       >
         <div className="p-4 border-b border-base-200 bg-base-200/50 flex justify-between items-start">
           <div>
-            <h3 className="font-bold text-lg">Move Activity</h3>
-            <p className="text-sm opacity-70 mt-1">Select a day to move this activity to.</p>
+            <h3 className="font-bold text-lg">{t("title")}</h3>
+            <p className="text-sm opacity-70 mt-1">{t("description")}</p>
           </div>
           <button onClick={onClose} className="btn btn-sm btn-circle btn-ghost">
             ✕
@@ -43,7 +48,7 @@ export default function MoveActivityModal({ isOpen, onClose, onMove, days, sourc
               // Parse date for display
               const [y, m, d] = day.date.split("-").map(Number);
               const dateObj = new Date(y, m - 1, d);
-              const displayDate = dateObj.toLocaleDateString("en-US", {
+              const displayDate = dateObj.toLocaleDateString(locale, {
                 weekday: "short",
                 month: "short",
                 day: "numeric",
@@ -65,7 +70,9 @@ export default function MoveActivityModal({ isOpen, onClose, onMove, days, sourc
                         : "hover:bg-primary/10 hover:text-primary active:scale-[0.98]"
                     }`}
                   >
-                    <span className="font-medium">Day {day.dayNumber}</span>
+                    <span className="font-medium">
+                      {td("day")} {day.dayNumber}
+                    </span>
                     <span className="text-sm opacity-70">{displayDate}</span>
                   </button>
                 </li>
@@ -76,7 +83,7 @@ export default function MoveActivityModal({ isOpen, onClose, onMove, days, sourc
 
         <div className="p-4 border-t border-base-200 flex justify-end bg-base-200/30">
           <button className="btn btn-ghost" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </button>
         </div>
       </motion.div>

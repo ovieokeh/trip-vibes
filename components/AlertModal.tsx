@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
 import clsx from "clsx";
+import { useTranslations } from "next-intl";
 
 interface AlertModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface AlertModalProps {
 }
 
 export default function AlertModal({ isOpen, title, message, type = "error", onClose }: AlertModalProps) {
+  const t = useTranslations("Alert");
   const modalRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function AlertModal({ isOpen, title, message, type = "error", onC
         </div>
         <div className="modal-action justify-center">
           <button className="btn btn-wide" onClick={onClose}>
-            Dismiss
+            {t("dismiss")}
           </button>
         </div>
       </div>

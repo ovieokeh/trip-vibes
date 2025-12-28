@@ -3,6 +3,7 @@
 import { Vibe } from "@/lib/types";
 import { ImageIcon } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface VibeImageProps {
   vibe: Vibe;
@@ -11,6 +12,7 @@ interface VibeImageProps {
 }
 
 export default function VibeImage({ vibe, className = "", style = {} }: VibeImageProps) {
+  const t = useTranslations("Common");
   // Priority:
   // 1. vibe.imageUrl (existing specific URL)
   // 2. vibe.photos[0].url (Google photos)
@@ -28,7 +30,7 @@ export default function VibeImage({ vibe, className = "", style = {} }: VibeImag
         <div className="flex flex-col items-center justify-center text-base-content/20 gap-1">
           <ImageIcon className="w-8 h-8" />
           <span className="text-[10px] font-medium uppercase tracking-wider opacity-70">
-            {vibe.category || "Place"}
+            {vibe.category || t("place")}
           </span>
         </div>
       </div>
@@ -39,7 +41,7 @@ export default function VibeImage({ vibe, className = "", style = {} }: VibeImag
     <div className={containerClasses} style={style}>
       <img
         src={src}
-        alt={vibe.title}
+        alt={vibe.title || t("vibeImage")}
         className="w-full h-full object-cover"
         onError={() => {
           setHasError(true);

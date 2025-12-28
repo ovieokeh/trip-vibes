@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useStore } from "@/store/useStore";
 import { saveItineraryAction, getActivitySuggestionsAction } from "@/lib/db-actions";
 import { Itinerary, TripActivity, Vibe } from "@/lib/types";
@@ -11,6 +11,7 @@ import AddActivityModal from "@/components/AddActivityModal";
 import LoadingScreen from "@/components/LoadingScreen";
 import ItineraryActions from "@/components/ItineraryActions";
 import { getTransitNote } from "@/lib/geo";
+import { useTranslations } from "next-intl";
 
 // Note: Metadata cannot be exported from a "use client" component.
 // Since this page relies on client-side state (Zustand) for the unsaved itinerary,
@@ -18,6 +19,7 @@ import { getTransitNote } from "@/lib/geo";
 // The saved page (app/saved/[id]) handles the shareable metadata.
 
 export default function ItineraryPage() {
+  const t = useTranslations("Itinerary");
   const router = useRouter();
   const prefs = useStore();
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
@@ -100,7 +102,7 @@ export default function ItineraryPage() {
                 } else if (event.type === "error") {
                   setAlert({
                     isOpen: true,
-                    title: "Generation Error",
+                    title: t("errors.generation"),
                     message: event.message,
                     type: "error",
                   });
@@ -115,8 +117,8 @@ export default function ItineraryPage() {
         console.error("Failed to generate itinerary:", error);
         setAlert({
           isOpen: true,
-          title: "Generation Failed",
-          message: "We couldn't generate your itinerary. Please try again.",
+          title: t("errors.generationFailed"),
+          message: t("errors.generationFailedMessage"),
           type: "error",
         });
       }
@@ -126,7 +128,7 @@ export default function ItineraryPage() {
     if (!itinerary) {
       generate();
     }
-  }, [prefs, router, itinerary]); // Added itinerary to deps to prevent re-run if set
+  }, [prefs, router, itinerary, t]); // Added itinerary to deps to prevent re-run if set
 
   if (!itinerary) {
     return <LoadingScreen message={loadingMessage} step={currentStep} />;
@@ -310,8 +312,8 @@ export default function ItineraryPage() {
       />
 
       <div className="text-center mb-8">
-        <h1 className="text-3xl  mb-2">Your Vibe Itinerary</h1>
-        <p className="text-base-content/70">Optimized for {prefs.budget} budget</p>
+        <h1 className="text-3xl mb-2">{t("title")}</h1>
+        <p className="text-base-content/70">{t("budgetOptimized", { budget: prefs.budget })}</p>
       </div>
 
       <div>
@@ -326,7 +328,7 @@ export default function ItineraryPage() {
         ))}
       </div>
 
-      <div className="divider my-8">End of Trip</div>
+      <div className="divider my-8">{t("endOfTrip")}</div>
 
       <ItineraryActions itinerary={itinerary} cityName={prefs.cityId} />
 
@@ -344,15 +346,15 @@ export default function ItineraryPage() {
             } catch (e) {
               setAlert({
                 isOpen: true,
-                title: "Save Failed",
-                message: "Could not save your trip. Please try again.",
+                title: t("errors.saveFailed"),
+                message: t("errors.saveFailedMessage"),
                 type: "error",
               });
               setIsSaving(false);
             }
           }}
         >
-          {isSaving ? "Saving..." : "Save Trip"}
+          {isSaving ? t("saving") : t("saveTrip")}
         </button>
 
         <button
@@ -362,7 +364,7 @@ export default function ItineraryPage() {
             router.push("/");
           }}
         >
-          Start New Trip
+          {t("startNewTrip")}
         </button>
       </div>
     </div>

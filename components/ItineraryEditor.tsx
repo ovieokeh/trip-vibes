@@ -9,6 +9,7 @@ import AlertModal from "@/components/AlertModal";
 import AddActivityModal from "@/components/AddActivityModal";
 import MoveActivityModal from "@/components/MoveActivityModal";
 import { AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 // Import shared utilities - single source of truth for activity operations
 import {
@@ -25,6 +26,7 @@ interface ItineraryEditorProps {
 }
 
 export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode = false }: ItineraryEditorProps) {
+  const t = useTranslations("ItineraryEditor");
   const {
     watch,
     setValue,
@@ -172,9 +174,19 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
     try {
       await saveItineraryAction(currentItinerary.id, currentItinerary.name, currentItinerary);
       reset(currentItinerary); // Clear dirty state
-      setAlert({ isOpen: true, title: "Success", message: "Itinerary saved successfully!", type: "success" });
+      setAlert({
+        isOpen: true,
+        title: t("saveSuccessTitle"),
+        message: t("saveSuccessMessage"),
+        type: "success",
+      });
     } catch {
-      setAlert({ isOpen: true, title: "Error", message: "Failed to save itinerary.", type: "error" });
+      setAlert({
+        isOpen: true,
+        title: t("saveErrorTitle"),
+        message: t("saveErrorMessage"),
+        type: "error",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -230,7 +242,7 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
       {isSavedMode && isDirty && (
         <div className="flex justify-center mt-8 pb-8 fixed bottom-4 right-8">
           <button className="btn btn-primary" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? t("saving") : t("saveChanges")}
           </button>
         </div>
       )}

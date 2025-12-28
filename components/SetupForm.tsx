@@ -1,29 +1,35 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useStore } from "@/store/useStore";
 import { SmartCitySelect } from "./SmartCitySelect";
 import { DateRangePicker } from "./DateRangePicker";
 import { DeckSelector } from "./DeckSelector";
 import { getVibeDecksAction, VibeDeck } from "@/lib/db-actions";
-
-const setupSchema = z.object({
-  cityId: z.string().min(1, "Please select a city"),
-  startDate: z.string().min(1, "Please select a start date"),
-  endDate: z.string().min(1, "Please select an end date"),
-  budget: z.enum(["low", "medium", "high"]),
-});
-
-type SetupFormData = z.infer<typeof setupSchema>;
+import { useTranslations } from "next-intl";
 
 export default function SetupForm() {
+  const t = useTranslations("SetupForm");
   const router = useRouter();
   const [showDeckModal, setShowDeckModal] = useState(false);
   const [hasDecks, setHasDecks] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<SetupFormData | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<any | null>(null);
+
+  const setupSchema = useMemo(
+    () =>
+      z.object({
+        cityId: z.string().min(1, t("errors.cityRequired")),
+        startDate: z.string().min(1, t("errors.startDateRequired")),
+        endDate: z.string().min(1, t("errors.endDateRequired")),
+        budget: z.enum(["low", "medium", "high"]),
+      }),
+    [t]
+  );
+
+  type SetupFormData = z.infer<typeof setupSchema>;
 
   const {
     cityId: storeCityId,
@@ -93,7 +99,9 @@ export default function SetupForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="card-body gap-5">
           <div className="form-control w-full">
             <label className="label pt-0">
-              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">Destination</span>
+              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">
+                {t("labels.destination")}
+              </span>
             </label>
             <Controller
               name="cityId"
@@ -105,7 +113,9 @@ export default function SetupForm() {
 
           <div className="form-control w-full">
             <label className="label pt-0">
-              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">Dates</span>
+              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">
+                {t("labels.dates")}
+              </span>
             </label>
             <Controller
               name="startDate"
@@ -136,7 +146,9 @@ export default function SetupForm() {
 
           <div className="form-control">
             <label className="label pt-0">
-              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">Budget</span>
+              <span className="label-text font-bold uppercase tracking-wider text-xs opacity-80">
+                {t("labels.budget")}
+              </span>
             </label>
             <Controller
               name="budget"
@@ -161,7 +173,7 @@ export default function SetupForm() {
           </div>
 
           <button type="submit" className="btn btn-primary btn-lg w-full mt-2 tracking-tight text-xl shadow-sm">
-            {hasDecks ? "Continue" : "Start Vibe Check"}
+            {hasDecks ? t("buttons.continue") : t("buttons.start")}
           </button>
         </form>
       </div>

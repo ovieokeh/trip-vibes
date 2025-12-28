@@ -3,6 +3,7 @@ import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { Command } from "cmdk";
 import { clsx } from "clsx";
 import { searchCitiesAction, getCityById } from "@/lib/db-actions";
+import { useTranslations } from "next-intl";
 
 import { useDebounce } from "@/hooks/use-debounce";
 
@@ -19,6 +20,7 @@ interface SmartCitySelectProps {
 }
 
 export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCitySelectProps) {
+  const t = useTranslations("CitySelect");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
@@ -107,7 +109,7 @@ export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCit
         disabled={disabled}
       >
         <span className="truncate">
-          {selectedCityData ? `${selectedCityData.name}, ${selectedCityData.country}` : "Select a city..."}
+          {selectedCityData ? `${selectedCityData.name}, ${selectedCityData.country}` : t("selectCity")}
         </span>
         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
       </button>
@@ -122,7 +124,7 @@ export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCit
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="flex h-11 w-full rounded-md bg-transparent py-3 text-base outline-none placeholder:text-base-content/40"
-                  placeholder="Search city (e.g. Tokyo, London)..."
+                  placeholder={t("searchPlaceholder")}
                   autoFocus
                 />
                 {isLoading && <Loader2 className="h-4 w-4 animate-spin opacity-40" />}
@@ -131,7 +133,7 @@ export function SmartCitySelect({ selectedCityId, onSelect, disabled }: SmartCit
               <Command.List className="max-h-[300px] overflow-y-auto overflow-x-hidden p-1">
                 {!isLoading && results.length === 0 && (
                   <Command.Empty className="py-6 text-center text-sm text-base-content/40 font-medium">
-                    {search.length < 2 ? "Type to search..." : "No city found."}
+                    {search.length < 2 ? t("typeToSearch") : t("noCity")}
                   </Command.Empty>
                 )}
 

@@ -6,6 +6,7 @@ import { Star, Globe, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import VibeImage from "./VibeImage";
 import PhotoGalleryModal from "./PhotoGalleryModal";
+import { useTranslations, useLocale } from "next-intl";
 
 import { estimateTravelTime } from "@/lib/geo";
 
@@ -16,6 +17,7 @@ function TransitIndicator({
   activity: TripActivity;
   onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
 }) {
+  const t = useTranslations("ItineraryDay");
   const details = activity.transitDetails;
 
   // If no details, fallback to string parsing or static
@@ -31,7 +33,7 @@ function TransitIndicator({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
         </svg>
-        {activity.transitNote || "Getting there"}
+        {activity.transitNote || t("gettingThere")}
       </span>
     );
   }
@@ -122,7 +124,7 @@ function TransitIndicator({
         >
           {getIcon(details.mode)}
           <span className="text-[10px] font-bold uppercase tracking-widest">
-            {details.durationMinutes} min {details.mode}
+            {details.durationMinutes} min {t(`transit.${details.mode}` as any)}
           </span>
         </div>
         <ul
@@ -131,17 +133,17 @@ function TransitIndicator({
         >
           <li>
             <a onClick={() => handleModeChange("walking")} className="text-xs py-1">
-              Walking
+              {t("transit.walking")}
             </a>
           </li>
           <li>
             <a onClick={() => handleModeChange("transit")} className="text-xs py-1">
-              Transit
+              {t("transit.transit")}
             </a>
           </li>
           <li>
             <a onClick={() => handleModeChange("driving")} className="text-xs py-1">
-              Driving
+              {t("transit.driving")}
             </a>
           </li>
         </ul>
@@ -163,6 +165,8 @@ export default function ItineraryDay({
   onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
   onMoveActivity?: (actId: string) => void;
 }) {
+  const t = useTranslations("ItineraryDay");
+  const locale = useLocale();
   // Gallery modal state
   const [galleryState, setGalleryState] = useState<{
     isOpen: boolean;
@@ -191,7 +195,8 @@ export default function ItineraryDay({
   const dateObj = new Date(year, month - 1, d);
 
   const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
-  const formattedDate = dateObj.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const displayDayName = dateObj.toLocaleDateString(locale, { weekday: "long" });
+  const formattedDate = dateObj.toLocaleDateString(locale, { month: "long", day: "numeric" });
 
   return (
     <>
@@ -208,7 +213,7 @@ export default function ItineraryDay({
         <h3 className="flex items-center gap-2 text-xl font-bold mb-4">
           {formattedDate}{" "}
           <span className="text-sm opacity-70 font-normal">
-            {dayName}, Day {day.dayNumber}
+            {displayDayName}, {t("day")} {day.dayNumber}
           </span>
         </h3>
 
@@ -348,7 +353,7 @@ export default function ItineraryDay({
                                 hoursToday === "Closed" ? "bg-error/10 text-error" : "bg-success/10 text-success"
                               }`}
                             >
-                              {hoursToday === "Closed" ? "Closed" : hoursToday}
+                              {hoursToday === "Closed" ? t("closed") : hoursToday}
                             </div>
                           )}
                         </div>
@@ -376,11 +381,11 @@ export default function ItineraryDay({
                           className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-40 text-sm border border-base-200"
                         >
                           <li>
-                            <a onClick={() => onMoveActivity?.(act.id)}>Move to Day...</a>
+                            <a onClick={() => onMoveActivity?.(act.id)}>{t("moveToDay")}</a>
                           </li>
                           <li>
                             <a onClick={() => onRemove?.(act.id)} className="text-error">
-                              Remove
+                              {t("remove")}
                             </a>
                           </li>
                         </ul>
@@ -397,13 +402,13 @@ export default function ItineraryDay({
                           className="btn btn-sm btn-ghost gap-1.5"
                         >
                           <Globe className="w-4 h-4" />
-                          Website
+                          {t("website")}
                         </a>
                       )}
                       {act.vibe.phone && (
                         <a href={`tel:${act.vibe.phone}`} className="btn btn-sm btn-ghost gap-1.5">
                           <Phone className="w-4 h-4" />
-                          Call
+                          {t("call")}
                         </a>
                       )}
                       {act.vibe.lat &&
@@ -420,7 +425,7 @@ export default function ItineraryDay({
                               className="btn btn-sm btn-ghost gap-1.5"
                             >
                               <MapPin className="w-4 h-4" />
-                              Directions
+                              {t("directions")}
                             </a>
                           );
                         })()}
@@ -443,7 +448,7 @@ export default function ItineraryDay({
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
-                  Add Activity
+                  {t("addActivity")}
                 </button>
               </div>
             );
@@ -465,7 +470,7 @@ export default function ItineraryDay({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              Add your first activity
+              {t("addFirstActivity")}
             </button>
           )}
         </div>

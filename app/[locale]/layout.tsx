@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import "./globals.css";
+import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 import { getSavedItinerariesAction } from "@/lib/db-actions";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
 
 export const dynamic = "force-dynamic";
 
@@ -41,17 +45,32 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+  params,
+}: {
   children: React.ReactNode;
-}>) {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+
+  // Ensure that the incoming `locale` is valid
+  if (!routing.locales.includes(locale as any)) {
+    notFound();
+  }
+
+  // Providing all messages to the client
+  // side is the easiest way to get started
+  const messages = await getMessages();
+
   const saved = await getSavedItinerariesAction();
 
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className="font-sans antialiased min-h-screen flex flex-col bg-base-100 text-base-content">
-        <Navbar savedCount={saved.length} />
-        <main className="container mx-auto max-w-2xl md:px-4 py-8 flex-grow">{children}</main>
-        <Footer />
+        <NextIntlClientProvider messages={messages}>
+          <Navbar savedCount={saved.length} />
+          <main className="container mx-auto max-w-2xl md:px-4 py-8 flex-grow">{children}</main>
+          <Footer />
+        </NextIntlClientProvider>
       </body>
     </html>
   );
