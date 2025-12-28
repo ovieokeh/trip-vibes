@@ -36,15 +36,9 @@ export class SchedulerEngine {
   private readonly MEAL_SLOTS: MealSlot[] = [
     {
       name: "Breakfast",
-      time: "09:00",
+      time: "08:00",
       durationMinutes: 60,
       requiredTags: ["breakfast", "cafe", "bakery"],
-    },
-    {
-      name: "Lunch",
-      time: "13:00",
-      durationMinutes: 75,
-      requiredTags: ["restaurant", "food", "diner"],
     },
     {
       name: "Dinner",
@@ -59,16 +53,40 @@ export class SchedulerEngine {
   }
 
   /**
+   * Check if user has a foodie-oriented vibe profile.
+   * Returns true if food-related weights are >= 7.
+   */
+  private isFoodieProfile(): boolean {
+    const weights = this.prefs.vibeProfile?.weights || {};
+    const foodTraits = ["food", "foodie", "culinary", "dining", "gourmet"];
+
+    for (const trait of foodTraits) {
+      if ((weights[trait] || 0) >= 7) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Maximum food-related activities per day:
+   * - Foodie profile: 4 (breakfast, dinner, + 2 snack/cafes)
+   * - Default: 3 (breakfast, dinner, + 1 snack)
+   */
+  private getMaxFoodSpotsPerDay(): number {
+    if (this.isFoodieProfile()) return 4;
+    return 3;
+  }
+
+  /**
    * Get activity time windows based on user's vibe profile.
    */
   private getActivityWindows(): TimeWindow[] {
     const nightlifeWeight = this.prefs.vibeProfile?.weights?.nightlife || 0;
-    const { preMorning, postDinner } = getTimeWindows(nightlifeWeight);
+    const { postDinner } = getTimeWindows(nightlifeWeight);
 
+    // Morning starts after breakfast (8:00-9:00), Afternoon fills until dinner
     return [
-      { name: "Early Morning", startTime: preMorning.start, endTime: preMorning.end, optional: true },
-      { name: "Morning", startTime: "10:00", endTime: "13:00" },
-      { name: "Afternoon", startTime: "14:15", endTime: "19:30" },
+      { name: "Morning", startTime: "09:00", endTime: "13:00" },
+      { name: "Afternoon", startTime: "13:00", endTime: "19:30" },
       { name: "Evening", startTime: postDinner.start, endTime: postDinner.end, optional: true },
     ];
   }
@@ -130,6 +148,10 @@ export class SchedulerEngine {
       }
 
       // 2. Fill activity windows dynamically (using day's allocation)
+      // Track food spots: meals from fixed slots count toward the limit
+      const maxFoodSpots = this.getMaxFoodSpotsPerDay();
+      let currentFoodCount = dayActivities.length; // Fixed meal slots are all food
+
       const windows = this.getActivityWindows();
       for (const window of windows) {
         const windowActivities = this.fillTimeWindow(
@@ -138,7 +160,9 @@ export class SchedulerEngine {
           usedIds,
           usedExternalIds,
           date,
-          previousLocation
+          previousLocation,
+          currentFoodCount,
+          maxFoodSpots
         );
 
         for (const act of windowActivities) {
@@ -208,6 +232,8 @@ export class SchedulerEngine {
 
   /**
    * Dynamically fills a time window with activities based on their durations.
+   * @param currentFoodCount - Number of food spots already scheduled for this day
+   * @param maxFoodSpots - Maximum allowed food spots per day
    */
   private fillTimeWindow(
     window: TimeWindow,
@@ -215,16 +241,21 @@ export class SchedulerEngine {
     usedIds: Set<string>,
     usedExternalIds: Set<string>,
     date: Date,
-    previousLocation: { lat: number; lng: number } | null
+    previousLocation: { lat: number; lng: number } | null,
+    currentFoodCount: number,
+    maxFoodSpots: number
   ): TripActivity[] {
     const activities: TripActivity[] = [];
     let currentMinutes = timeToMinutes(window.startTime);
     const endMinutes = timeToMinutes(window.endTime);
+    let foodCount = currentFoodCount;
 
     while (currentMinutes < endMinutes) {
       const currentTime = minutesToTime(currentMinutes);
 
-      const selection = this.selectActivityCandidate(candidates, usedIds, usedExternalIds, date, currentTime);
+      // Skip food candidates if we've hit the limit
+      const skipFood = foodCount >= maxFoodSpots;
+      const selection = this.selectActivityCandidate(candidates, usedIds, usedExternalIds, date, currentTime, skipFood);
 
       if (!selection) break;
 
@@ -237,6 +268,11 @@ export class SchedulerEngine {
       if (selection.alternative) {
         usedIds.add(selection.alternative.id);
         if (selection.alternative.foursquareId) usedExternalIds.add(selection.alternative.foursquareId);
+      }
+
+      // Track food count
+      if (isMeal(selection.primary)) {
+        foodCount++;
       }
 
       const activity = this.createDynamicActivity(
@@ -307,17 +343,21 @@ export class SchedulerEngine {
 
   /**
    * Select an activity candidate for dynamic window filling.
+   * @param skipFood - If true, skip food-related candidates to enforce variety
    */
   private selectActivityCandidate(
     candidates: EngineCandidate[],
     usedIds: Set<string>,
     usedExternalIds: Set<string>,
     date: Date,
-    time: string
+    time: string,
+    skipFood: boolean = false
   ): { primary: EngineCandidate; alternative?: EngineCandidate } | null {
     const pool = candidates.filter((c) => {
       if (usedIds.has(c.id)) return false;
       if (c.foursquareId && usedExternalIds.has(c.foursquareId)) return false;
+      // Skip food candidates if we've hit the daily limit
+      if (skipFood && isMeal(c)) return false;
       return isActivity(c);
     });
 

@@ -3,20 +3,33 @@ import { EngineCandidate } from "../types";
 /**
  * Patterns for classifying places as meals or activities.
  *
- * Classification Logic:
- * 1. A place is a MEAL if it matches FOOD_PATTERN (but NOT NIGHTLIFE_PATTERN)
- * 2. A place is an ACTIVITY if it does NOT match FOOD_PATTERN, OR if it's nightlife
- * 3. EXCEPTION: Hybrid places (markets, food halls) can be BOTH
+ * Based on REAL Foursquare category analysis:
+ * - Categories are structured: "Thai Restaurant", "Beer Bar", "Monument"
+ * - Most food places end with "Restaurant", "Joint", "Spot", etc.
+ * - Bars serve food/drinks but are evening entertainment
  *
- * This ensures mutually exclusive classification except for explicit hybrids.
+ * Classification Logic:
+ * 1. TRUE ACTIVITIES: Parks, museums, monuments, etc. - never food
+ * 2. MEALS: Restaurants, cafes, bakeries - for meal slots only
+ * 3. BARS/NIGHTLIFE: Evening entertainment, counts toward food limit
+ * 4. HYBRID: Markets, food halls - can be both
  */
 
-// Food establishments - primarily for meal slots
-const FOOD_PATTERN =
-  /restaurant|cafe|food|bakery|bistro|diner|steakhouse|pizza|taco|burger|sushi|ramen|gastropub|eatery|grill/i;
+// TRUE activity categories - these are NEVER food
+// Based on real Foursquare categories: "Park", "Museum", "Monument", etc.
+const ACTIVITY_PATTERN =
+  /park|plaza|beach|monument|museum|gallery|castle|church|shrine|temple|zoo|botanical garden|theater|theatre|stadium|trail|hiking|forest|lake|island|arcade|amusement|playground|swimming|sauna|spa|scenic|historic|structure|field|court|rink|sports|recreation|street art|harbor|marina/i;
 
-// Nightlife - these should be activities (evening slots), not meals
-const NIGHTLIFE_PATTERN = /pub|bar|nightclub|lounge|speakeasy|brewery|cocktail/i;
+// Food establishments - for meal slots
+// Based on real categories: "Thai Restaurant", "Bakery", "Fast Food Restaurant"
+const FOOD_PATTERN =
+  /restaurant|café|cafe|bakery|bistro|diner|steakhouse|pizzeria|buffet|gastropub|food truck|breakfast spot|snack|sandwich spot|joint|eatery|grill|ice cream|dessert|pastry|donut|bagel|cupcake|pie shop|soup spot|deli|noodle|ramen|sushi|taco|burrito|falafel|dumpling/i;
+
+// Nightlife - evening entertainment that ALSO serves food/drinks
+// Use word boundary for "bar" to avoid matching "Barbershop"
+// Based on real categories: "Beer Bar", "Wine Bar", "Pub", "Night Club"
+const NIGHTLIFE_PATTERN =
+  /\bbar\b|beer bar|wine bar|cocktail bar|sake bar|karaoke bar|piano bar|pub|beer garden|lounge|night club|nightclub|speakeasy|rock club|jazz|music venue|brewery/i;
 
 /**
  * Hybrid places can be scheduled as BOTH a meal AND an activity.
@@ -25,64 +38,80 @@ const NIGHTLIFE_PATTERN = /pub|bar|nightclub|lounge|speakeasy|brewery|cocktail/i
 const HYBRID_PATTERN = /market|hall|food court/i;
 
 /**
+ * Gets combined text from candidate's categories and name for pattern matching.
+ */
+function getCombinedText(c: EngineCandidate): string {
+  const cats = (c.metadata?.categories || []).map((s: string) => s.toLowerCase());
+  const name = (c.name || "").toLowerCase();
+  return [...cats, name].join(" ");
+}
+
+/**
+ * Checks if the candidate is a TRUE activity (park, museum, etc.)
+ */
+function matchesActivityPattern(c: EngineCandidate): boolean {
+  return ACTIVITY_PATTERN.test(getCombinedText(c));
+}
+
+/**
  * Checks if the candidate looks like a food place based on categories and name.
  */
 function matchesFoodPattern(c: EngineCandidate): boolean {
-  const cats = (c.metadata?.categories || []).map((s: string) => s.toLowerCase());
-  const name = c.name.toLowerCase();
-  const combined = [...cats, name].join(" ");
-  return FOOD_PATTERN.test(combined);
+  return FOOD_PATTERN.test(getCombinedText(c));
 }
 
 /**
  * Checks if the candidate is a nightlife place.
  */
 export function matchesNightlifePattern(c: EngineCandidate): boolean {
-  const cats = (c.metadata?.categories || []).map((s: string) => s.toLowerCase());
-  const name = c.name.toLowerCase();
-  const combined = [...cats, name].join(" ");
-  return NIGHTLIFE_PATTERN.test(combined);
+  return NIGHTLIFE_PATTERN.test(getCombinedText(c));
 }
 
 /**
  * Checks if the candidate is a hybrid place (can be both meal and activity).
  */
 export function isHybridPlace(c: EngineCandidate): boolean {
-  const cats = (c.metadata?.categories || []).map((s: string) => s.toLowerCase());
-  const name = c.name.toLowerCase();
-  const combined = [...cats, name].join(" ");
-  return HYBRID_PATTERN.test(combined);
+  return HYBRID_PATTERN.test(getCombinedText(c));
 }
 
 /**
  * Determines if a candidate should be scheduled in a MEAL slot.
- * Returns true if the place is primarily a food establishment.
+ * Returns true for food establishments AND bars/nightlife (they serve food/drinks).
  */
 export function isMeal(c: EngineCandidate): boolean {
-  // A meal is food that is NOT a nightlife venue
-  // (pubs/bars should be activities, not meals)
-  return matchesFoodPattern(c) && !matchesNightlifePattern(c);
+  // True activities are never meals
+  if (matchesActivityPattern(c)) return false;
+
+  // Food establishments are meals
+  if (matchesFoodPattern(c)) return true;
+
+  // Nightlife serves food/drinks - count toward meal/food limit
+  if (matchesNightlifePattern(c)) return true;
+
+  return false;
 }
 
 /**
  * Determines if a candidate should be scheduled in an ACTIVITY slot.
  *
  * A place is an activity if:
- * 1. It does NOT look like food, OR
- * 2. It IS food but is also a hybrid place (market, food hall)
+ * 1. It matches the explicit ACTIVITY_PATTERN (park, museum, etc.)
+ * 2. It's a hybrid place (market, food hall)
+ * 3. It doesn't match any food OR nightlife patterns
  *
- * This ensures meals and activities are mutually exclusive,
- * except for hybrid places which can appear in either slot.
+ * IMPORTANT: Bars/nightlife are NOT activities - they serve food and
+ * should count toward food limits, scheduled only in evening slots.
  */
 export function isActivity(c: EngineCandidate): boolean {
-  // Nightlife is always an activity (evening vibes)
-  if (matchesNightlifePattern(c)) return true;
+  // Explicit activities (park, museum, etc.) are always activities
+  if (matchesActivityPattern(c)) return true;
 
-  const looksLikeFood = matchesFoodPattern(c);
+  // Hybrid places (markets) can be activities
+  if (isHybridPlace(c)) return true;
 
-  // Not food = definitely an activity
-  if (!looksLikeFood) return true;
+  // Food and nightlife are NOT activities - they count toward food limit
+  if (matchesFoodPattern(c) || matchesNightlifePattern(c)) return false;
 
-  // Food but hybrid = can also be an activity
-  return isHybridPlace(c);
+  // Anything else that doesn't match known patterns = activity by default
+  return true;
 }
