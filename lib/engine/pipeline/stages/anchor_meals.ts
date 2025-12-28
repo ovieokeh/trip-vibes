@@ -32,50 +32,33 @@ export class AnchorMealsStage implements PlannerStage {
 
   async run(state: ScheduleState, prefs: UserPreferences): Promise<ScheduleState> {
     const newState = { ...state };
-    const { startDate, endDate } = prefs;
 
-    // We iterate through each day in the plan
-    for (let i = 0; i < newState.days.length; i++) {
-      const day = newState.days[i];
-      const dayActivities = [...day.activities]; // Copy existing (likely empty)
-
+    for (const day of newState.days) {
+      const dayActivities = [...day.activities];
       let previousLocation: { lat: number; lng: number } | null = null;
-      // In a real pipeline, we might have activities already.
-      // For anchors, we usually start fresh or interleave.
-      // We'll assume we are adding to the list.
-
-      // Filter candidates for this day (exclude used)
-      const dayPool = newState.remainingCandidates.filter(
-        (c) => !newState.usedIds.has(c.id) && (!c.foursquareId || !newState.usedExternalIds.has(c.foursquareId))
-      );
 
       for (const meal of MEAL_SLOTS) {
-        // Re-filter pool to exclude candidates used in previous slots of the SAME day
-        const currentPool = dayPool.filter(
-          (c) => !newState.usedIds.has(c.id) && (!c.foursquareId || !newState.usedExternalIds.has(c.foursquareId))
-        );
-
-        const selection = this.selectMealCandidate(meal, currentPool);
+        // Filter pool from the latest remainingCandidates in state
+        const selection = this.selectMealCandidate(meal, newState.remainingCandidates);
 
         if (selection) {
-          // Mark as used
-          newState.usedIds.add(selection.primary.id);
-          if (selection.primary.foursquareId) {
-            newState.usedExternalIds.add(selection.primary.foursquareId);
+          // Mark as used in sets
+          newState.usedIds.add(selection.id);
+          if (selection.foursquareId) {
+            newState.usedExternalIds.add(selection.foursquareId);
           }
-          if (selection.alternative) {
-            newState.usedIds.add(selection.alternative.id);
-            if (selection.alternative.foursquareId) {
-              newState.usedExternalIds.add(selection.alternative.foursquareId);
-            }
-          }
+
+          // Also remove from remainingCandidates to preserve the pool for subsequent days/stages
+          newState.remainingCandidates = newState.remainingCandidates.filter(
+            (c) => c.id !== selection.id && (!c.foursquareId || c.foursquareId !== selection.foursquareId)
+          );
 
           // Create Activity
-          const activity = this.createMealActivity(selection.primary, meal, selection.alternative, previousLocation);
+          const activity = this.createMealActivity(selection, meal, previousLocation);
           dayActivities.push(activity);
 
-          if (selection.primary.lat && selection.primary.lng) {
-            previousLocation = { lat: selection.primary.lat, lng: selection.primary.lng };
+          if (selection.lat && selection.lng) {
+            previousLocation = { lat: selection.lat, lng: selection.lng };
           }
         }
       }
@@ -87,53 +70,58 @@ export class AnchorMealsStage implements PlannerStage {
     return newState;
   }
 
-  private selectMealCandidate(
-    meal: MealSlot,
-    candidates: EngineCandidate[]
-  ): { primary: EngineCandidate; alternative?: EngineCandidate } | null {
-    // 1. Strict Match
-    let strictPool = candidates.filter((c) => this.matchesMealSlot(c, meal, true));
-    if (strictPool.length === 0) {
-      // 2. Loose Match
-      strictPool = candidates.filter((c) => this.matchesMealSlot(c, meal, false));
-    }
+  private selectMealCandidate(meal: MealSlot, candidates: EngineCandidate[]): EngineCandidate | null {
+    // 1. Strict Match: specific tags (bakery for breakfast, etc)
+    let pool = candidates.filter((c) => this.matchesMealSlot(c, meal, "strict"));
+    if (pool.length > 0) return pool[0];
 
-    // Sort by score? Or assume they come sorted?
-    // Let's assume input is sorted by score (engine usually does this)
-    // We could re-sort here if needed.
+    // 2. Loose Match: isMeal() utility (any restaurant/cafe/bar)
+    pool = candidates.filter((c) => this.matchesMealSlot(c, meal, "loose"));
+    if (pool.length > 0) return pool[0];
 
-    if (strictPool.length === 0) return null;
+    // 3. Relaxed Match: any candidate that isn't explicitly an activity
+    // (Last resort, in case classification is weird)
+    pool = candidates.filter((c) => this.matchesMealSlot(c, meal, "relaxed"));
+    if (pool.length > 0) return pool[0];
 
-    const primary = strictPool[0];
-
-    // Only pick an alternative if we have a healthy pool left
-    // AND it matches the current meal slot (avoid stealing other meal types)
-    const alternative = strictPool.find(
-      (c) =>
-        c.id !== primary.id && (!c.foursquareId || c.foursquareId !== primary.foursquareId) && strictPool.length > 2 // We have at least one other strict match for this type
-    );
-
-    return { primary, alternative };
+    return null;
   }
 
-  private matchesMealSlot(c: EngineCandidate, meal: MealSlot, strict: boolean): boolean {
-    // Basic exclusions
+  private matchesMealSlot(c: EngineCandidate, meal: MealSlot, level: "strict" | "loose" | "relaxed"): boolean {
+    // Basic exclusions: No nightlife for breakfast
     if (meal.name !== "Dinner" && matchesNightlifePattern(c)) return false;
 
-    if (strict) {
+    if (level === "strict") {
       const cats = (c.metadata?.categories || []).map((s: string) => s.toLowerCase());
       const name = c.name.toLowerCase();
       const combined = [...cats, name].join(" ");
       return meal.requiredTags.some((tag) => combined.includes(tag));
     }
 
-    return isMeal(c);
+    if (level === "loose") {
+      return isMeal(c);
+    }
+
+    if (level === "relaxed") {
+      // Not an explicit activity = potential meal
+      // We exclude hybrids here as well to be safe
+      const cats = (c.metadata?.categories || []).map((s: string) => s.toLowerCase());
+      const name = c.name.toLowerCase();
+      const combined = [...cats, name].join(" ");
+      const isExplicitActivity =
+        combined.includes("park") ||
+        combined.includes("museum") ||
+        combined.includes("monument") ||
+        combined.includes("gallery");
+      return !isExplicitActivity;
+    }
+
+    return false;
   }
 
   private createMealActivity(
     c: EngineCandidate,
     meal: MealSlot,
-    alternativeCandidate?: EngineCandidate,
     previousLocation?: { lat: number; lng: number } | null
   ): TripActivity {
     let transitDetails = undefined;
@@ -151,10 +139,8 @@ export class AnchorMealsStage implements PlannerStage {
       startTime: meal.time,
       endTime: addMinutesToTime(meal.time, meal.durationMinutes),
       note: `Enjoy ${meal.name} at ${c.name}.`,
-      isAlternative: false,
       transitNote,
       transitDetails,
-      alternative: alternativeCandidate ? this.mapCandidateToVibe(alternativeCandidate) : undefined,
     };
   }
 

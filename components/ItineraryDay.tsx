@@ -158,7 +158,6 @@ export default function ItineraryDay({
   onMoveActivity,
 }: {
   day: DayPlan;
-  onSwap?: (id: string) => void;
   onRemove?: (id: string) => void;
   onAdd?: () => void;
   onUpdate?: (actId: string, updates: Partial<TripActivity>) => void;
@@ -325,44 +324,6 @@ export default function ItineraryDay({
                           );
                         })()}
                     </div>
-
-                    {act.alternative && (
-                      <div className="mt-2 pt-2 border-t border-dashed border-base-300">
-                        <details className="group">
-                          <summary className="text-[10px] font-bold uppercase cursor-pointer list-none flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                            <span>See Alternative</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-3 w-3 group-open:rotate-180 transition-transform"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </summary>
-
-                          <div className="mt-2 bg-base-200 p-2 rounded flex gap-3 items-center">
-                            {act.alternative.imageUrl && (
-                              <VibeImage vibe={act.alternative} className="w-12 h-12 rounded shrink-0" />
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="font-bold text-xs truncate">{act.alternative.title}</div>
-                              <div className="text-[10px] opacity-70 truncate">{act.alternative.category}</div>
-                              {act.alternative.rating && (
-                                <div className="flex items-center gap-0.5 text-[10px]">
-                                  <Star className="w-2.5 h-2.5 fill-warning text-warning" />
-                                  <span>{act.alternative.rating}</span>
-                                </div>
-                              )}
-                            </div>
-                            <button className="btn btn-xs btn-primary" onClick={() => onSwap?.(act.id)}>
-                              Swap
-                            </button>
-                          </div>
-                        </details>
-                      </div>
-                    )}
                   </div>
                 </div>
               </motion.div>

@@ -61,10 +61,8 @@ export interface TripActivity {
   startTime: string; // "10:00"
   endTime: string; // "12:00"
   note: string; // "Walk 15 mins along the canal"
-  isAlternative: boolean;
   transitNote?: string; // e.g., "15 min walk"
   transitDetails?: TransitDetails;
-  alternative?: Vibe;
 }
 
 export interface DayPlan {

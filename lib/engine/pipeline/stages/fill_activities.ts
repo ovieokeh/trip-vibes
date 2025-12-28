@@ -137,18 +137,7 @@ export class FillActivitiesStage implements PlannerStage {
       state.usedIds.add(selection.id);
       if (selection.foursquareId) state.usedExternalIds.add(selection.foursquareId);
 
-      // 2. Select Alternative (second best, if pool is healthy)
-      const alternative =
-        scored.length > 2 && scored[1].score > 0 // Ensure we have a decent backup
-          ? scored[1].c
-          : undefined;
-      const activity = this.createActivity(
-        selection,
-        alternative,
-        minutesToTime(currentMinutes),
-        duration,
-        currentLocation
-      );
+      const activity = this.createActivity(selection, minutesToTime(currentMinutes), duration, currentLocation);
       added.push(activity);
 
       // Track category for variety penalty
@@ -168,7 +157,6 @@ export class FillActivitiesStage implements PlannerStage {
 
   private createActivity(
     c: EngineCandidate,
-    alternative: EngineCandidate | undefined,
     startTime: string,
     durationMinutes: number,
     previousLocation: { lat: number; lng: number } | null
@@ -188,8 +176,6 @@ export class FillActivitiesStage implements PlannerStage {
       startTime,
       endTime: addMinutesToTime(startTime, durationMinutes),
       note: `Explore ${c.name}.`,
-      isAlternative: !!alternative,
-      alternative: alternative ? this.mapCandidateToVibe(alternative) : undefined,
       transitDetails,
       transitNote,
     };

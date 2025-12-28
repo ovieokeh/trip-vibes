@@ -15,7 +15,6 @@ import {
   isPlaceOpenAt,
   appendActivityToDay,
   moveActivityBetweenDays,
-  swapActivityAlternative,
   recalculateTransitForActivities,
 } from "@/lib/activity";
 
@@ -71,38 +70,6 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
     const date = new Date(dateStr);
     return isPlaceOpenAt(vibe.openingHours, date, startTime);
   }, []);
-
-  /**
-   * Swap an activity with its alternative.
-   * Uses shared swapActivityAlternative utility for consistent transit calculation.
-   */
-  const handleSwap = (dayId: string, activityId: string) => {
-    let warningMessage = "";
-
-    const newDays = itinerary.days.map((day) => {
-      if (day.id !== dayId) return day;
-
-      const activity = day.activities.find((a) => a.id === activityId);
-      if (!activity?.alternative) return day;
-
-      // Check if the alternative might be closed
-      const isOpen = checkIsOpen(activity.alternative, day.date, activity.startTime);
-      if (!isOpen) {
-        warningMessage = `${activity.alternative.title} might be closed at ${activity.startTime} on this day.`;
-      }
-
-      // Use shared utility for swapping
-      const updatedActivities = swapActivityAlternative(day, activityId);
-      if (!updatedActivities) return day;
-
-      return { ...day, activities: updatedActivities };
-    });
-
-    setValue("days", newDays, { shouldDirty: true });
-    if (warningMessage) {
-      setAlert({ isOpen: true, title: "Opening Hours Warning", message: warningMessage, type: "warning" });
-    }
-  };
 
   /**
    * Remove an activity from a day.
@@ -250,7 +217,6 @@ export default function ItineraryEditor({ initialItinerary, cityId, isSavedMode 
           <ItineraryDay
             key={day.id}
             day={day}
-            onSwap={(actId) => handleSwap(day.id, actId)}
             onRemove={(actId) => handleRemove(day.id, actId)}
             onAdd={() => handleOpenAddModal(day.id)}
             onUpdate={(actId, updates) => handleActivityUpdate(day.id, actId, updates)}

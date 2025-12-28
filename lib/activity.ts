@@ -155,7 +155,6 @@ export function createTripActivity(
     startTime,
     endTime,
     note: vibe.description,
-    isAlternative: false,
     transitNote,
     transitDetails,
   };
@@ -260,38 +259,4 @@ export function moveActivityBetweenDays(
     if (d.id === targetDayId) return { ...d, activities: updatedTargetActivities };
     return d;
   });
-}
-
-/**
- * Swaps an activity's primary vibe with its alternative.
- * Recalculates transit for the swapped activity and the next activity.
- *
- * @param day - The day containing the activity
- * @param activityId - ID of the activity to swap
- * @returns Updated activities array, or null if swap failed
- */
-export function swapActivityAlternative(day: DayPlan, activityId: string): TripActivity[] | null {
-  const activityIndex = day.activities.findIndex((a) => a.id === activityId);
-  if (activityIndex === -1) return null;
-
-  const activity = day.activities[activityIndex];
-  if (!activity.alternative) return null;
-
-  const oldVibe = activity.vibe;
-  const newVibe = activity.alternative;
-
-  // Create swapped activity
-  const swappedActivity: TripActivity = {
-    ...activity,
-    vibe: newVibe,
-    alternative: oldVibe,
-    note: newVibe.description,
-  };
-
-  // Update activities array
-  const updatedActivities = [...day.activities];
-  updatedActivities[activityIndex] = swappedActivity;
-
-  // Recalculate transit for the whole day (simplest approach, handles all edge cases)
-  return recalculateTransitForActivities(updatedActivities);
 }
