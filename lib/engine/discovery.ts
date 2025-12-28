@@ -9,6 +9,14 @@ import { generateSearchZones, SearchZone } from "../geo";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 
+// Category root IDs for separate discovery streams
+const MEAL_CATEGORY_ROOT = "63be6904847c3692a84b9bb5"; // Dining and Drinking
+const ACTIVITY_CATEGORY_ROOTS = [
+  "4d4b7104d754a06370d81259", // Arts and Entertainment
+  "4d4b7105d754a06377d81259", // Landmarks and Outdoors
+  "4d4b7105d754a06372d81259", // Sports and Recreation
+];
+
 interface FoursquarePlaceLocation {
   address: string;
   locality: string;
@@ -53,8 +61,7 @@ export class DiscoveryEngine {
 
   /**
    * Primary method to find candidates.
-   * 1. Search DB for matching categories.
-   * 2. If insufficient, fetch from Foursquare using geo-exploration (or name fallback).
+   * Uses SEPARATE search streams for meals and activities to ensure balanced pools.
    * @param forceRefresh - When true, always fetch fresh results from Foursquare
    */
   async findCandidates(
@@ -65,39 +72,110 @@ export class DiscoveryEngine {
     // 1. Identify relevant category IDs based on user vibes
     const targetCategoryIds = this.mapVibesToCategoryIds();
 
-    // 2. Search DB
-    let candidates = await this.searchDB(city.id, targetCategoryIds);
+    // 2. Search DB for all matching candidates
+    let allCandidates = await this.searchDB(city.id, targetCategoryIds);
 
-    // 3. Fallback/Enrichment via Foursquare Geo-Exploration
-    const meals = candidates.filter(isMeal);
-    const activities = candidates.filter(isActivity);
+    // 3. Classify current pool
+    let meals = allCandidates.filter(isMeal);
+    let activities = allCandidates.filter(isActivity);
 
     const needsMeals = meals.length < requirements.minMeals;
     const needsActivities = activities.length < requirements.minActivities;
 
-    // Fetch from Foursquare if we need more candidates OR if forceRefresh is requested
+    console.log(`[Discovery] Initial pool: ${meals.length} meals, ${activities.length} activities`);
+
+    // 4. Fetch from Foursquare if needed - SEPARATE STREAMS
     if ((forceRefresh || needsMeals || needsActivities) && process.env.FOURSQUARE_API_KEY) {
       if (forceRefresh) {
         console.log(`[Discovery] Force refresh requested for ${city.name}`);
-      } else {
-        console.log(
-          `[Discovery] Insufficient balance. Meals: ${meals.length}/${requirements.minMeals}, Activities: ${activities.length}/${requirements.minActivities}`
-        );
       }
 
-      // Use geo-exploration if city has coordinates
       if (city.lat && city.lng) {
-        await this.fetchWithGeoExploration(city, targetCategoryIds, requirements);
+        // Parallel fetch: meals and activities in separate API calls
+        const fetchPromises: Promise<void>[] = [];
+
+        if (forceRefresh || needsMeals) {
+          console.log(`[Discovery] Fetching MEALS (need ${requirements.minMeals - meals.length} more)`);
+          fetchPromises.push(this.fetchCategoryStream(city, [MEAL_CATEGORY_ROOT], "meals"));
+        }
+
+        if (forceRefresh || needsActivities) {
+          console.log(`[Discovery] Fetching ACTIVITIES (need ${requirements.minActivities - activities.length} more)`);
+          fetchPromises.push(this.fetchCategoryStream(city, ACTIVITY_CATEGORY_ROOTS, "activities"));
+        }
+
+        await Promise.all(fetchPromises);
       } else {
-        // Fallback to name-based search (single zone)
+        // Fallback to name-based search
         await this.fetchFromFoursquareByName(city, targetCategoryIds);
       }
 
-      // Re-fetch from DB
-      candidates = await this.searchDB(city.id, targetCategoryIds);
+      // 5. Re-fetch from DB and verify
+      allCandidates = await this.searchDB(city.id, targetCategoryIds);
+      meals = allCandidates.filter(isMeal);
+      activities = allCandidates.filter(isActivity);
+
+      console.log(`[Discovery] Final pool: ${meals.length} meals, ${activities.length} activities`);
     }
 
-    return candidates;
+    return allCandidates;
+  }
+
+  /**
+   * Fetches a specific category stream from Foursquare (meals OR activities).
+   * Uses geo-exploration to cover the city area.
+   */
+  private async fetchCategoryStream(
+    city: { id: string; name: string; country: string; lat?: number | null; lng?: number | null },
+    categoryRoots: string[],
+    streamName: string
+  ): Promise<void> {
+    if (!city.lat || !city.lng) return;
+
+    const zones = generateSearchZones(city.lat, city.lng, 6);
+    const categoryIds = categoryRoots.join(",");
+
+    // Use ALL zones for maximum coverage (important for long trips)
+    console.log(`[Discovery] Fetching ${streamName} from ${zones.length} zones`);
+
+    const results = await Promise.allSettled(
+      zones.map(async (zone) => {
+        try {
+          const res = await axios.get<{ results: FoursquarePlace[] }>(
+            "https://places-api.foursquare.com/places/search",
+            {
+              params: {
+                ll: `${zone.lat},${zone.lng}`,
+                radius: 5000,
+                limit: 50,
+                categories: categoryIds,
+              },
+              headers: {
+                Authorization: `Bearer ${process.env.FOURSQUARE_API_KEY}`,
+                "x-places-api-version": "2025-06-17",
+              },
+            }
+          );
+          return res.data.results;
+        } catch (e) {
+          console.error(`[Discovery] Error fetching ${streamName} zone:`, e);
+          return [];
+        }
+      })
+    );
+
+    // Collect and save all places
+    const allPlaces: FoursquarePlace[] = [];
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        allPlaces.push(...result.value);
+      }
+    }
+
+    if (allPlaces.length > 0) {
+      await this.savePlacesBatch(allPlaces, city.id);
+      console.log(`[Discovery] Saved ${allPlaces.length} ${streamName}`);
+    }
   }
 
   public async enrichFromGoogle(place: EngineCandidate) {
@@ -168,8 +246,20 @@ export class DiscoveryEngine {
     const categoryValues = Object.values(CATEGORIES);
 
     // ALWAYS include base food categories to ensure we have restaurants
-    const mandatoryTags = ["restaurant", "cafe", "bakery", "food"];
-    const tagsToSearch = new Set([...allTags, ...mandatoryTags]);
+    const mandatoryFoodTags = ["restaurant", "cafe", "bakery", "food"];
+    // ALWAYS include base activity categories to ensure we have things to do
+    const mandatoryActivityTags = [
+      "museum",
+      "park",
+      "monument",
+      "gallery",
+      "theater",
+      "landmark",
+      "historic site",
+      "plaza",
+      "garden",
+    ];
+    const tagsToSearch = new Set([...allTags, ...mandatoryFoodTags, ...mandatoryActivityTags]);
 
     tagsToSearch.forEach((tag) => {
       // Find category where name matches tag (fuzzy)
@@ -472,7 +562,7 @@ export class DiscoveryEngine {
       cityId: cityId,
       metadata: JSON.stringify({
         categories: fsq.categories?.map((c: any) => c.name) || [],
-        categoryIds: fsq.categories?.map((c: any) => c.id) || [],
+        categoryIds: fsq.categories?.map((c: any) => c.fsq_category_id) || [],
         source: "foursquare",
         social: fsq.social_media,
       }),

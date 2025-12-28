@@ -8,6 +8,7 @@ import { calculateHaversineDistance } from "../../../geo";
 import { getDurationForCandidate } from "../../durations";
 
 const TRANSIT_BUFFER_MINUTES = 15;
+const MAX_ITERATIONS_PER_GAP = 20; // Safety guard against infinite loops
 
 export class FillActivitiesStage implements PlannerStage {
   name = "FillActivities";
@@ -20,17 +21,17 @@ export class FillActivitiesStage implements PlannerStage {
       day.activities.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
       const filledActivities: TripActivity[] = [];
-      let lastEndTimeMinutes = timeToMinutes("09:00"); // Start day at 9 AM (after breakfast usually)
+      let lastEndTimeMinutes = timeToMinutes("09:00"); // Start day at 9 AM (after breakfast)
       let lastLocation: { lat: number; lng: number } | null = null;
 
-      // Find gaps between existing activities
+      // Find gaps between existing activities and fill them
       for (let i = 0; i <= day.activities.length; i++) {
         const nextActivity = day.activities[i];
 
-        // Define Gap
-        const gapEndMinutes = nextActivity ? timeToMinutes(nextActivity.startTime) : timeToMinutes("19:30"); // End at Dinner time if no more activities, or 19:30 default
+        // Define Gap end
+        const gapEndMinutes = nextActivity ? timeToMinutes(nextActivity.startTime) : timeToMinutes("19:30"); // End at Dinner time
 
-        // If next activity is breakfast (e.g. 8am), we might have started late, so just skip
+        // If next activity is breakfast (e.g. 8am), skip
         if (gapEndMinutes < lastEndTimeMinutes) {
           if (nextActivity) {
             filledActivities.push(nextActivity);
@@ -42,10 +43,9 @@ export class FillActivitiesStage implements PlannerStage {
           continue;
         }
 
-        // Fill the Gap
+        // Fill the Gap - TIME-BASED (no arbitrary budget limits)
         const gapAvailable = gapEndMinutes - lastEndTimeMinutes;
         if (gapAvailable > 60) {
-          // Only fill valid gaps > 60 mins
           const newItems = this.fillGap(day, lastEndTimeMinutes, gapEndMinutes, newState, lastLocation);
           filledActivities.push(...newItems);
 
@@ -92,19 +92,26 @@ export class FillActivitiesStage implements PlannerStage {
     const effectiveEnd = endMinutes - 15;
 
     let currentLocation = startLocation;
+    let iterations = 0;
 
     const usedCategories = new Set<string>();
     day.activities.forEach((a: TripActivity) => {
       if (a.vibe.category) usedCategories.add(a.vibe.category.toLowerCase());
     });
 
-    while (currentMinutes < effectiveEnd) {
+    // TIME-BASED filling with safety guard
+    while (currentMinutes < effectiveEnd && iterations < MAX_ITERATIONS_PER_GAP) {
+      iterations++;
+
       const candidates = state.remainingCandidates.filter(
         (c) =>
           !state.usedIds.has(c.id) && (!c.foursquareId || !state.usedExternalIds.has(c.foursquareId)) && isActivity(c)
       );
 
-      if (candidates.length === 0) break;
+      if (candidates.length === 0) {
+        console.warn(`[FillActivities] Day ${day.dayNumber}: No activity candidates left`);
+        break;
+      }
 
       // Score candidates based on proximity to currentLocation AND variety
       const scored = candidates.map((c) => {

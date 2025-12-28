@@ -150,6 +150,7 @@ export interface EngineCandidate {
   };
   metadata: {
     categories: string[];
+    categoryId?: string;
     source: string;
     website: string | null;
     phone: string | null;

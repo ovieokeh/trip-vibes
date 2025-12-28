@@ -112,7 +112,10 @@ export class AnchorMealsStage implements PlannerStage {
         combined.includes("park") ||
         combined.includes("museum") ||
         combined.includes("monument") ||
-        combined.includes("gallery");
+        combined.includes("gallery") ||
+        combined.includes("theater") ||
+        combined.includes("cinema") ||
+        combined.includes("movie");
       return !isExplicitActivity;
     }
 

@@ -36,16 +36,22 @@ export class MatchingEngine {
     const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
 
     // START: Smart Retry Logic
-    let minMeals = 20; // Generous meal pool
-    let minActivities = 50; // Initial activity pool
+    // Scale candidates by trip length
+    // Target: 5 activities per day to fill 9am-7:30pm gap
+    const activitiesPerDay = 5;
+    let minMeals = Math.max(20, dayCount * 4);
+    let minActivities = Math.max(30, dayCount * activitiesPerDay); // 8 days = 40 activities
+
     let retryCount = 0;
-    const MAX_RETRIES = 1; // 1 Retry allowed (total 2 attempts) to save quota
+    const MAX_RETRIES = 2; // Increased to 2 retries for hard cases
     let itinerary: Itinerary | null = null;
 
     while (retryCount <= MAX_RETRIES) {
       if (retryCount > 0) {
         this.onProgress(`Expanding search (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})...`);
-        minActivities += 50; // Fetch significantly more on retry
+        // Dynamic increase on retry
+        minActivities += dayCount * 5;
+        minMeals += dayCount * 2;
       }
 
       this.onProgress(`Scouting vibes in ${city.name} for ${dayCount} days`);

@@ -57,9 +57,9 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // Standard fetch: 20 meals, 100 activities
-    // Standard fetch: 20 meals, 50 activities (starts low, retries high if needed)
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
+    // Scaling: minMeals = max(20, days*4), minActivities = max(30, days*5)
+    // 3 days: minMeals = max(20, 12) = 20, minActivities = max(30, 15) = 30
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 30 }, expect.anything());
   });
 
   it("should calculate correct minCandidates for a long trip (7 days)", async () => {
@@ -75,9 +75,9 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // Standard fetch: 20 meals, 100 activities
-    // Standard fetch: 20 meals, 50 activities
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
+    // Scaling: minMeals = max(20, days*4), minActivities = max(30, days*5)
+    // 7 days: minMeals = max(20, 28) = 28, minActivities = max(30, 35) = 35
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 28, minActivities: 35 }, expect.anything());
   });
 
   it("should handle single day trip (1 day)", async () => {
@@ -93,9 +93,9 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // Standard fetch: 20 meals, 100 activities
-    // Standard fetch: 20 meals, 50 activities
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
+    // Scaling: minMeals = max(20, days*4), minActivities = max(30, days*5)
+    // 1 day: minMeals = max(20, 4) = 20, minActivities = max(30, 5) = 30
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 30 }, expect.anything());
   });
 
   it("should handle lopsided candidate pools (e.g. all activities, no meals)", async () => {
@@ -117,8 +117,8 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // Standard fetch: 20 meals, 100 activities
-    // Standard fetch: 20 meals, 50 activities
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
+    // Scaling: minMeals = max(20, days*4), minActivities = max(30, days*5)
+    // 2 days: minMeals = max(20, 8) = 20, minActivities = max(30, 10) = 30
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 30 }, expect.anything());
   });
 });
