@@ -37,7 +37,7 @@ const DRIVING_BUFFER_MIN = 3; // Parking + walking from car
 
 export function estimateTravelTime(distanceKm: number, mode: "walking" | "driving" | "transit"): number {
   // More conservative speeds based on real-world urban travel
-  const walkingSpeedKmH = 4.5; // Tourist pace, not commuter pace
+  const walkingSpeedKmH = 4.8; // Standard urban walking speed (approx 3 mph)
   const drivingSpeedKmH = 25.0; // Urban average including traffic lights
   const transitSpeedKmH = 18.0; // Bus/metro with stops and transfers
 
@@ -66,7 +66,7 @@ export function estimateTravelTime(distanceKm: number, mode: "walking" | "drivin
  * Walking vs driving threshold in kilometers.
  * Used by both getTransitNote and getTravelDetails for consistency.
  */
-const WALKING_THRESHOLD_KM = 2.0;
+const WALKING_THRESHOLD_KM = 1.5;
 
 export function getTransitNote(fromLat: number, fromLng: number, toLat: number, toLng: number): string {
   const dist = calculateHaversineDistance(fromLat, fromLng, toLat, toLng);

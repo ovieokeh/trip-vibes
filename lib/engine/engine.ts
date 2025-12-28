@@ -30,71 +30,79 @@ export class MatchingEngine {
     if (!city) throw new Error(`Location ${this.prefs.cityId} not found in database.`);
     this.prefs.cityId = city.id;
 
-    // 1. Discovery
-    // 1. Discovery
+    // 1. Setup Time Budget
     const start = new Date(this.prefs.startDate);
     const end = new Date(this.prefs.endDate);
     const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
 
-    // Calculate dynamic needs
-    // We target 4 meals per day (Breakfast, Lunch, Dinner + 1 buffer)
-    // We target 4 activities per day (Morning, Afternoon, Evening + 1 buffer)
-    const minMeals = dayCount * 4;
-    const minActivities = dayCount * 4;
+    // START: Smart Retry Logic
+    let minMeals = 20; // Generous meal pool
+    let minActivities = 50; // Initial activity pool
+    let retryCount = 0;
+    const MAX_RETRIES = 1; // 1 Retry allowed (total 2 attempts) to save quota
+    let itinerary: Itinerary | null = null;
 
-    this.onProgress(`Scouting vibes in ${city.name} for ${dayCount} days`);
-    const discovery = new DiscoveryEngine(this.prefs);
-    let candidates = await discovery.findCandidates(city, { minMeals, minActivities }, this.prefs.forceRefresh);
-
-    // 2. Scoring & Ranking
-    this.onProgress("Synthesizing vibe profile...");
-    const scoring = new ScoringEngine(this.prefs);
-    candidates = scoring.rankCandidates(candidates);
-
-    // 3. Deep Enrichment (Google) - Optional / Lazy
-    // We only enrich top candidates to save Google API quota
-    // But we pass ALL candidates to the scheduler so it has maximum choice
-    const mealCandidates = candidates.filter(isMeal);
-    const activityCandidates = candidates.filter(isActivity);
-
-    // Calculate how many to enrich (top picks for quality)
-    // We need 2× slots to account for primary + alternative
-    // Daily template has 6 slots, so 6 × dayCount × 2 = 12 × dayCount
-    const enrichmentLimit = dayCount * 12;
-    const topActivitiesToEnrich = activityCandidates.slice(0, enrichmentLimit);
-    const topMealsToEnrich = mealCandidates.slice(0, enrichmentLimit);
-
-    // Deduplicate enrichment targets (hybrids may appear in both)
-    const enrichmentSet = new Map<string, (typeof candidates)[0]>();
-    for (const c of [...topActivitiesToEnrich, ...topMealsToEnrich]) {
-      if (!enrichmentSet.has(c.id)) {
-        enrichmentSet.set(c.id, c);
+    while (retryCount <= MAX_RETRIES) {
+      if (retryCount > 0) {
+        this.onProgress(`Expanding search (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})...`);
+        minActivities += 50; // Fetch significantly more on retry
       }
-    }
-    const toEnrich = Array.from(enrichmentSet.values());
 
-    this.onProgress(`Enriching ${toEnrich.length} top picks...`);
-    await Promise.all(toEnrich.map((c) => discovery.enrichFromGoogle(c)));
+      this.onProgress(`Scouting vibes in ${city.name} for ${dayCount} days`);
+      const discovery = new DiscoveryEngine(this.prefs);
 
-    // 4. Scheduling - pass ALL candidates, not just enriched ones
-    // This ensures the scheduler has maximum flexibility
-    this.onProgress("Assembling your journey...");
-    const scheduler = new SchedulerEngine(this.prefs);
+      // Fetch with forceRefresh on retry to ensure we get new Foursquare data
+      const candidates = await discovery.findCandidates(
+        city,
+        { minMeals, minActivities },
+        this.prefs.forceRefresh || retryCount > 0
+      );
 
-    // Deduplicate all candidates before passing to scheduler
-    const allCandidatesMap = new Map<string, (typeof candidates)[0]>();
-    for (const c of candidates) {
-      if (!allCandidatesMap.has(c.id)) {
-        allCandidatesMap.set(c.id, c);
+      // 2. Scoring
+      this.onProgress(`Ranking ${candidates.length} options...`);
+      const scoring = new ScoringEngine(this.prefs);
+      const rankedCandidates = scoring.rankCandidates(candidates);
+
+      // 3. Enrichment
+      // We enrich a generous buffer of top candidates to ensure the scheduler has good data
+      // Limit to avoid excessive Google API costs
+      const enrichLimit = minMeals + minActivities + 30;
+      const topCandidates = rankedCandidates.slice(0, enrichLimit);
+
+      this.onProgress("Checking details...");
+      // Parallel enrichment with batching
+      const batchSize = 10;
+      for (let i = 0; i < topCandidates.length; i += batchSize) {
+        if (i % 20 === 0) this.onProgress(`Checking details (${i}/${topCandidates.length})...`);
+        const batch = topCandidates.slice(i, i + batchSize);
+        await Promise.all(batch.map((c) => discovery.enrichFromGoogle(c)));
       }
+
+      // 4. Scheduling
+      this.onProgress("Assembling your journey...");
+      const scheduler = new SchedulerEngine(this.prefs);
+      itinerary = scheduler.assembleItinerary(topCandidates);
+
+      // 5. Sparse Day Check
+      // A day is sparse if it ends before 5:00 PM (17:00)
+      const hasSparseDay = itinerary.days.some((day) => {
+        if (day.activities.length === 0) return true;
+        const lastActivity = day.activities[day.activities.length - 1];
+        // Parse "19:30" -> 19
+        const endHour = parseInt(lastActivity.endTime.split(":")[0], 10);
+        return endHour < 17;
+      });
+
+      if (!hasSparseDay) {
+        console.log(`[Engine] Itinerary looks full. Finishing.`);
+        break;
+      }
+
+      console.log(`[Engine] Sparse day detected. Retrying with more candidates... (Retry ${retryCount})`);
+      retryCount++;
     }
-    const allUniqueCandidates = Array.from(allCandidatesMap.values());
 
-    console.log(
-      `[Engine] Passing ${allUniqueCandidates.length} candidates to scheduler (${mealCandidates.length} meals, ${activityCandidates.length} activities)`
-    );
-
-    const itinerary = scheduler.assembleItinerary(allUniqueCandidates);
+    if (!itinerary) throw new Error("Failed to generate itinerary");
 
     this.onProgress("Finalizing details...");
     return itinerary;

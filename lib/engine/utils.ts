@@ -61,6 +61,14 @@ function matchesFoodPattern(c: EngineCandidate): boolean {
 }
 
 /**
+ * Checks if a category name represents food.
+ * Helper for DiscoveryEngine to filter API requests.
+ */
+export function isFoodCategoryName(name: string): boolean {
+  return FOOD_PATTERN.test(name.toLowerCase());
+}
+
+/**
  * Checks if the candidate is a nightlife place.
  */
 export function matchesNightlifePattern(c: EngineCandidate): boolean {
@@ -79,14 +87,15 @@ export function isHybridPlace(c: EngineCandidate): boolean {
  * Returns true for food establishments AND bars/nightlife (they serve food/drinks).
  */
 export function isMeal(c: EngineCandidate): boolean {
-  // True activities are never meals
-  if (matchesActivityPattern(c)) return false;
-
   // Food establishments are meals
+  // Prioritize this check so "Garden Restaurant" is matched as a meal
   if (matchesFoodPattern(c)) return true;
 
   // Nightlife serves food/drinks - count toward meal/food limit
   if (matchesNightlifePattern(c)) return true;
+
+  // Hybrids (Markets) can be meals
+  if (isHybridPlace(c)) return true;
 
   return false;
 }
@@ -103,15 +112,16 @@ export function isMeal(c: EngineCandidate): boolean {
  * should count toward food limits, scheduled only in evening slots.
  */
 export function isActivity(c: EngineCandidate): boolean {
-  // Explicit activities (park, museum, etc.) are always activities
-  if (matchesActivityPattern(c)) return true;
-
-  // Hybrid places (markets) can be activities
+  // 1. Hybrids are allowed (Markets, Food Halls) - can be activity OR meal
   if (isHybridPlace(c)) return true;
 
-  // Food and nightlife are NOT activities - they count toward food limit
+  // 2. Food/Nightlife are strictly NOT activities (unless hybrid)
+  // This prevents "Garden Restaurant" from being an activity
   if (matchesFoodPattern(c) || matchesNightlifePattern(c)) return false;
 
-  // Anything else that doesn't match known patterns = activity by default
+  // 3. Explicit Match
+  if (matchesActivityPattern(c)) return true;
+
+  // 4. Fallback
   return true;
 }

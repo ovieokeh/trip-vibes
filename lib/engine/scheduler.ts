@@ -4,6 +4,7 @@ import { isMeal, isActivity, matchesNightlifePattern } from "./utils";
 import { isPlaceOpenAt, calculateTransit } from "../activity";
 import { addMinutesToTime, timeToMinutes, minutesToTime } from "../time";
 import { getDurationForCandidate, getTimeWindows } from "./durations";
+import { calculateHaversineDistance } from "../geo";
 
 /**
  * Fixed meal slot definition.
@@ -97,10 +98,8 @@ export class SchedulerEngine {
     const end = new Date(this.prefs.endDate);
     const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
 
-    // Pre-allocate candidates evenly across days to ensure balanced distribution
+    // Use global pools for all days (no pre-distribution)
     const { mealCandidates, activityCandidates } = this.splitCandidates(candidates);
-    const mealsPerDay = this.distributeCandidates(mealCandidates, dayCount);
-    const activitiesPerDay = this.distributeCandidates(activityCandidates, dayCount);
 
     const globalUsedIds = new Set<string>();
     const globalUsedExternalIds = new Set<string>();
@@ -112,12 +111,14 @@ export class SchedulerEngine {
       const dayActivities: TripActivity[] = [];
       let previousLocation: { lat: number; lng: number } | null = null;
 
-      // Use day-specific candidate pools
-      const dayMeals = mealsPerDay[i] || [];
-      const dayActivityPool = activitiesPerDay[i] || [];
+      // Use global candidate pools
+      // usedIds set prevents reusing the same place across days
+      const dayMeals = mealCandidates;
+      const dayActivityPool = activityCandidates;
 
       const usedIds = new Set<string>(globalUsedIds);
       const usedExternalIds = new Set<string>(globalUsedExternalIds);
+      const usedCategories = new Set<string>(); // Track used categories for this day
 
       // 1. Schedule meals first (fixed times)
       for (const meal of this.MEAL_SLOTS) {
@@ -156,13 +157,14 @@ export class SchedulerEngine {
       for (const window of windows) {
         const windowActivities = this.fillTimeWindow(
           window,
-          dayActivityPool,
+          dayActivityPool, // This is now the global pool
           usedIds,
           usedExternalIds,
           date,
           previousLocation,
           currentFoodCount,
-          maxFoodSpots
+          maxFoodSpots,
+          usedCategories // Pass for variety penalty
         );
 
         for (const act of windowActivities) {
@@ -205,10 +207,18 @@ export class SchedulerEngine {
     const activityCandidates: EngineCandidate[] = [];
 
     for (const c of candidates) {
-      if (isMeal(c) && !matchesNightlifePattern(c)) {
+      // Nightlife can be BOTH meal (Dinner) and Activity (Evening)
+      // So we handle them specially to ensure they are available in both pools
+      if (matchesNightlifePattern(c)) {
         mealCandidates.push(c);
+        activityCandidates.push(c);
+        continue;
       }
-      if (isActivity(c)) {
+
+      // Exclusive classification for others
+      if (isMeal(c)) {
+        mealCandidates.push(c);
+      } else if (isActivity(c)) {
         activityCandidates.push(c);
       }
     }
@@ -217,23 +227,10 @@ export class SchedulerEngine {
   }
 
   /**
-   * Distribute candidates evenly across days using round-robin allocation.
-   */
-  private distributeCandidates(candidates: EngineCandidate[], dayCount: number): EngineCandidate[][] {
-    const perDay: EngineCandidate[][] = Array.from({ length: dayCount }, () => []);
-
-    candidates.forEach((candidate, index) => {
-      const dayIndex = index % dayCount;
-      perDay[dayIndex].push(candidate);
-    });
-
-    return perDay;
-  }
-
-  /**
    * Dynamically fills a time window with activities based on their durations.
    * @param currentFoodCount - Number of food spots already scheduled for this day
    * @param maxFoodSpots - Maximum allowed food spots per day
+   * @param usedCategories - Set of categories already used this day
    */
   private fillTimeWindow(
     window: TimeWindow,
@@ -243,7 +240,8 @@ export class SchedulerEngine {
     date: Date,
     previousLocation: { lat: number; lng: number } | null,
     currentFoodCount: number,
-    maxFoodSpots: number
+    maxFoodSpots: number,
+    usedCategories: Set<string>
   ): TripActivity[] {
     const activities: TripActivity[] = [];
     let currentMinutes = timeToMinutes(window.startTime);
@@ -255,7 +253,16 @@ export class SchedulerEngine {
 
       // Skip food candidates if we've hit the limit
       const skipFood = foodCount >= maxFoodSpots;
-      const selection = this.selectActivityCandidate(candidates, usedIds, usedExternalIds, date, currentTime, skipFood);
+      const selection = this.selectActivityCandidate(
+        candidates,
+        usedIds,
+        usedExternalIds,
+        date,
+        currentTime,
+        skipFood,
+        usedCategories,
+        previousLocation
+      );
 
       if (!selection) break;
 
@@ -275,6 +282,11 @@ export class SchedulerEngine {
         foodCount++;
       }
 
+      // Track used category
+      if (selection.primary.metadata?.categories?.[0]) {
+        usedCategories.add(selection.primary.metadata.categories[0].toLowerCase());
+      }
+
       const activity = this.createDynamicActivity(
         selection.primary,
         currentTime,
@@ -285,7 +297,7 @@ export class SchedulerEngine {
 
       activities.push(activity);
 
-      if (selection.primary.lat && selection.primary.lng) {
+      if (selection.primary.lat != null && selection.primary.lng != null) {
         previousLocation = { lat: selection.primary.lat, lng: selection.primary.lng };
       }
 
@@ -344,6 +356,7 @@ export class SchedulerEngine {
   /**
    * Select an activity candidate for dynamic window filling.
    * @param skipFood - If true, skip food-related candidates to enforce variety
+   * @param usedCategories - Set of categories already used this day (for penalty scoring)
    */
   private selectActivityCandidate(
     candidates: EngineCandidate[],
@@ -351,36 +364,83 @@ export class SchedulerEngine {
     usedExternalIds: Set<string>,
     date: Date,
     time: string,
-    skipFood: boolean = false
+    skipFood: boolean = false,
+    usedCategories?: Set<string>,
+    previousLocation?: { lat: number; lng: number } | null
   ): { primary: EngineCandidate; alternative?: EngineCandidate } | null {
     const pool = candidates.filter((c) => {
       if (usedIds.has(c.id)) return false;
       if (c.foursquareId && usedExternalIds.has(c.foursquareId)) return false;
       // Skip food candidates if we've hit the daily limit
       if (skipFood && isMeal(c)) return false;
+
+      // Use strict activity check, OR allow nightlife ONLY in the evening
+      const isNightlife = matchesNightlifePattern(c);
+      if (isNightlife) {
+        const hour = parseInt(time.split(":")[0], 10);
+        if (hour >= 18) return true;
+        return false;
+      }
+
       return isActivity(c);
     });
 
+    if (pool.length === 0) return null;
+
+    // Dynamic Scoring with Penalties
+    // We map each candidate to an effective score:
+    // Effective Score = Base Score - Penalty (if category used)
+    const PENALTY_PER_USAGE = 30;
+
+    const scoredPool = pool.map((c) => {
+      let score = c._score || 0;
+
+      // Apply penalty if category used
+      const cat = c.metadata?.categories?.[0]?.toLowerCase();
+      if (usedCategories && cat && usedCategories.has(cat)) {
+        score -= PENALTY_PER_USAGE;
+      }
+
+      // Proximity Boost (Clustering)
+      // If we have a previous location, boost candidates that are close by
+      if (previousLocation && c.lat != null && c.lng != null) {
+        const dist = calculateHaversineDistance(previousLocation.lat, previousLocation.lng, c.lat, c.lng);
+        if (dist < 3.0) {
+          score += 20; // Strong boost for very close items (< 3km)
+        } else if (dist < 5.0) {
+          score += 10; // Medium boost for reasonably close items (< 5km)
+        }
+      }
+
+      return { candidate: c, effectiveScore: score };
+    });
+
+    // Sort by effective score descending
+    scoredPool.sort((a, b) => b.effectiveScore - a.effectiveScore);
+
+    // Pick top available candidate
     let primary: EngineCandidate | null = null;
     let alternative: EngineCandidate | null = null;
 
-    for (const c of pool) {
-      if (this.isOpen(c, date, time)) {
+    // Try finding open places from sorted list
+    for (const item of scoredPool) {
+      if (this.isOpen(item.candidate, date, time)) {
         if (!primary) {
-          primary = c;
-        } else if (!alternative && c.id !== primary.id) {
-          alternative = c;
+          primary = item.candidate;
+        } else if (!alternative && item.candidate.id !== primary.id) {
+          alternative = item.candidate;
           break;
         }
       }
     }
 
+    // Fallback if nothing open found (just take top scored)
     if (!primary) {
-      for (const c of pool) {
+      for (const item of scoredPool) {
         if (!primary) {
-          primary = c;
-        } else if (!alternative && c.id !== primary.id) {
-          alternative = c;
+          primary = item.candidate;
+        } else if (!alternative && item.candidate.id !== primary.id) {
+          alternative = item.candidate;
           break;
         }
       }
@@ -390,13 +450,18 @@ export class SchedulerEngine {
   }
 
   private matchesMealSlot(c: EngineCandidate, meal: MealSlot): boolean {
-    if (matchesNightlifePattern(c)) return false;
+    // Block nightlife for Breakfast/Morning, but allow for Dinner
+    if (meal.name !== "Dinner" && matchesNightlifePattern(c)) return false;
 
     const cats = (c.metadata.categories || []).map((s: string) => s.toLowerCase());
     const name = c.name.toLowerCase();
     const combined = [...cats, name].join(" ");
 
+    // 1. Strict Requirement Check (Primary)
     if (meal.requiredTags.some((tag) => combined.includes(tag))) return true;
+
+    // 2. Fallback: Any valid meal, IF it's not strictly excluded
+    // (e.g. don't schedule a 'Bar' for Breakfast via fallback, but we already handled that above)
     return isMeal(c);
   }
 

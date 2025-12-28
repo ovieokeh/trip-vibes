@@ -57,8 +57,9 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // 3 Days * 4 = 12 each
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 12, minActivities: 12 }, undefined);
+    // Standard fetch: 20 meals, 100 activities
+    // Standard fetch: 20 meals, 50 activities (starts low, retries high if needed)
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
   });
 
   it("should calculate correct minCandidates for a long trip (7 days)", async () => {
@@ -74,8 +75,9 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // 7 Days * 4 = 28 each
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 28, minActivities: 28 }, undefined);
+    // Standard fetch: 20 meals, 100 activities
+    // Standard fetch: 20 meals, 50 activities
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
   });
 
   it("should handle single day trip (1 day)", async () => {
@@ -91,8 +93,9 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // 1 Day * 4 = 4 items
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 4, minActivities: 4 }, undefined);
+    // Standard fetch: 20 meals, 100 activities
+    // Standard fetch: 20 meals, 50 activities
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
   });
 
   it("should handle lopsided candidate pools (e.g. all activities, no meals)", async () => {
@@ -114,8 +117,8 @@ describe("MatchingEngine Scaling Integration", () => {
 
     await engine.generate();
 
-    // 2 Days * 4 meals = 8 meals min
-    // 2 Days * 4 activities = 8 activities min
-    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 8, minActivities: 8 }, undefined);
+    // Standard fetch: 20 meals, 100 activities
+    // Standard fetch: 20 meals, 50 activities
+    expect(findSpy).toHaveBeenCalledWith(expect.anything(), { minMeals: 20, minActivities: 50 }, expect.anything());
   });
 });

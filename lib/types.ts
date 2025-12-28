@@ -157,4 +157,5 @@ export interface EngineCandidate {
     phone: string | null;
     neighborhood?: string;
   };
+  _score?: number;
 }

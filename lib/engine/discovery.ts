@@ -4,7 +4,7 @@ import { eq, and, or, sql, inArray } from "drizzle-orm";
 import { EngineCandidate, UserPreferences } from "../types";
 import { ARCHETYPES } from "../archetypes";
 import { CATEGORIES } from "../categories";
-import { isMeal, isActivity } from "./utils";
+import { isMeal, isActivity, isFoodCategoryName } from "./utils";
 import { generateSearchZones, SearchZone } from "../geo";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
@@ -282,7 +282,6 @@ export class DiscoveryEngine {
     if (!process.env.FOURSQUARE_API_KEY || !city.lat || !city.lng) return;
 
     const zones = generateSearchZones(city.lat, city.lng, 6); // 6km offset
-    const idsToSearch = this.prepareCategoryIds(categoryIds);
 
     // Batch zones into groups of 2 for parallel fetching with early exit
     const BATCH_SIZE = 2;
@@ -306,6 +305,18 @@ export class DiscoveryEngine {
       }
 
       console.log(`[Geo-Exploration] Fetching batch of ${batch.length} zones in parallel...`);
+
+      // Dynamic Category Filtering:
+      // If we have enough meals, exclude food categories to prioritize activities in Foursquare limit (50)
+      let batchCategoryIds = categoryIds;
+      if (meals.length >= requirements.minMeals) {
+        batchCategoryIds = categoryIds.filter((id) => {
+          const name = CATEGORIES[id]?.name || "";
+          return !isFoodCategoryName(name);
+        });
+        // console.log(`[Geo-Exploration] Excluding food categories. Searching ${batchCategoryIds.length} IDs.`);
+      }
+      const idsToSearch = this.prepareCategoryIds(batchCategoryIds);
 
       // Fetch all zones in this batch in parallel
       const batchResults = await Promise.allSettled(
