@@ -51,12 +51,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
   }
 
-  console.log({
-    photoRef,
-    firstImage,
-    itineraryDays: itinerary.days[0].activities[0],
-  });
-
   // Construct the Dynamic OG Image URL
   const searchParams = new URLSearchParams();
   searchParams.set("title", title);
