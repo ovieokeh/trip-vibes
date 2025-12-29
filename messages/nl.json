@@ -80,7 +80,11 @@
     "noDate": "Geen data",
     "savedTripHeader": "OPGESLAGEN REIS",
     "notFound": "Reis niet gevonden",
-    "backToSaved": "Terug naar opgeslagen reizen"
+    "backToSaved": "Terug naar opgeslagen reizen",
+    "metadata": {
+      "title": "Reis naar {city}",
+      "description": "Bekijk deze reis naar {city} op TripVibes!"
+    }
   },
   "Loading": {
     "buildingTrip": "Je reis opbouwen",

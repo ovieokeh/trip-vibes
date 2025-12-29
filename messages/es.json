@@ -80,7 +80,11 @@
     "noDate": "Sin fechas",
     "savedTripHeader": "VIAJE GUARDADO",
     "notFound": "Viaje no encontrado",
-    "backToSaved": "Volver a viajes guardados"
+    "backToSaved": "Volver a viajes guardados",
+    "metadata": {
+      "title": "Viaje a {city}",
+      "description": "¡Mira este viaje a {city} en TripVibes!"
+    }
   },
   "Loading": {
     "buildingTrip": "Construyendo tu Viaje",

@@ -81,7 +81,11 @@
     "noDate": "No dates",
     "savedTripHeader": "SAVED TRIP",
     "notFound": "Trip Not Found",
-    "backToSaved": "Back to Saved Trips"
+    "backToSaved": "Back to Saved Trips",
+    "metadata": {
+      "title": "Trip to {city}",
+      "description": "Check out this trip to {city} on TripVibes!"
+    }
   },
   "Loading": {
     "buildingTrip": "Building Your Trip",

@@ -81,7 +81,11 @@
     "noDate": "Χωρίς μέρες",
     "savedTripHeader": "ΦΥΛΑΓΜΕΝΟ ΤΑΞΙΔΙ",
     "notFound": "Δεν βρέθηκε το ταξίδι",
-    "backToSaved": "Πίσω στα φυλαγμένα"
+    "backToSaved": "Πίσω στα φυλαγμένα",
+    "metadata": {
+      "title": "Ταξίδι στην/στον {city}",
+      "description": "Δες αυτό το ταξίδι στην/στον {city} στο TripVibes!"
+    }
   },
   "Loading": {
     "buildingTrip": "Φτιάχνουμε το Ταξίδι",

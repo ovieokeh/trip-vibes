@@ -24,22 +24,47 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const city = await getCityById(itinerary.cityId);
   const cityName = city?.name || "Unknown City";
-  const title = itinerary.name || `Trip to ${cityName}`;
-  const description = `Check out this trip to ${cityName} on TripVibes!`;
-  const firstImage = itinerary.days.find((day) => day.activities.length > 0)?.activities[0].vibe.imageUrl;
+  const title = itinerary.name || t("metadata.title", { city: cityName });
+  const description = t("metadata.description", { city: cityName });
 
-  // Get the base URL for absolute paths
+  const startDate = itinerary.startDate
+    ? new Date(itinerary.startDate).toLocaleDateString(locale, { month: "short", day: "numeric" })
+    : "";
+
+  // Try to find a photo reference from the first activity
+  const firstActivityWithImage = itinerary.days.find((day) =>
+    day.activities.length > 0 ? day.activities[0].vibe?.photos?.[0] : null
+  );
+  const firstImage = firstActivityWithImage?.activities[0].vibe?.photos?.[0].url;
+
+  let ogImageUrl = "";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  // Convert image URL to absolute if it's a relative API route
-  let absoluteImageUrl = `${baseUrl}/og-image.jpg`; // fallback
-  if (firstImage) {
-    if (firstImage.startsWith("/")) {
-      absoluteImageUrl = `${baseUrl}${firstImage}`;
-    } else if (firstImage.startsWith("http")) {
-      absoluteImageUrl = firstImage;
+  // Check if we have a Google Photo Ref in the URL
+  let photoRef = "";
+  if (firstImage && firstImage.includes("ref=")) {
+    try {
+      const urlObj = new URL(firstImage, "http://localhost"); // ensure valid URL parsing
+      photoRef = urlObj.searchParams.get("ref") || "";
+    } catch (e) {
+      // ignore parsing error
     }
   }
+
+  console.log({
+    photoRef,
+    firstImage,
+    itineraryDays: itinerary.days[0].activities[0],
+  });
+
+  // Construct the Dynamic OG Image URL
+  const searchParams = new URLSearchParams();
+  searchParams.set("title", title);
+  searchParams.set("city", cityName);
+  if (startDate) searchParams.set("date", startDate);
+  if (photoRef) searchParams.set("ref", photoRef);
+
+  ogImageUrl = `${baseUrl}/api/og?${searchParams.toString()}`;
 
   return {
     title,
@@ -52,7 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "TripVibes",
       images: [
         {
-          url: absoluteImageUrl,
+          url: ogImageUrl,
           width: 1200,
           height: 630,
           alt: title,
@@ -63,7 +88,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title,
       description,
-      images: [absoluteImageUrl],
+      images: [ogImageUrl],
     },
   };
 }
@@ -115,7 +140,7 @@ export default async function SavedTripDetailsPage({ params }: { params: Promise
       </div>
 
       <div className="text-center mb-8">
-        <h2 className="text-3xl  mb-1">{itinerary.name || `Trip to ${cityName}`}</h2>
+        <h2 className="text-3xl  mb-1">{itinerary.name || t("metadata.title", { city: cityName })}</h2>
         <p className="opacity-70 font-medium">
           {cityName}
           {dateRange ? ` • ${dateRange}` : ""}

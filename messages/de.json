@@ -80,7 +80,11 @@
     "noDate": "Keine Daten",
     "savedTripHeader": "GESPEICHERTE REISE",
     "notFound": "Reise nicht gefunden",
-    "backToSaved": "Zurück zu gespeicherten Reisen"
+    "backToSaved": "Zurück zu gespeicherten Reisen",
+    "metadata": {
+      "title": "Reise nach {city}",
+      "description": "Sieh dir diese Reise nach {city} auf TripVibes an!"
+    }
   },
   "Loading": {
     "buildingTrip": "Erstelle deine Reise",
