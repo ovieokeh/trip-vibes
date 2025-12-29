@@ -551,25 +551,44 @@ export class DiscoveryEngine {
       return;
     }
 
+    // Auto-Detect Chains from Name Frequency
+    // We check ALL validPlaces (even existing ones) to count frequencies,
+    // because a chain might have 1 old place + 2 new places in this batch.
+    const nameCounts = new Map<string, number>();
+    for (const p of validPlaces) {
+      const name = p.name.toLowerCase().trim();
+      nameCounts.set(name, (nameCounts.get(name) || 0) + 1);
+    }
+
     // Bulk insert new places
-    const insertValues = newPlaces.map((fsq) => ({
-      id: uuidv4(),
-      foursquareId: fsq.fsq_place_id!,
-      name: fsq.name,
-      address: fsq.location?.formatted_address,
-      lat: fsq.latitude ?? 0,
-      lng: fsq.longitude ?? 0,
-      cityId: cityId,
-      metadata: JSON.stringify({
-        categories: fsq.categories?.map((c: any) => c.name) || [],
-        categoryIds: fsq.categories?.map((c: any) => c.fsq_category_id) || [],
-        source: "foursquare",
-        social: fsq.social_media,
-      }),
-      website: fsq.website,
-      phone: fsq.tel,
-      rating: null,
-    }));
+    const insertValues = newPlaces.map((fsq) => {
+      const name = fsq.name.toLowerCase().trim();
+      const isChain = (nameCounts.get(name) || 0) > 2; // >2 occurences = chain
+
+      if (isChain) {
+        console.log(`[Discovery] Detected chain: ${fsq.name}`);
+      }
+
+      return {
+        id: uuidv4(),
+        foursquareId: fsq.fsq_place_id!,
+        name: fsq.name,
+        address: fsq.location?.formatted_address,
+        lat: fsq.latitude ?? 0,
+        lng: fsq.longitude ?? 0,
+        cityId: cityId,
+        metadata: JSON.stringify({
+          categories: fsq.categories?.map((c: any) => c.name) || [],
+          categoryIds: fsq.categories?.map((c: any) => c.fsq_category_id) || [],
+          source: "foursquare",
+          social: fsq.social_media,
+          isChain, // Saved to DB
+        }),
+        website: fsq.website,
+        phone: fsq.tel,
+        rating: null,
+      };
+    });
 
     await db.insert(places).values(insertValues);
     console.log(`[Discovery] Inserted ${newPlaces.length} new places (${existingIds.size} already cached)`);

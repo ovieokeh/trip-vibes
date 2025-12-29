@@ -99,6 +99,18 @@ export function getTravelDetails(fromLat: number, fromLng: number, toLat: number
   };
 }
 
+/**
+ * City center friction penalty for driving.
+ * Accounts for parking, walking from car, traffic, and urban congestion.
+ * Returns extra minutes to add when driving to/from city center.
+ */
+export function getCenterFrictionPenalty(fromZone: string, toZone: string): number {
+  if (fromZone === "center" || toZone === "center") {
+    return 12; // minutes
+  }
+  return 0;
+}
+
 // ============================================================================
 // GEO-EXPLORATION UTILITIES
 // ============================================================================

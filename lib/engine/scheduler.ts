@@ -13,7 +13,10 @@ export class SchedulerEngine {
     this.pipeline = [new AnchorMealsStage(), new FillActivitiesStage()];
   }
 
-  public async assembleItinerary(candidates: EngineCandidate[]): Promise<Itinerary> {
+  public async assembleItinerary(
+    candidates: EngineCandidate[],
+    cityCoordinates?: { lat: number; lng: number }
+  ): Promise<Itinerary> {
     const start = new Date(this.prefs.startDate);
     const end = new Date(this.prefs.endDate);
     const dayCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000) + 1);
@@ -38,6 +41,7 @@ export class SchedulerEngine {
       days,
       usedIds: new Set<string>(),
       usedExternalIds: new Set<string>(),
+      cityCoordinates,
     };
 
     // Run Pipeline

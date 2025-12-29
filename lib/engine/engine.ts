@@ -116,7 +116,13 @@ export class MatchingEngine {
       // 4. Scheduling
       this.onProgress("assembling_journey");
       const scheduler = new SchedulerEngine(this.prefs);
-      itinerary = await scheduler.assembleItinerary(topCandidates);
+      const cityCoords =
+        city.lat && city.lng
+          ? { lat: city.lat, lng: city.lng }
+          : topCandidates.length > 0
+          ? { lat: topCandidates[0].lat, lng: topCandidates[0].lng }
+          : undefined;
+      itinerary = await scheduler.assembleItinerary(topCandidates, cityCoords);
 
       // 5. Sparse Day Check
       // A day is sparse if it ends before 5:00 PM (17:00)

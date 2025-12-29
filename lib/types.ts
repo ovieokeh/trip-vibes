@@ -156,6 +156,7 @@ export interface EngineCandidate {
     website: string | null;
     phone: string | null;
     neighborhood?: string;
+    isChain?: boolean;
   };
   _score?: number;
 }

@@ -35,7 +35,7 @@ export default function LoadingScreen({ message, step }: LoadingScreenProps) {
       <div className="relative">
         <div className="absolute inset-0 animate-ping opacity-20 rounded-full bg-primary blur-xl"></div>
         <div className="relative bg-base-100 p-6 rounded-full shadow-2xl border border-base-200">
-          <Icon className="w-12 h-12 text-primary animate-spin" />
+          <Icon className="w-12 h-12 text-primary" />
         </div>
       </div>
 

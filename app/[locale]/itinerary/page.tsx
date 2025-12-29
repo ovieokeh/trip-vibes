@@ -37,7 +37,6 @@ export default function ItineraryPage() {
     }
   }, [locale, prefs.locale, prefs.setLocale]);
 
-  // ... (Add Activity Modal State, alert State, currentStep)
   const [addModal, setAddModal] = useState<{
     isOpen: boolean;
     dayId: string | null;
@@ -147,30 +146,6 @@ export default function ItineraryPage() {
   if (!itinerary) {
     return <LoadingScreen message={loadingMessage} step={currentStep} />;
   }
-
-  // Minimal client-side check (simplified compared to server)
-  const checkIsOpen = (vibe: Vibe, dateStr: string, startTime: string) => {
-    if (!vibe.openingHours?.periods) return true;
-    const date = new Date(dateStr);
-    const dayIndex = date.getDay();
-    const startInt = parseInt(startTime.replace(":", ""));
-
-    // Check if there is ANY period open today covering start time
-    // This is a simplified check
-    const periods = vibe.openingHours.periods;
-    const isOpen = periods.some((period) => {
-      if (period.open.day !== dayIndex) return false;
-      const openTime = parseInt(period.open.time);
-
-      if (!period.close) return true; // 24h?
-      if (period.close.day !== period.open.day) return startInt >= openTime; // Closes next day
-
-      const closeTime = parseInt(period.close.time);
-      return startInt >= openTime && startInt < closeTime;
-    });
-
-    return isOpen;
-  };
 
   const handleRemove = (dayId: string, activityId: string) => {
     if (!itinerary) return;

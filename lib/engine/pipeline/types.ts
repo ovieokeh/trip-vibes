@@ -10,6 +10,9 @@ export interface ScheduleState {
   // Track globally used IDs to prevent duplicates across days
   usedIds: Set<string>;
   usedExternalIds: Set<string>;
+
+  // City context for time/clustering
+  cityCoordinates?: { lat: number; lng: number };
 }
 
 export interface PlannerStage {

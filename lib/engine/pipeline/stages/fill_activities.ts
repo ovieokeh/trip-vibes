@@ -4,17 +4,26 @@ import { isActivity, isMeal } from "../../utils";
 import { v4 as uuidv4 } from "uuid";
 import { addMinutesToTime, timeToMinutes, minutesToTime } from "../../../time";
 import { calculateTransit } from "../../../activity";
-import { calculateHaversineDistance } from "../../../geo";
+import { calculateHaversineDistance, getCenterFrictionPenalty } from "../../../geo";
 import { getDurationForCandidate } from "../../durations";
+import { DiversityTracker } from "../../diversity";
+import { calculateSunsetTime, isOpenAt, getOutdoorTimePenalty, getSeasonPenalty } from "../../time_windows";
+import { assignZones, getZoneChangePenalty } from "../../clustering";
+import { isThinPOI, countHighQualityPOIs } from "../../poi_quality";
 
 const TRANSIT_BUFFER_MINUTES = 15;
 const MAX_ITERATIONS_PER_GAP = 20; // Safety guard against infinite loops
+const MAX_ZONE_CHANGES_PER_DAY = 2; // Limit zigzag across city
+const MAX_THIN_POI_PER_DAY = 2; // Cap low-value POIs
+const COZY_CATEGORIES = ["cafe", "coffee", "bakery", "bar", "brewery", "bookstore", "spa", "lounge"];
 
 export class FillActivitiesStage implements PlannerStage {
   name = "FillActivities";
 
   async run(state: ScheduleState, prefs: UserPreferences): Promise<ScheduleState> {
     const newState = { ...state };
+    const cityCenter = state.cityCoordinates || { lat: 50, lng: 14 }; // Default to Prague-ish if missing
+    const clusteredCandidates = assignZones(state.originalCandidates, cityCenter);
 
     for (const day of newState.days) {
       // Sort existing activities (meals) by time
@@ -46,7 +55,15 @@ export class FillActivitiesStage implements PlannerStage {
         // Fill the Gap - TIME-BASED (no arbitrary budget limits)
         const gapAvailable = gapEndMinutes - lastEndTimeMinutes;
         if (gapAvailable > 60) {
-          const newItems = this.fillGap(day, lastEndTimeMinutes, gapEndMinutes, newState, lastLocation);
+          const newItems = this.fillGap(
+            day,
+            lastEndTimeMinutes,
+            gapEndMinutes,
+            newState,
+            lastLocation,
+            clusteredCandidates,
+            cityCenter
+          );
           filledActivities.push(...newItems);
 
           // Update last location from new items if any
@@ -84,7 +101,9 @@ export class FillActivitiesStage implements PlannerStage {
     startMinutes: number,
     endMinutes: number,
     state: ScheduleState,
-    startLocation: { lat: number; lng: number } | null
+    startLocation: { lat: number; lng: number } | null,
+    clusteredCandidates: any[],
+    cityCenter: { lat: number; lng: number }
   ): TripActivity[] {
     const added: TripActivity[] = [];
     let currentMinutes = startMinutes;
@@ -94,10 +113,33 @@ export class FillActivitiesStage implements PlannerStage {
     let currentLocation = startLocation;
     let iterations = 0;
 
-    const usedCategories = new Set<string>();
+    const diversityTracker = new DiversityTracker();
+    // Pre-populate with existing activities (e.g. meals already anchored)
     day.activities.forEach((a: TripActivity) => {
-      if (a.vibe.category) usedCategories.add(a.vibe.category.toLowerCase());
+      diversityTracker.record(a.vibe.category ? [a.vibe.category] : []);
     });
+
+    const tripDate = new Date(day.date);
+    const cityLat = state.cityCoordinates?.lat || 50; // Fallback to center-ish Europe
+    const sunsetTime = calculateSunsetTime(cityLat, tripDate);
+    const sunsetMinutes = timeToMinutes(sunsetTime);
+    const dayOfWeek = tripDate.getDay();
+
+    // Zone Tracking
+    let currentZone = "center";
+    if (startLocation) {
+      const assigned = assignZones([{ lat: startLocation.lat, lng: startLocation.lng } as any], cityCenter);
+      currentZone = assigned[0].zoneId;
+    }
+
+    // Realism Tracking
+    let zoneChanges = 0;
+    let thinPoiCount = 0;
+
+    // Fallback: if pool is >50% thin, relax the cap
+    const activityCandidates = state.remainingCandidates.filter((c) => !state.usedIds.has(c.id) && isActivity(c));
+    const highQualityCount = countHighQualityPOIs(activityCandidates);
+    const relaxThinLimit = highQualityCount < activityCandidates.length * 0.5;
 
     // TIME-BASED filling with safety guard
     while (currentMinutes < effectiveEnd && iterations < MAX_ITERATIONS_PER_GAP) {
@@ -117,20 +159,73 @@ export class FillActivitiesStage implements PlannerStage {
       const scored = candidates.map((c) => {
         let score = c._score || 0;
 
-        // Proximity Boost
+        // Proximity Boost & Logistics Penalties
         if (currentLocation && c.lat && c.lng) {
           const dist = calculateHaversineDistance(currentLocation.lat, currentLocation.lng, c.lat, c.lng);
-          if (dist < 2.0) score += 20;
-          else if (dist < 5.0) score += 10;
+
+          // Graduated proximity scoring
+          if (dist < 1.0) score += 40; // Walking distance - big bonus
+          else if (dist < 2.0) score += 25; // Short transit
+          else if (dist < 4.0) score += 10; // Medium distance
+          else if (dist < 8.0) score -= 20; // Far - penalty
+          else score -= 50; // Very far - heavy penalty (cross-city)
+
+          // Anchor distance rule: if far from previous, require higher base score to justify the trip
+          if (dist > 5.0 && (c._score || 0) < 50) {
+            score -= 30; // Penalty for low-value distant items
+          }
         }
 
-        // Variety Penalty
-        const primaryCat = (c.metadata as any)?.categories?.[0]?.toLowerCase();
-        if (primaryCat && usedCategories.has(primaryCat)) {
-          score -= 30; // -30 penalty for repeat categories
+        // Dynamic Diversity Penalty
+        const cats = c.metadata?.categories || [];
+        score -= diversityTracker.getPenalty(cats);
+
+        // Time Window Penalty (Sunset)
+        score -= getOutdoorTimePenalty(c, currentMinutes, sunsetMinutes);
+
+        // Opening Hours Check
+        if (!isOpenAt(c, dayOfWeek, minutesToTime(currentMinutes))) {
+          score -= 100; // Heavy penalty for closed venues
         }
 
-        return { c, score };
+        // Pre-calculated Zone Penalty
+        const candidateZone = clusteredCandidates.find((cc) => cc.candidate.id === c.id)?.zoneId || "unknown";
+        score -= getZoneChangePenalty(currentZone, candidateZone);
+
+        // Matinee Penalty: Discourage indoor seated activities before 2pm (840 mins)
+        if (currentMinutes < 840) {
+          const matineeCats = ["cinema", "movie", "theater", "nightlife", "bar", "club", "performing arts"];
+          const isMatinee = cats.some((cat) => matineeCats.some((m) => cat.toLowerCase().includes(m)));
+          if (isMatinee) {
+            score -= 50;
+          }
+        }
+
+        // ========== REALISM IMPROVEMENTS ==========
+
+        // Zone Change Limit: Penalize if we've already hit max zone changes
+        if (candidateZone !== currentZone && zoneChanges >= MAX_ZONE_CHANGES_PER_DAY) {
+          score -= 80; // Strong discouragement after max zone changes
+        }
+
+        // Thin POI Cap: Penalize low-value POIs after cap reached
+        if (isThinPOI(c) && thinPoiCount >= MAX_THIN_POI_PER_DAY && !relaxThinLimit) {
+          score -= 60;
+        }
+
+        // Season Penalty: Discourage beaches/outdoor in winter
+        score -= getSeasonPenalty(c, tripDate);
+
+        // Evening Cozy Boost: Prefer cafes/bars in 16:00-19:00 window
+        if (currentMinutes >= 960 && currentMinutes < 1140) {
+          const catsLower = cats.join(" ").toLowerCase();
+          const isCozy = COZY_CATEGORIES.some((cat) => catsLower.includes(cat));
+          if (isCozy) {
+            score += 30;
+          }
+        }
+
+        return { c, score, candidateZone };
       });
 
       scored.sort((a, b) => b.score - a.score);
@@ -147,16 +242,28 @@ export class FillActivitiesStage implements PlannerStage {
       const activity = this.createActivity(selection, minutesToTime(currentMinutes), duration, currentLocation);
       added.push(activity);
 
-      // Track category for variety penalty
-      if (selection.metadata?.categories?.[0]) {
-        usedCategories.add(selection.metadata.categories[0].toLowerCase());
+      // Track category for diversity penalty
+      diversityTracker.record(selection.metadata?.categories || []);
+
+      // Track thin POI usage
+      if (isThinPOI(selection)) {
+        thinPoiCount++;
+      }
+
+      // Track zone changes
+      const selectedZone = scored[0].candidateZone;
+      if (selectedZone !== currentZone) {
+        zoneChanges++;
+        currentZone = selectedZone;
       }
 
       if (selection.lat && selection.lng) {
         currentLocation = { lat: selection.lat, lng: selection.lng };
       }
 
-      currentMinutes += duration + TRANSIT_BUFFER_MINUTES;
+      // Apply city center friction penalty for driving
+      const friction = getCenterFrictionPenalty(currentZone, selectedZone);
+      currentMinutes += duration + TRANSIT_BUFFER_MINUTES + friction;
     }
 
     return added;

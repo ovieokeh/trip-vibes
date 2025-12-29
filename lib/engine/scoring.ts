@@ -12,7 +12,13 @@ export class ScoringEngine {
 
     return candidates
       .map((p) => {
-        const score = this.calculateScore(p, weights);
+        let score = this.calculateScore(p, weights);
+
+        // Apply logistics penalties/boosts
+        score -= this.calculateRedundancyPenalty(p, candidates);
+        score -= this.calculateGenericPenalty(p);
+        score += this.calculateIconicBoost(p);
+
         return { ...p, _score: score };
       })
       .sort((a: any, b: any) => b._score - a._score);
@@ -66,10 +72,72 @@ export class ScoringEngine {
 
     const keywords = synonyms[trait.toLowerCase()] || [trait];
 
-    // Check if any place category contains any keyword
     return placeCategories.some((cat) => {
       const lowerCat = cat.toLowerCase();
       return keywords.some((k) => lowerCat.includes(k));
     });
+  }
+
+  /**
+   * Penalizes "generic anywhere" venues like chain cinemas or fast food.
+   */
+  /**
+   * Penalizes "generic anywhere" venues like chain cinemas or fast food.
+   */
+  private calculateGenericPenalty(p: EngineCandidate): number {
+    // 1. Auto-detected chains (from DiscoveryEngine)
+    if (p.metadata?.isChain) {
+      return 30;
+    }
+
+    // 2. Hardcoded global blacklist (fallbacks)
+    const name = (p.name || "").toLowerCase();
+    const genericPatterns = [
+      "imax",
+      "cinema city",
+      "multikino",
+      "starbucks",
+      "mcdonald",
+      "burger king",
+      "kfc",
+      "o'learys",
+      "espresso house",
+      "vapiano",
+      "subway",
+      "hard rock cafe",
+    ];
+    if (genericPatterns.some((pattern) => name.includes(pattern))) {
+      return 30;
+    }
+    return 0;
+  }
+
+  /**
+   * Boosts iconic/city-specific venues using category keywords.
+   */
+  private calculateIconicBoost(p: EngineCandidate): number {
+    const cats = (p.metadata?.categories || []).join(" ").toLowerCase();
+    const iconicPatterns = ["historic", "castle", "palace", "cathedral", "landmark", "scenic"];
+    if (iconicPatterns.some((pattern) => cats.includes(pattern))) {
+      return 20;
+    }
+    return 0;
+  }
+
+  /**
+   * Light redundancy penalty based on pool saturation.
+   */
+  private calculateRedundancyPenalty(p: EngineCandidate, all: EngineCandidate[]): number {
+    const primaryCat = p.metadata?.categories?.[0]?.toLowerCase();
+    if (!primaryCat) return 0;
+
+    const sameCategory = all.filter((c) => c.metadata?.categories?.[0]?.toLowerCase() === primaryCat).length;
+
+    // If more than 20% of the pool is the same category, slightly penalize individual items
+    // to encourage variety in the top results.
+    if (sameCategory > all.length * 0.2 && sameCategory > 5) {
+      return 10;
+    }
+    return 0;
   }
 }
