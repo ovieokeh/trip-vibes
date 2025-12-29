@@ -1,49 +1,50 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, RefreshControl } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { Screen } from "../../components/ui";
-import { Timeline } from "../../components/Itinerary/Timeline";
-import { ResultMap } from "../../components/ResultMap";
-import { getItinerary } from "../../lib/vibe-api";
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Itinerary } from "@trip-vibes/shared";
+import { getItinerary } from "../../lib/vibe-api";
+import { Screen, Button } from "../../components/ui";
+import { ItineraryDay } from "../../components/Itinerary/ItineraryDay";
 import { Colors } from "../../constants/Colors";
 
 export default function ItineraryScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const colors = Colors.light;
+
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const colors = Colors.light;
 
-  const fetchItinerary = async () => {
+  async function load() {
+    if (!id || typeof id !== "string") return;
+
     try {
       const data = await getItinerary(id);
       setItinerary(data);
-      setError(null);
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
       setError("Failed to load itinerary");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }
 
   useEffect(() => {
-    if (!id) return;
-    fetchItinerary();
+    load();
   }, [id]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    fetchItinerary();
+    load();
   }, [id]);
 
   if (loading) {
     return (
       <Screen centered>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 10 }}>Loading Itinerary...</Text>
       </Screen>
     );
   }
@@ -51,29 +52,43 @@ export default function ItineraryScreen() {
   if (error || !itinerary) {
     return (
       <Screen centered padded>
-        <Text style={{ color: colors.error }}>{error || "Itinerary not found"}</Text>
+        <Text style={{ color: colors.error, marginBottom: 20 }}>{error || "Itinerary not found"}</Text>
+        <Button title="Go Home" onPress={() => router.replace("/")} />
       </Screen>
     );
   }
 
   return (
-    <Screen
-      scrollable
-      safeArea={false}
-      style={{ paddingTop: 60 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View style={styles.header}>
-        <Text style={styles.title}>{itinerary.name || `Trip to ${itinerary.cityId}`}</Text>
-      </View>
+    <Screen safeArea={false} style={{ paddingTop: 60 }}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>{itinerary.name || `Trip to ${formatCity(itinerary.cityId)}`}</Text>
+        </View>
 
-      <View style={styles.mapContainer}>
-        <ResultMap itinerary={itinerary} />
-      </View>
+        {itinerary.days.map((day) => (
+          <ItineraryDay key={day.id} day={day} />
+        ))}
 
-      <Timeline itinerary={itinerary} />
+        <View style={styles.footer}>
+          <Button
+            title="Save Trip"
+            onPress={() => router.push("/saved-trips")}
+            variant="outline"
+            style={{ marginBottom: 10 }}
+          />
+          <Button title="Back Home" onPress={() => router.push("/")} variant="ghost" />
+        </View>
+      </ScrollView>
     </Screen>
   );
+}
+
+function formatCity(id: string) {
+  if (!id) return "";
+  return id.charAt(0).toUpperCase() + id.slice(1);
 }
 
 const styles = StyleSheet.create({
@@ -88,5 +103,18 @@ const styles = StyleSheet.create({
   mapContainer: {
     paddingHorizontal: 20,
     marginBottom: 20,
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "space-between",
   },
 });

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { Vibe } from "@trip-vibes/shared";
+import { Vibe, DeckEngine, ArchetypeDefinition } from "@trip-vibes/shared";
 import { VibeStack } from "../components/VibeStack";
 import { Screen, Button } from "../components/ui";
 import { Colors } from "../constants/Colors";
@@ -9,84 +9,88 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useCreationFlow } from "../store/creation-flow";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-// Mock Data
-const MOCK_VIBES: Vibe[] = [
-  {
-    id: "1",
-    title: "Hidden Canals",
-    description: "Discover the secret waterways away from the crowds.",
-    imageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80",
-    category: "hidden-gem",
-    cityId: "amsterdam",
-    tags: ["quiet", "water", "scenic"],
-    neighborhood: "Jordaan",
-  },
-  {
-    id: "2",
-    title: "Urban Industrial Art",
-    description: "Gritty, colorful street art in repurposed warehouses.",
-    imageUrl: "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?w=800&q=80",
-    category: "culture",
-    cityId: "amsterdam",
-    tags: ["art", "edgy", "photo"],
-    neighborhood: "NDSM",
-  },
-  {
-    id: "3",
-    title: "Cozy Brown Cafe",
-    description: "Traditional Dutch pubs with a warm, candlelit atmosphere.",
-    imageUrl: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=800&q=80",
-    category: "nightlife",
-    cityId: "amsterdam",
-    tags: ["drinks", "cozy", "local"],
-    neighborhood: "De Pijp",
-  },
-];
-
 export default function VibesScreen() {
   const router = useRouter();
   const colors = Colors.light;
-  const { likeVibe, dislikeVibe, likedVibes } = useCreationFlow();
+  const { cityId, likeVibe, dislikeVibe, likedVibes, dislikedVibes, vibeProfile } = useCreationFlow();
 
-  const [vibes, setVibes] = useState<Vibe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [currentVibe, setCurrentVibe] = useState<Vibe | null>(null);
+  const [nextVibe, setNextVibe] = useState<Vibe | null>(null);
   const [complete, setComplete] = useState(false);
 
+  // Initialize Engine
+  const engine = useMemo(() => {
+    const usedIds = [...likedVibes, ...dislikedVibes];
+    return new DeckEngine(usedIds);
+  }, [likedVibes, dislikedVibes]); // Re-init on swipe basically
+
+  const archetypeToVibe = (arch: ArchetypeDefinition, cid: string): Vibe => ({
+    id: arch.id,
+    title: arch.title,
+    description: arch.description,
+    imageUrl: arch.imageUrl,
+    category: arch.category.toLowerCase(),
+    cityId: cid,
+    tags: arch.tags,
+    neighborhood: arch.category, // Fallback
+  });
+
+  // Effect to load cards
   useEffect(() => {
-    // Simulate fetch
-    setTimeout(() => {
-      setVibes(MOCK_VIBES);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    if (!cityId) {
+      // This case should ideally be guarded by navigation logic
+      console.warn("No cityId found, cannot load vibes.");
+      router.replace("/"); // Redirect to home or city selection
+      return;
+    }
+
+    // Check completion
+    if (likedVibes.length >= 6) {
+      setComplete(true);
+      return;
+    }
+
+    // If we have no current card, load one
+    if (!currentVibe) {
+      const card = engine.getNextCard(vibeProfile);
+      if (card) {
+        setCurrentVibe(archetypeToVibe(card, cityId));
+      } else {
+        // No more cards available from the engine
+        setComplete(true);
+      }
+    }
+
+    // Preload next if missing and current exists
+    if (currentVibe && !nextVibe) {
+      // To get the *next* card, we need to tell the engine to ignore the current one too.
+      const nextCard = engine.getNextCard(vibeProfile, [currentVibe.id]);
+      if (nextCard) {
+        setNextVibe(archetypeToVibe(nextCard, cityId));
+      } else {
+        // No more cards after the current one
+        // This means the currentVibe is the last one, so we don't set nextVibe
+      }
+    }
+  }, [engine, vibeProfile, cityId, likedVibes, currentVibe, nextVibe, router]);
 
   const handleSwipeRight = (vibe: Vibe) => {
     console.log("Liked:", vibe.title);
     likeVibe(vibe.id);
+    setCurrentVibe(nextVibe); // Move next to current
+    setNextVibe(null); // Clear next to trigger reload in useEffect
   };
 
   const handleSwipeLeft = (vibe: Vibe) => {
     console.log("Disliked:", vibe.title);
     dislikeVibe(vibe.id);
-  };
-
-  const handleFinished = () => {
-    setComplete(true);
+    setCurrentVibe(nextVibe); // Move next to current
+    setNextVibe(null); // Clear next to trigger reload in useEffect
   };
 
   const handleGenerate = () => {
-    // TODO: Verify we have enough data (dates, city, etc)
-    // For now, assume mock details and navigate to generating
     router.push("/generating");
   };
-
-  if (loading) {
-    return (
-      <Screen centered>
-        <Text>Loading Vibes...</Text>
-      </Screen>
-    );
-  }
 
   if (complete) {
     return (
@@ -101,6 +105,17 @@ export default function VibesScreen() {
     );
   }
 
+  // If currentVibe is null and not complete, it means we are still loading or ran out of cards unexpectedly.
+  // The useEffect handles setting `complete` if no cards are found.
+  // So, if we reach here and currentVibe is null, it implies a brief loading state before `complete` is set.
+  if (!currentVibe) {
+    return (
+      <Screen centered>
+        <Text>Loading Vibes...</Text>
+      </Screen>
+    );
+  }
+
   return (
     <GestureHandlerRootView>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -109,10 +124,10 @@ export default function VibesScreen() {
             <Text style={styles.headerTitle}>Swipe Your Vibe</Text>
           </View>
           <VibeStack
-            vibes={vibes}
+            currentVibe={currentVibe}
+            nextVibe={nextVibe}
             onSwipeRight={handleSwipeRight}
             onSwipeLeft={handleSwipeLeft}
-            onFinished={handleFinished}
           />
         </SafeAreaView>
       </View>

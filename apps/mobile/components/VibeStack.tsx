@@ -17,38 +17,31 @@ const { width } = Dimensions.get("window");
 const SWIPE_THRESHOLD = width * 0.3;
 
 interface VibeStackProps {
-  vibes: Vibe[];
+  currentVibe: Vibe | null;
+  nextVibe: Vibe | null;
   onSwipeRight: (vibe: Vibe) => void;
   onSwipeLeft: (vibe: Vibe) => void;
-  onFinished: () => void;
 }
 
-export function VibeStack({ vibes, onSwipeRight, onSwipeLeft, onFinished }: VibeStackProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const currentVibe = vibes[currentIndex];
-  const nextVibe = vibes[currentIndex + 1];
-
+export function VibeStack({ currentVibe, nextVibe, onSwipeRight, onSwipeLeft }: VibeStackProps) {
   const translationX = useSharedValue(0);
   const translationY = useSharedValue(0);
 
   const handleSwipeComplete = useCallback(
     (direction: "left" | "right") => {
-      const vibe = vibes[currentIndex];
+      if (!currentVibe) return;
+
       if (direction === "right") {
-        onSwipeRight(vibe);
+        onSwipeRight(currentVibe);
       } else {
-        onSwipeLeft(vibe);
+        onSwipeLeft(currentVibe);
       }
 
-      if (currentIndex >= vibes.length - 1) {
-        onFinished();
-      } else {
-        setCurrentIndex((prev) => prev + 1);
-        translationX.value = 0;
-        translationY.value = 0;
-      }
+      // Reset immediately for next card (parent will swap vibes)
+      translationX.value = 0;
+      translationY.value = 0;
     },
-    [currentIndex, vibes, onSwipeRight, onSwipeLeft, onFinished, translationX, translationY]
+    [currentVibe, onSwipeRight, onSwipeLeft, translationX, translationY]
   );
 
   const gesture = Gesture.Pan()
@@ -89,7 +82,7 @@ export function VibeStack({ vibes, onSwipeRight, onSwipeLeft, onFinished }: Vibe
   if (!currentVibe) {
     return (
       <View style={styles.center}>
-        <Text>No more vibes!</Text>
+        <Text>Loading more vibes...</Text>
       </View>
     );
   }
