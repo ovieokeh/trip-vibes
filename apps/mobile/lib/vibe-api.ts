@@ -1,11 +1,7 @@
-import { supabase } from "./supabase";
-import { Platform } from "react-native";
 import EventSource, { EventSourceListener } from "react-native-sse";
 import { Itinerary } from "@trip-vibes/shared";
-
-// Helper to get local IP for Android emulator
-// Update this with your machine's local IP if testing on physical device
-const API_URL = Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000";
+import { api, API_URL } from "./api";
+import { supabase } from "./supabase";
 
 export interface StreamProgress {
   type: "progress";
@@ -106,34 +102,12 @@ export function generateItineraryStream(
 }
 
 export async function getItinerary(id: string) {
+  if (id === "mock-id") {
+    return MOCK_ITINERARY;
+  }
+
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    // In a real app, this would be a GET request
-    // For MVS if the backend doesn't support GET /api/itinerary/[id], we might need to rely on the generation result
-    // But let's assume we can fetch it. If not, I'll use a mocked result for the "mock-id".
-
-    if (id === "mock-id") {
-      return MOCK_ITINERARY;
-    }
-
-    const response = await fetch(`${API_URL}/api/itinerary/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: session ? `Bearer ${session.access_token}` : "",
-      },
-    });
-
-    if (!response.ok) {
-      // Fallback for demo if backend route missing
-      if (__DEV__) return MOCK_ITINERARY;
-      throw new Error(`API Error: ${response.statusText}`);
-    }
-
-    return await response.json();
+    return await api<Itinerary>(`/api/itinerary/${id}`);
   } catch (error) {
     console.error("Get Itinerary Error:", error);
     if (__DEV__) return MOCK_ITINERARY;
@@ -144,6 +118,7 @@ export async function getItinerary(id: string) {
 const MOCK_ITINERARY = {
   id: "mock-id",
   cityId: "amsterdam",
+  createdAt: new Date().toISOString(),
   days: [
     {
       id: "day-1",
@@ -157,6 +132,9 @@ const MOCK_ITINERARY = {
           endTime: "11:30",
           note: "Start with a coffee at a local favorite.",
           vibe: {
+            id: "vibe-w43",
+            cityId: "amsterdam",
+            tags: ["food", "cafe"],
             title: "Winkel 43",
             category: "food",
             description: "Famous apple pie.",
@@ -169,6 +147,9 @@ const MOCK_ITINERARY = {
           endTime: "14:00",
           note: "Walk through the canals.",
           vibe: {
+            id: "vibe-pg2",
+            cityId: "amsterdam",
+            tags: ["walk", "scenic"],
             title: "Prinsengracht Walk",
             category: "hidden-gem",
             description: "Scenic canal route.",
@@ -182,29 +163,10 @@ const MOCK_ITINERARY = {
 
 export async function getUserItineraries() {
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) return [];
-
-    const response = await fetch(`${API_URL}/api/itinerary/list`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
-
-    if (!response.ok) {
-      if (__DEV__) return [MOCK_ITINERARY]; // Return mock for now
-      return [];
-    }
-
-    return await response.json();
+    return await api<Itinerary[]>("/api/itinerary/list");
   } catch (error) {
     console.error("Get User Itineraries Error:", error);
-    if (__DEV__) return [MOCK_ITINERARY];
+    if (__DEV__) return [MOCK_ITINERARY]; // Return mock for now
     return [];
   }
 }

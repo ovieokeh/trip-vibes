@@ -6,7 +6,7 @@ import { Colors } from "../constants/Colors";
 
 export default function Home() {
   const router = useRouter();
-  const { user, isAnonymous, loading, signOut } = useAuth();
+  const { user, isAnonymous, loading } = useAuth();
   const colors = Colors.light;
 
   if (loading) {

@@ -7,6 +7,7 @@ import { Screen, Button } from "../components/ui";
 import { Colors } from "../constants/Colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCreationFlow } from "../store/creation-flow";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 // Mock Data
 const MOCK_VIBES: Vibe[] = [
@@ -101,19 +102,21 @@ export default function VibesScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Swipe Your Vibe</Text>
-        </View>
-        <VibeStack
-          vibes={vibes}
-          onSwipeRight={handleSwipeRight}
-          onSwipeLeft={handleSwipeLeft}
-          onFinished={handleFinished}
-        />
-      </SafeAreaView>
-    </View>
+    <GestureHandlerRootView>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Swipe Your Vibe</Text>
+          </View>
+          <VibeStack
+            vibes={vibes}
+            onSwipeRight={handleSwipeRight}
+            onSwipeLeft={handleSwipeLeft}
+            onFinished={handleFinished}
+          />
+        </SafeAreaView>
+      </View>
+    </GestureHandlerRootView>
   );
 }
 

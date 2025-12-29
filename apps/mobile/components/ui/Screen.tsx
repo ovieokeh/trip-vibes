@@ -7,6 +7,7 @@ interface ScreenProps extends ViewProps {
   padded?: boolean;
   safeArea?: boolean;
   centered?: boolean;
+  refreshControl?: React.ReactElement;
 }
 
 export function Screen({
@@ -16,6 +17,7 @@ export function Screen({
   safeArea = true,
   centered = false,
   style,
+  refreshControl,
   ...props
 }: ScreenProps) {
   const colors = Colors.light; // TODO: Add dark mode support
@@ -36,6 +38,7 @@ export function Screen({
           contentContainerStyle={containerStyle}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          refreshControl={refreshControl}
           {...props}
         >
           {children}
