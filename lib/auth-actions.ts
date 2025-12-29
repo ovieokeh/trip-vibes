@@ -35,7 +35,22 @@ export async function syncUserToDatabase() {
       credits: user.is_anonymous ? 1 : 5, // Anonymous: 1, Real account: 5
     });
   } else {
-    console.log("[syncUserToDatabase] User already exists in DB:", user.id);
+    // User exists - check if we need to upgrade from anonymous to real
+    const dbUser = existingUser[0];
+    if (dbUser.isAnonymous && user.email) {
+      console.log("[syncUserToDatabase] Upgrading anonymous user to real account:", user.id);
+      await db
+        .update(users)
+        .set({
+          email: user.email,
+          isAnonymous: false,
+          credits: (dbUser.credits ?? 0) < 5 ? 5 : dbUser.credits ?? 5, // Grant bonus credits if they have less than 5
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, user.id));
+    } else {
+      console.log("[syncUserToDatabase] User already exists and up to date:", user.id);
+    }
   }
 
   return user;

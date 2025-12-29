@@ -226,7 +226,10 @@
       "generic": "Er is iets misgegaan. Probeer het opnieuw."
     },
     "noCredits": "Je hebt je gratis reis verbruikt!",
-    "noCreditsMessage": "Meld je aan om 5 extra reizen te krijgen."
+    "noCreditsMessage": "Meld je aan voor 5 extra reizen.",
+    "checkEmail": "Controleer je e-mail",
+    "verificationSentMessage": "We hebben je een verificatielink gestuurd. Controleer je inbox om je account te activeren.",
+    "close": "Sluiten"
   },
   "Errors": {
     "notFound": {
@@ -251,5 +254,18 @@
       "lastUpdated": "Laatst bijgewerkt: 29 december 2024",
       "content": "Door TripVibes te gebruiken, ga je akkoord met de volgende voorwaarden..."
     }
+  },
+  "CreditsModal": {
+    "title": "Over Reis-credits",
+    "whatAreCredits": {
+      "title": "Wat zijn credits?",
+      "description": "Credits stellen je in staat om slimme, gepersonaliseerde routes te genereren. Elke nieuwe reis kost 1 credit."
+    },
+    "howToGetMore": {
+      "title": "Hoe krijg je meer?",
+      "signupBonus": "Nieuwe gebruikers krijgen 5 gratis credits bij aanmelding.",
+      "comingSoon": "Binnenkort komen er meer manieren om credits te verdienen en te kopen!"
+    },
+    "close": "Begrepen"
   }
 }

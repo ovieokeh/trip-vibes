@@ -9,6 +9,7 @@ import { AuthModal } from "./AuthModal";
 import { useAuth } from "./AuthProvider";
 import { useTranslations, useFormatter } from "next-intl";
 import LanguageSwitcher from "./LanguageSwitcher";
+import CreditsExplainerModal from "./CreditsExplainerModal";
 
 export default function Navbar() {
   const t = useTranslations("Navbar");
@@ -20,6 +21,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isCreditsOpen, setIsCreditsOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
 
   // Fetch saved count on client
@@ -47,10 +49,13 @@ export default function Navbar() {
   const CreditsDisplay = ({ className = "" }: { className?: string }) =>
     !loading &&
     user && (
-      <div className={`flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-2 ${className}`}>
+      <button
+        onClick={() => setIsCreditsOpen(true)}
+        className={`flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-2 hover:bg-base-200 rounded-lg transition-colors py-1 ${className}`}
+      >
         <Sparkles className="w-3.5 h-3.5 sm:w-4 h-4 text-warning" />
         <span className="font-medium">{credits}</span>
-      </div>
+      </button>
     );
 
   const NewTripButton = ({ className = "" }: { className?: string }) => (
@@ -79,12 +84,20 @@ export default function Navbar() {
     </Link>
   );
 
-  const AuthSection = () => {
+  const AuthSection = ({ isMobile = false }: { isMobile?: boolean }) => {
     if (loading) return null;
 
     if (isAnonymous) {
       return (
-        <button className="btn btn-outline btn-sm gap-2 w-full md:w-auto" onClick={() => setIsAuthOpen(true)}>
+        <button
+          className="btn btn-outline btn-sm gap-2 w-full md:w-auto"
+          onClick={() => {
+            if (document.activeElement instanceof HTMLElement) {
+              document.activeElement.blur();
+            }
+            setIsAuthOpen(true);
+          }}
+        >
           <UserCircle className="w-4 h-4" />
           <span>{t("signIn")}</span>
         </button>
@@ -92,13 +105,34 @@ export default function Navbar() {
     }
 
     if (user) {
+      if (isMobile) {
+        return (
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex items-center gap-2 px-1 py-2 opacity-70">
+              <UserCircle className="w-4 h-4" />
+              <span className="text-sm font-medium truncate">{user.email}</span>
+            </div>
+            <button
+              className="btn btn-outline btn-sm w-full"
+              onClick={async () => {
+                const { createClient } = await import("@/lib/supabase/client");
+                await createClient().auth.signOut();
+                router.push("/");
+              }}
+            >
+              {t("signOut")}
+            </button>
+          </div>
+        );
+      }
+
       return (
         <div className="dropdown dropdown-end w-full md:w-auto">
           <label
             tabIndex={0}
             className="btn btn-ghost btn-circle avatar placeholder btn-sm sm:btn-md focus:bg-base-200"
           >
-            <div className="bg-primary text-primary-content rounded-full w-7 sm:w-8">
+            <div className="flex items-center justify-center bg-primary text-primary-content rounded-full w-7 sm:w-8">
               <span className="text-[10px] sm:text-xs">{user.email?.[0]?.toUpperCase() || "U"}</span>
             </div>
           </label>
@@ -144,6 +178,8 @@ export default function Navbar() {
       />
 
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onSuccess={() => setIsAuthOpen(false)} />
+
+      <CreditsExplainerModal isOpen={isCreditsOpen} onClose={() => setIsCreditsOpen(false)} />
 
       <div className="navbar bg-base-100/80 backdrop-blur-md sticky top-0 z-50 px-4 sm:px-6 border-b border-base-200/50">
         <div className="flex-1">
@@ -198,7 +234,7 @@ export default function Navbar() {
                   <div className="divider my-0 opacity-50"></div>
 
                   <div className="px-2">
-                    <AuthSection />
+                    <AuthSection isMobile={true} />
                   </div>
 
                   <div className="px-2">

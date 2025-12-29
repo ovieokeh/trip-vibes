@@ -228,7 +228,10 @@
       "generic": "Something went wrong. Please try again."
     },
     "noCredits": "You've used your free trip!",
-    "noCreditsMessage": "Sign up to get 5 more trips."
+    "noCreditsMessage": "Sign up to get 5 more trips.",
+    "checkEmail": "Check your email",
+    "verificationSentMessage": "We've sent you a verification link. Please check your inbox to activate your account.",
+    "close": "Close"
   },
   "Errors": {
     "notFound": {
@@ -253,5 +256,18 @@
       "lastUpdated": "Last updated: December 29, 2024",
       "content": "By using TripVibes, you agree to the following terms..."
     }
+  },
+  "CreditsModal": {
+    "title": "About Trip Credits",
+    "whatAreCredits": {
+      "title": "What are credits?",
+      "description": "Credits allow you to generate smart, personalized itineraries. Each new trip costs 1 credit."
+    },
+    "howToGetMore": {
+      "title": "How to get more?",
+      "signupBonus": "New users get 5 free credits upon signing up.",
+      "comingSoon": "More ways to earn and purchase credits are coming soon!"
+    },
+    "close": "Got it"
   }
 }

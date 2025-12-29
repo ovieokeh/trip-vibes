@@ -24,6 +24,7 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const supabase = createClient();
 
@@ -51,9 +52,14 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
             setLoading(false);
             return;
           }
+
+          // For upgrades, we also want to show verification message if configured
+          setVerificationSent(true);
+          setLoading(false);
+          return;
         } else {
           // No anonymous user - create a new account
-          const { error } = await supabase.auth.signUp({
+          const { data, error } = await supabase.auth.signUp({
             email,
             password,
           });
@@ -64,6 +70,13 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
             } else {
               setError(error.message);
             }
+            setLoading(false);
+            return;
+          }
+
+          // If session is null, it means email verification is required
+          if (data.user && !data.session) {
+            setVerificationSent(true);
             setLoading(false);
             return;
           }
@@ -103,9 +116,8 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
     setLoading(true);
     setError(null);
     try {
-      // If no user, create an anonymous one
       if (!user) {
-        const { data, error: signInError } = await supabase.auth.signInAnonymously();
+        const { error: signInError } = await supabase.auth.signInAnonymously();
         if (signInError) {
           console.error("Anonymous sign-in failed:", signInError);
           setError(signInError.message);
@@ -116,7 +128,6 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
         // Wait a moment for session cookies to propagate
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // Verify session was created
         const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData.session) {
           console.error("Session not created after anonymous sign-in");
@@ -139,6 +150,30 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
   };
 
   if (!isOpen) return null;
+
+  if (verificationSent) {
+    return (
+      <div className="modal modal-open z-50">
+        <div className="modal-box max-w-sm text-center">
+          <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-success" />
+          </div>
+
+          <h3 className="font-bold text-xl mb-2">{t("checkEmail")}</h3>
+          <p className="text-base-content/70 text-sm mb-6">{t("verificationSentMessage")}</p>
+
+          <button className="btn btn-primary w-full" onClick={onClose}>
+            {t("close")}
+          </button>
+        </div>
+        <div className="modal-backdrop bg-black/50" onClick={onClose}></div>
+      </div>
+    );
+  }
 
   return (
     <div className="modal modal-open z-50">

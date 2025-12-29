@@ -224,7 +224,10 @@
       "generic": "Etwas ist schief gelaufen. Bitte versuche es erneut."
     },
     "noCredits": "Du hast deine kostenlose Reise aufgebraucht!",
-    "noCreditsMessage": "Registriere dich, um 5 weitere Reisen zu erhalten."
+    "noCreditsMessage": "Melde dich an, um 5 weitere Reisen zu erhalten.",
+    "checkEmail": "Überprüfe deine E-Mail",
+    "verificationSentMessage": "Wir haben dir einen Bestätigungslink gesendet. Bitte überprüfe deinen Posteingang, um dein Konto zu aktivieren.",
+    "close": "Schließen"
   },
   "Errors": {
     "notFound": {
@@ -249,5 +252,18 @@
       "lastUpdated": "Zuletzt aktualisiert: 29. Dezember 2024",
       "content": "Durch die Nutzung von TripVibes erklären Sie sich mit den folgenden Bedingungen einverstanden..."
     }
+  },
+  "CreditsModal": {
+    "title": "Über Reise-Credits",
+    "whatAreCredits": {
+      "title": "Was sind Credits?",
+      "description": "Credits ermöglichen es Ihnen, intelligente, personalisierte Reisepläne zu erstellen. Jede neue Reise kostet 1 Credit."
+    },
+    "howToGetMore": {
+      "title": "Wie bekommt man mehr?",
+      "signupBonus": "Neue Benutzer erhalten bei der Registrierung 5 kostenlose Credits.",
+      "comingSoon": "Weitere Möglichkeiten, Credits zu verdienen und zu kaufen, folgen in Kürze!"
+    },
+    "close": "Verstanden"
   }
 }

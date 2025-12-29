@@ -226,7 +226,10 @@
       "generic": "Algo salió mal. Por favor, inténtalo de nuevo."
     },
     "noCredits": "¡Has agotado tu viaje gratis!",
-    "noCreditsMessage": "Regístrate para obtener 5 viajes más."
+    "noCreditsMessage": "Regístrate para obtener 5 viajes más.",
+    "checkEmail": "Revisa tu correo",
+    "verificationSentMessage": "Te hemos enviado un enlace de verificación. Revisa tu bandeja de entrada para activar tu cuenta.",
+    "close": "Cerrar"
   },
   "Errors": {
     "notFound": {
@@ -244,12 +247,25 @@
     "privacy": {
       "title": "Política de Privacidad",
       "lastUpdated": "Última actualización: 29 de diciembre de 2024",
-      "content": "Tu privacidad es importante para nosotros. Esta política explica cómo manejamos tus datos..."
+      "content": "Tu privacidad es important para nosotros. Esta política explica cómo manejamos tus datos..."
     },
     "terms": {
       "title": "Términos de Servicio",
       "lastUpdated": "Última actualización: 29 de diciembre de 2024",
       "content": "Al usar TripVibes, aceptas los siguientes términos..."
     }
+  },
+  "CreditsModal": {
+    "title": "Acerca de los Créditos de Viaje",
+    "whatAreCredits": {
+      "title": "¿Qué son los créditos?",
+      "description": "Los créditos te permiten generar itinerarios inteligentes y personalizados. Cada nuevo viaje cuesta 1 crédito."
+    },
+    "howToGetMore": {
+      "title": "¿Cómo obtener más?",
+      "signupBonus": "Los nuevos usuarios reciben 5 créditos gratis al registrarse.",
+      "comingSoon": "¡Pronto habrá más formas de ganar y comprar créditos!"
+    },
+    "close": "Entendido"
   }
 }
