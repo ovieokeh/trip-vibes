@@ -199,6 +199,8 @@
     "crafting_descriptions": "Aangepaste beschrijvingen maken met AI...",
     "personalizing_activity": "Activiteit personaliseren {current}/{total}...",
     "finalizing": "Details afronden...",
+    "checking_credits": "Beschikbare credits controleren...",
+    "insufficient_credits": "Onvoldoende credits. Meld je aan voor meer.",
     "generic_error": "Er is een onverwachte fout opgetreden"
   },
   "Auth": {

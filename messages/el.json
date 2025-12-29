@@ -201,6 +201,8 @@
     "crafting_descriptions": "Γράφουμε τις περιγραφές με AI...",
     "personalizing_activity": "Προσαρμόζουμε τη δραστηριότητα {current}/{total}...",
     "finalizing": "Τελειοποιούμε τις λεπτομέρειες...",
+    "checking_credits": "Έλεγχος διαθέσιμων πόντων...",
+    "insufficient_credits": "Ανεπαρκείς πόντοι. Παρακαλώ εγγραφείτε για περισσότερους.",
     "generic_error": "Παρουσιάστηκε ένα απρόσμενο σφάλμα"
   },
   "Auth": {

@@ -10,7 +10,7 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -62,14 +62,12 @@ export default async function RootLayout({
   // side is the easiest way to get started
   const messages = await getMessages();
 
-  const saved = await getSavedItinerariesAction();
-
   return (
     <html lang={locale}>
       <body className="font-sans antialiased min-h-screen flex flex-col bg-base-100 text-base-content">
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
-            <Navbar savedCount={saved.length} />
+            <Navbar />
             <main className="container mx-auto max-w-2xl md:px-4 py-8 flex-grow">{children}</main>
             <Footer />
           </AuthProvider>

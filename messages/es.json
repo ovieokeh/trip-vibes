@@ -199,6 +199,8 @@
     "crafting_descriptions": "Creando descripciones personalizadas con IA...",
     "personalizing_activity": "Personalizando actividad {current}/{total}...",
     "finalizing": "Finalizando detalles...",
+    "checking_credits": "Comprobando créditos disponibles...",
+    "insufficient_credits": "Créditos insuficientes. Por favor, regístrate para obtener más.",
     "generic_error": "Ha ocurrido un error inesperado"
   },
   "Auth": {

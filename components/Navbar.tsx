@@ -3,23 +3,35 @@
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { Heart, User, Sparkles, UserCircle, Menu, X } from "lucide-react";
 import { useStore } from "@/store/useStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ConfirmModal from "./ConfirmModal";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "./AuthProvider";
 import { useTranslations, useFormatter } from "next-intl";
 import LanguageSwitcher from "./LanguageSwitcher";
 
-export default function Navbar({ savedCount = 0 }: { savedCount?: number }) {
+export default function Navbar() {
   const t = useTranslations("Navbar");
   const tc = useTranslations("Confirmation.newTrip");
   const formatIntl = useFormatter();
   const reset = useStore((state) => state.reset);
   const router = useRouter();
-  const { user, isAnonymous, credits, loading } = useAuth();
+  const { user, isAnonymous, credits, loading, isSynced } = useAuth();
   const pathname = usePathname();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+
+  // Fetch saved count on client
+  useEffect(() => {
+    if (isSynced || !isAnonymous) {
+      import("@/lib/db-actions").then((mod) => {
+        mod.getSavedItinerariesAction().then((saved) => {
+          setSavedCount(saved.length);
+        });
+      });
+    }
+  }, [isSynced, isAnonymous]);
 
   const handleNewTrip = () => {
     if (pathname === "/itinerary") {

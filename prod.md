@@ -73,12 +73,12 @@ TripVibes is a functional travel itinerary generator with a complete user flow, 
 
 ### 5. 🌐 SEO & Social (Must-Have)
 
-| Item                              | Status     |
-| --------------------------------- | ---------- |
-| Open Graph meta tags              | ⚠️ Partial |
-| Dynamic OG images for itineraries | ❌ Missing |
-| Sitemap.xml                       | ❌ Missing |
-| robots.txt                        | ❌ Missing |
+| Item                              | Status      |
+| --------------------------------- | ----------- |
+| Open Graph meta tags              | ✅ Complete |
+| Dynamic OG images for itineraries | ❌ Missing  |
+| Sitemap.xml                       | ✅ Done     |
+| robots.txt                        | ✅ Done     |
 
 ---
 
@@ -86,16 +86,16 @@ TripVibes is a functional travel itinerary generator with a complete user flow, 
 
 | Issue                       | Fix                            |
 | --------------------------- | ------------------------------ |
-| No ISR/SSG for static pages | Enable for home, about         |
+| No ISR/SSG for static pages | ✅ Enabled (Home)              |
 | Images not optimized        | Use Next.js Image consistently |
 
 ---
 
 ### 7. 🛡️ Rate Limiting
 
-- Rate limit `/api/itinerary/stream`
-- 1 generation per anonymous user
-- Credits system for authenticated users
+- Rate limit `/api/itinerary/stream` (✅ Done)
+- 1 generation per anonymous user (✅ Enforced)
+- Credits system for authenticated users (✅ Integrated)
 
 ---
 
@@ -130,17 +130,17 @@ TripVibes is a functional travel itinerary generator with a complete user flow, 
 - [x] Error pages (404, error, global-error) (Localized)
 - [x] Privacy Policy / Terms pages (Localized)
 
-### Day 3: Data & UX
+### Day 3: Data & UX (✅ Ready)
 
-- [ ] Rate limiting (1 per anon user)
+- [x] Rate limiting (1 per anon user)
 - [x] Cache staleness indicator + regenerate button (✅ Done)
 - [x] userId columns in DB
 
-### Day 4: SEO
+### Day 4: SEO (✅ Infrastructure Ready)
 
 - [ ] Dynamic OG images
-- [ ] Sitemap.xml
-- [ ] robots.txt
+- [x] Sitemap.xml
+- [x] robots.txt
 
 ### Day 5: Polish
 

@@ -26,6 +26,17 @@ export async function GET(req: NextRequest) {
       };
 
       try {
+        // 0. Check and Deduct Credit (Rate Limiting)
+        sendEvent({ type: "progress", key: "checking_credits", step: "init" });
+        const { deductCredit } = await import("@/lib/auth-actions");
+        const hasCredits = await deductCredit();
+
+        if (!hasCredits) {
+          sendEvent({ type: "error", key: "insufficient_credits" });
+          controller.close();
+          return;
+        }
+
         // 1. Check Cache
         sendEvent({ type: "progress", key: "checking_cache", step: "init" });
         const cached = await getCachedItinerary(prefs.cityId, prefs);

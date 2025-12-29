@@ -201,6 +201,8 @@
     "crafting_descriptions": "Crafting custom descriptions with AI...",
     "personalizing_activity": "Personalizing activity {current}/{total}...",
     "finalizing": "Finalizing details...",
+    "checking_credits": "Checking available credits...",
+    "insufficient_credits": "Insufficient credits. Please sign up for more.",
     "generic_error": "An unexpected error occurred"
   },
   "Auth": {

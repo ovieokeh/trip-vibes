@@ -1,6 +1,8 @@
 import SetupForm from "@/components/SetupForm";
 import { useTranslations } from "next-intl";
 
+export const revalidate = 3600; // 1 hour
+
 export default function Home() {
   const t = useTranslations("Home");
 
