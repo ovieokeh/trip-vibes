@@ -45,6 +45,10 @@
       "cityRequired": "Stad is verplicht",
       "startDateRequired": "Startdatum is verplicht",
       "endDateRequired": "Einddatum is verplicht"
+    },
+    "noCredits": {
+      "title": "Geen credits meer",
+      "message": "Je hebt al je gratis credits opgebruikt. Meld je aan of log in om meer credits te krijgen en door te gaan met het plannen van geweldige reizen!"
     }
   },
   "Footer": {

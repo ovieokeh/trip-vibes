@@ -45,6 +45,10 @@
       "cityRequired": "City is required",
       "startDateRequired": "Start date is required",
       "endDateRequired": "End date is required"
+    },
+    "noCredits": {
+      "title": "Out of Credits",
+      "message": "You've used all your free credits. Sign up or log in to get more credits and continue planning amazing trips!"
     }
   },
   "Footer": {

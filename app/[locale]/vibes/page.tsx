@@ -10,6 +10,7 @@ import { DeckEngine } from "@/lib/vibes/deck";
 import { SaveDeckModal } from "@/components/SaveDeckModal";
 import { AuthModal } from "@/components/AuthModal";
 import { useTranslations } from "next-intl";
+import { PartyPopper } from "lucide-react";
 
 export default function VibesPage() {
   const t = useTranslations("Vibes");
@@ -22,6 +23,7 @@ export default function VibesPage() {
   const [showAuth, setShowAuth] = useState(false);
   const [autoSaveDeck, setAutoSaveDeck] = useState(false);
   const [lastSwipeDirection, setLastSwipeDirection] = useState<"left" | "right">("right");
+  const [showCelebration, setShowCelebration] = useState(false);
 
   // Initialize Engine
   const engine = useMemo(() => {
@@ -60,9 +62,13 @@ export default function VibesPage() {
   }, [vibeProfile, engine, cityId]);
 
   const finishVibeCheck = () => {
-    setIsFinishing(true);
-    // Show save deck modal instead of immediately redirecting
-    setShowSaveDeck(true);
+    setShowCelebration(true);
+    // Brief celebration before transitioning
+    setTimeout(() => {
+      setShowCelebration(false);
+      setIsFinishing(true);
+      setShowSaveDeck(true);
+    }, 1200);
   };
 
   const handleContinueToItinerary = () => {
@@ -157,9 +163,19 @@ export default function VibesPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden relative">
-      <div className="absolute top-4 w-full px-4 flex justify-between items-center text-xs opacity-80 uppercase tracking-widest">
-        <span>{t("vibeCheck")}</span>
-        <span>{likedVibes.length} / 6</span>
+      <div className="absolute top-4 w-full px-4 flex justify-between items-center text-xs font-medium uppercase tracking-widest">
+        <span className="text-base-content/60">{t("vibeCheck")}</span>
+        {/* Progress dots */}
+        <div className="flex items-center gap-1.5">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                i < likedVibes.length ? "bg-primary scale-110" : "bg-base-300"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="absolute top-12 w-full flex justify-center gap-2 px-4 h-8">
@@ -179,12 +195,66 @@ export default function VibesPage() {
       </div>
 
       <div className="relative w-full max-w-sm h-[60vh] mt-8">
+        {/* Stacked card preview (decorative) */}
+        {currentCard && (
+          <div
+            className="absolute inset-0 w-full max-w-sm h-[60vh] bg-base-200 rounded-3xl shadow-lg border border-base-300 pointer-events-none"
+            style={{
+              transform: "scale(0.92) translateY(8px)",
+              opacity: 0.5,
+            }}
+          />
+        )}
+
+        {/* Current interactive card */}
         <AnimatePresence custom={lastSwipeDirection}>
-          {currentCard && <SwipeCard key={currentCard.id} vibe={currentCard} onSwipe={handleSwipe} />}
+          {currentCard && <SwipeCard key={currentCard.id} vibe={currentCard} onSwipe={handleSwipe} isTop={true} />}
+        </AnimatePresence>
+
+        {/* Celebration overlay */}
+        <AnimatePresence>
+          {showCelebration && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.2 }}
+              className="absolute inset-0 flex items-center justify-center z-50"
+            >
+              <div className="text-center">
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, -10, 10, 0], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 0.6 }}
+                  className="mb-4"
+                >
+                  <PartyPopper className="w-20 h-20 text-warning mx-auto" />
+                </motion.div>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-2xl font-bold text-base-content"
+                >
+                  {t("complete")}
+                </motion.p>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
-      {currentCard && <div className="mt-8 text-center text-sm opacity-70 animate-pulse">{t("instructions")}</div>}
+      {currentCard && !showCelebration && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-8 text-center text-sm text-base-content/50"
+        >
+          <span className="flex items-center gap-2 justify-center">
+            <span className="text-error">←</span>
+            {t("instructions")}
+            <span className="text-success">→</span>
+          </span>
+        </motion.div>
+      )}
     </div>
   );
 }

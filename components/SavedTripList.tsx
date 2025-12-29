@@ -65,10 +65,67 @@ export default function SavedTripList({ initialTrips }: SavedTripListProps) {
 
   if (trips.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Map className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p className="opacity-70">{t("empty")}</p>
-        <Link href="/" className="btn btn-link">
+      <div className="text-center py-16 px-4">
+        {/* Custom Illustrated Empty State */}
+        <div className="relative w-48 h-48 mx-auto mb-8">
+          {/* Background decorative circle */}
+          <div className="absolute inset-0 bg-primary/5 rounded-full animate-pulse"></div>
+
+          {/* Main illustration container */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            {/* Luggage illustration */}
+            <svg viewBox="0 0 120 120" className="w-32 h-32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Suitcase body */}
+              <rect
+                x="25"
+                y="40"
+                width="70"
+                height="55"
+                rx="8"
+                className="fill-base-200 stroke-base-300"
+                strokeWidth="2"
+              />
+              {/* Suitcase handle */}
+              <path
+                d="M45 40 V30 A10 10 0 0 1 55 20 H65 A10 10 0 0 1 75 30 V40"
+                className="stroke-base-300"
+                strokeWidth="3"
+                fill="none"
+              />
+              {/* Stripes */}
+              <rect x="25" y="55" width="70" height="6" className="fill-primary/20" />
+              <rect x="25" y="75" width="70" height="6" className="fill-primary/20" />
+              {/* Wheels */}
+              <circle cx="40" cy="98" r="5" className="fill-base-300" />
+              <circle cx="80" cy="98" r="5" className="fill-base-300" />
+              {/* Lock */}
+              <rect x="55" y="45" width="10" height="6" rx="1" className="fill-primary" />
+            </svg>
+
+            {/* Floating elements */}
+            <div className="absolute top-2 right-4 animate-float stagger-1">
+              <div className="w-8 h-8 rounded-full bg-warning/20 flex items-center justify-center">
+                <span className="text-lg">✈️</span>
+              </div>
+            </div>
+            <div className="absolute bottom-8 left-2 animate-float stagger-2">
+              <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center">
+                <span className="text-sm">🗺️</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 className="text-xl font-bold text-base-content mb-2">{t("empty")}</h3>
+        <p className="text-base-content/50 mb-6 max-w-xs mx-auto">
+          {t("emptyDescription") || "Start planning your next adventure and save it here."}
+        </p>
+
+        <Link
+          href="/"
+          className="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
+        >
+          <Map className="w-5 h-5" />
           {t("planNow")}
         </Link>
       </div>

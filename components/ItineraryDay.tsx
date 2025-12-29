@@ -232,10 +232,10 @@ export default function ItineraryDay({
                 )}
 
                 <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="card bg-base-100 shadow-sm border border-base-200 mb-2 overflow-hidden"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.15, duration: 0.4 }}
+                  className="card bg-base-100 shadow-md hover:shadow-lg border border-base-200/50 mb-2 overflow-hidden transition-shadow duration-200"
                 >
                   {/* Mobile: Horizontal carousel at top */}
                   {act.vibe.photos && act.vibe.photos.length > 0 ? (
@@ -399,14 +399,17 @@ export default function ItineraryDay({
                           href={act.vibe.website}
                           target="_blank"
                           rel="noreferrer"
-                          className="btn btn-sm btn-ghost gap-1.5"
+                          className="btn btn-sm btn-ghost gap-1.5 hover:bg-primary/10 hover:text-primary transition-colors"
                         >
                           <Globe className="w-4 h-4" />
                           {t("website")}
                         </a>
                       )}
                       {act.vibe.phone && (
-                        <a href={`tel:${act.vibe.phone}`} className="btn btn-sm btn-ghost gap-1.5">
+                        <a
+                          href={`tel:${act.vibe.phone}`}
+                          className="btn btn-sm btn-ghost gap-1.5 hover:bg-primary/10 hover:text-primary transition-colors"
+                        >
                           <Phone className="w-4 h-4" />
                           {t("call")}
                         </a>
@@ -422,7 +425,7 @@ export default function ItineraryDay({
                               href={`https://www.google.com/maps/dir/?api=1${originParam}&destination=${act.vibe.lat},${act.vibe.lng}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="btn btn-sm btn-ghost gap-1.5"
+                              className="btn btn-sm btn-ghost gap-1.5 hover:bg-primary/10 hover:text-primary transition-colors"
                             >
                               <MapPin className="w-4 h-4" />
                               {t("directions")}

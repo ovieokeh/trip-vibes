@@ -33,17 +33,15 @@ export default function LoadingScreen({ message, step }: LoadingScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 p-8 max-w-lg mx-auto text-center">
       <div className="relative">
-        <div className="absolute inset-0 animate-ping opacity-20 rounded-full bg-primary blur-xl"></div>
-        <div className="relative bg-base-100 p-6 rounded-full shadow-2xl border border-base-200">
+        <div className="absolute inset-0 animate-pulse opacity-30 rounded-full bg-primary blur-2xl scale-150"></div>
+        <div className="relative bg-base-100 p-6 rounded-full shadow-2xl border border-base-200 animate-float">
           <Icon className="w-12 h-12 text-primary" />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h2 className="text-2xl  bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          {t("buildingTrip")}
-        </h2>
-        <p className="text-lg font-medium opacity-80 min-h-[3rem] transition-all duration-300">{message}</p>
+      <div className="space-y-3">
+        <h2 className="text-2xl font-bold text-base-content">{t("buildingTrip")}</h2>
+        <p className="text-lg font-medium text-base-content/60 min-h-[3rem] transition-all duration-500">{message}</p>
       </div>
 
       <div className="flex gap-2 mt-4 justify-center">

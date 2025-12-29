@@ -10,13 +10,17 @@ import { DateRangePicker } from "./DateRangePicker";
 import { DeckSelector } from "./DeckSelector";
 import { getVibeDecksAction, VibeDeck } from "@/lib/db-actions";
 import { useTranslations } from "next-intl";
+import { Coins, Wallet, Gem, Sparkles } from "lucide-react";
+import { useAuth } from "./AuthProvider";
+import AlertModal from "./AlertModal";
 
 export default function SetupForm() {
   const t = useTranslations("SetupForm");
   const router = useRouter();
+  const { credits, loading: authLoading } = useAuth();
   const [showDeckModal, setShowDeckModal] = useState(false);
+  const [showNoCreditsModal, setShowNoCreditsModal] = useState(false);
   const [hasDecks, setHasDecks] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<any | null>(null);
 
   const setupSchema = useMemo(
     () =>
@@ -66,13 +70,18 @@ export default function SetupForm() {
   });
 
   const onSubmit = (data: SetupFormData) => {
+    // Check if user has credits before proceeding
+    if (!authLoading && credits !== null && credits <= 0) {
+      setShowNoCreditsModal(true);
+      return;
+    }
+
     setCity(data.cityId);
     setDates(data.startDate, data.endDate);
     setBudget(data.budget);
 
     // If user has saved decks, show selector; otherwise go straight to vibes
     if (hasDecks) {
-      setPendingFormData(data);
       setShowDeckModal(true);
     } else {
       clearVibes();
@@ -95,7 +104,7 @@ export default function SetupForm() {
 
   return (
     <>
-      <div className="card w-full bg-base-100/50 backdrop-blur-sm">
+      <div className="card w-full border border-base-200/50">
         <form onSubmit={handleSubmit(onSubmit)} className="card-body gap-5">
           <div className="form-control w-full">
             <label className="label pt-0">
@@ -153,26 +162,65 @@ export default function SetupForm() {
             <Controller
               name="budget"
               control={control}
-              render={({ field }) => (
-                <div className="join w-full grid grid-cols-3">
-                  {(["low", "medium", "high"] as const).map((b) => (
-                    <input
-                      key={b}
-                      className="join-item btn btn-outline btn-sm font-bold border-base-300 data-[checked=true]:btn-active data-[checked=true]:btn-primary"
-                      type="radio"
-                      name="budget"
-                      aria-label={b === "low" ? "$" : b === "medium" ? "$$" : "$$$"}
-                      data-checked={field.value === b}
-                      checked={field.value === b}
-                      onChange={() => field.onChange(b)}
-                    />
-                  ))}
-                </div>
-              )}
+              render={({ field }) => {
+                const budgetOptions = [
+                  { value: "low" as const, label: "$", icon: Coins, desc: "Budget" },
+                  { value: "medium" as const, label: "$$", icon: Wallet, desc: "Balanced" },
+                  { value: "high" as const, label: "$$$", icon: Gem, desc: "Premium" },
+                ];
+                return (
+                  <div className="grid grid-cols-3 gap-2">
+                    {budgetOptions.map((opt) => {
+                      const isSelected = field.value === opt.value;
+                      const Icon = opt.icon;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => field.onChange(opt.value)}
+                          className={`relative flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition-all duration-200 ${
+                            isSelected
+                              ? "border-primary bg-primary/10 shadow-md scale-[1.02]"
+                              : "border-base-300 bg-base-100 hover:border-primary/50 hover:bg-base-200/50"
+                          }`}
+                        >
+                          <Icon
+                            className={`w-5 h-5 transition-colors ${
+                              isSelected ? "text-primary" : "text-base-content/50"
+                            }`}
+                          />
+                          <span
+                            className={`text-lg font-bold transition-colors ${
+                              isSelected ? "text-primary" : "text-base-content"
+                            }`}
+                          >
+                            {opt.label}
+                          </span>
+                          <span
+                            className={`text-[10px] uppercase tracking-wider transition-colors ${
+                              isSelected ? "text-primary/80" : "text-base-content/40"
+                            }`}
+                          >
+                            {opt.desc}
+                          </span>
+                          {isSelected && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center animate-scale-in">
+                              <Sparkles className="w-2.5 h-2.5 text-primary-content" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              }}
             />
           </div>
 
-          <button type="submit" className="btn btn-primary btn-lg w-full mt-2 tracking-tight text-xl shadow-sm">
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg w-full mt-4 tracking-tight text-xl shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+          >
             {hasDecks ? t("buttons.continue") : t("buttons.start")}
           </button>
         </form>
@@ -193,6 +241,18 @@ export default function SetupForm() {
           <div className="modal-backdrop bg-black/50" onClick={() => setShowDeckModal(false)}></div>
         </div>
       )}
+
+      {/* No Credits Alert Modal */}
+      <AlertModal
+        isOpen={showNoCreditsModal}
+        title={t("noCredits.title") || "Out of Credits"}
+        message={
+          t("noCredits.message") ||
+          "You've used all your free credits. Sign up for an account to get more credits and continue planning trips!"
+        }
+        type="warning"
+        onClose={() => setShowNoCreditsModal(false)}
+      />
     </>
   );
 }

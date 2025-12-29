@@ -45,6 +45,10 @@
       "cityRequired": "Stadt ist erforderlich",
       "startDateRequired": "Startdatum ist erforderlich",
       "endDateRequired": "Enddatum ist erforderlich"
+    },
+    "noCredits": {
+      "title": "Keine Credits mehr",
+      "message": "Du hast alle deine kostenlosen Credits aufgebraucht. Registriere dich oder melde dich an, um mehr Credits zu erhalten und weiter tolle Reisen zu planen!"
     }
   },
   "Footer": {

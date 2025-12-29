@@ -45,6 +45,10 @@
       "cityRequired": "La ciudad es obligatoria",
       "startDateRequired": "La fecha de inicio es obligatoria",
       "endDateRequired": "La fecha de finalización es obligatoria"
+    },
+    "noCredits": {
+      "title": "Sin créditos",
+      "message": "¡Has agotado todos tus créditos gratuitos! Regístrate o inicia sesión para obtener más créditos y seguir planificando viajes increíbles."
     }
   },
   "Footer": {
