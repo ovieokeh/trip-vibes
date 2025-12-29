@@ -9,6 +9,7 @@
     "saved": "Gespeichert Reisen",
     "signIn": "Anmelden",
     "signOut": "Abmelden",
+    "account": "Konto",
     "menu": "Menü",
     "language": "Sprache"
   },
@@ -265,5 +266,20 @@
       "comingSoon": "Weitere Möglichkeiten, Credits zu verdienen und zu kaufen, folgen in Kürze!"
     },
     "close": "Verstanden"
+  },
+  "Account": {
+    "title": "Kontoverwaltung",
+    "profile": "Profil",
+    "email": "E-Mail-Adresse",
+    "credits": "Aktuelle Credits",
+    "savedVibes": "Deine gespeicherten Vibes",
+    "noVibes": "Du hast noch keine Vibe-Decks gespeichert.",
+    "dangerZone": "Gefahrenzone",
+    "deleteAccount": "Konto löschen",
+    "deleteDescription": "Sobald Sie Ihr Konto löschen, gibt es kein Zurück mehr. Alle Ihre gespeicherten Reisen, Vibes und Credits werden dauerhaft entfernt.",
+    "confirmDeleteTitle": "Sind Sie absolut sicher?",
+    "confirmDeleteMessage": "Diese Aktion ist unumkehrbar. Alle Ihre Daten werden dauerhaft gelöscht.",
+    "deleting": "Konto wird gelöscht...",
+    "errorDeleting": "Konto konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
   }
 }

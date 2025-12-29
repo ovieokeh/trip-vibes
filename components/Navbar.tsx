@@ -108,10 +108,12 @@ export default function Navbar() {
       if (isMobile) {
         return (
           <div className="flex flex-col gap-2 w-full">
-            <div className="flex items-center gap-2 px-1 py-2 opacity-70">
-              <UserCircle className="w-4 h-4" />
-              <span className="text-sm font-medium truncate">{user.email}</span>
-            </div>
+            <Link href="/account" className="btn btn-ghost btn-sm w-full justify-start gap-2">
+              <div className="flex items-center gap-2 px-1 py-2 opacity-70">
+                <UserCircle className="w-4 h-4" />
+                <span className="text-sm font-medium truncate">{user.email}</span>
+              </div>
+            </Link>
             <button
               className="btn btn-outline btn-sm w-full"
               onClick={async () => {
@@ -141,6 +143,11 @@ export default function Navbar() {
             className="dropdown-content menu p-2 shadow-2xl bg-base-100 rounded-box w-52 mt-4 border border-base-200 z-[101]"
           >
             <li className="menu-title text-xs opacity-50 truncate px-2 mb-1">{user.email || "Account"}</li>
+            <li>
+              <Link href="/account" className="active:bg-primary active:text-primary-content">
+                {t("account") || "Account"}
+              </Link>
+            </li>
             <li>
               <button
                 className="active:bg-primary active:text-primary-content"

@@ -9,6 +9,7 @@
     "saved": "Saved Trips",
     "signIn": "Sign In",
     "signOut": "Sign Out",
+    "account": "Account",
     "menu": "Menu",
     "language": "Language"
   },
@@ -269,5 +270,20 @@
       "comingSoon": "More ways to earn and purchase credits are coming soon!"
     },
     "close": "Got it"
+  },
+  "Account": {
+    "title": "Account Management",
+    "profile": "Profile",
+    "email": "Email Address",
+    "credits": "Current Credits",
+    "savedVibes": "Your Saved Vibes",
+    "noVibes": "You haven't saved any vibe decks yet.",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete Account",
+    "deleteDescription": "Once you delete your account, there is no going back. All your saved trips, vibes, and credits will be permanently removed.",
+    "confirmDeleteTitle": "Are you absolutely sure?",
+    "confirmDeleteMessage": "This action is irreversible. All your data will be permanently deleted.",
+    "deleting": "Deleting Account...",
+    "errorDeleting": "Failed to delete account. Please try again."
   }
 }

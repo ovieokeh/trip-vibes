@@ -9,6 +9,7 @@
     "saved": "Guardados Viajes",
     "signIn": "Iniciar sesión",
     "signOut": "Cerrar sesión",
+    "account": "Cuenta",
     "menu": "Menú",
     "language": "Idioma"
   },
@@ -267,5 +268,20 @@
       "comingSoon": "¡Pronto habrá más formas de ganar y comprar créditos!"
     },
     "close": "Entendido"
+  },
+  "Account": {
+    "title": "Administración de la Cuenta",
+    "profile": "Perfil",
+    "email": "Correo Electrónico",
+    "credits": "Créditos Actuales",
+    "savedVibes": "Tus Vibes Guardados",
+    "noVibes": "Aún no has guardado ningún mazo de vibes.",
+    "dangerZone": "Zona de Peligro",
+    "deleteAccount": "Eliminar Cuenta",
+    "deleteDescription": "Una vez que elimines tu cuenta, no hay vuelta atrás. Todos tus viajes, vibes y créditos guardados se eliminarán permanentemente.",
+    "confirmDeleteTitle": "¿Estás absolutamente seguro?",
+    "confirmDeleteMessage": "Esta acción es irreversible. Todos tus datos serán eliminados permanentemente.",
+    "deleting": "Eliminando Cuenta...",
+    "errorDeleting": "Error al eliminar la cuenta. Por favor, inténtalo de nuevo."
   }
 }

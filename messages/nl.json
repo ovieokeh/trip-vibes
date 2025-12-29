@@ -9,6 +9,7 @@
     "saved": "Opgeslagen Reizen",
     "signIn": "Inloggen",
     "signOut": "Uitloggen",
+    "account": "Account",
     "menu": "Menu",
     "language": "Taal"
   },
@@ -267,5 +268,20 @@
       "comingSoon": "Binnenkort komen er meer manieren om credits te verdienen en te kopen!"
     },
     "close": "Begrepen"
+  },
+  "Account": {
+    "title": "Accountbeheer",
+    "profile": "Profiel",
+    "email": "E-mailadres",
+    "credits": "Huidige Credits",
+    "savedVibes": "Jouw Opgeslagen Vibes",
+    "noVibes": "Je hebt nog geen vibe-decks opgeslagen.",
+    "dangerZone": "Gevarenzone",
+    "deleteAccount": "Account Verwijderen",
+    "deleteDescription": "Zodra je je account verwijdert, is er geen weg terug. Al je opgeslagen reizen, vibes en credits worden permanent verwijderd.",
+    "confirmDeleteTitle": "Weet je het absoluut zeker?",
+    "confirmDeleteMessage": "Deze actie is onomkeerbaar. Al je gegevens worden permanent verwijderd.",
+    "deleting": "Account Verwijderen...",
+    "errorDeleting": "Account verwijderen mislukt. Probeer het opnieuw."
   }
 }

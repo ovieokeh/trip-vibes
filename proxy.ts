@@ -29,7 +29,20 @@ export default async function proxy(request: NextRequest) {
 
   // 3. Refresh session if expired - required for Server Components
   // Only refresh if user already has a session
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 4. Protect /account routes
+  const path = request.nextUrl.pathname;
+  // Check if path contains /account (handling locale prefixes like /en/account)
+  const isAccountPage = path.includes("/account");
+
+  if (isAccountPage && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
 
   return response;
 }
