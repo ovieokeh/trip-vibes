@@ -204,7 +204,6 @@ export default function Navbar() {
           <LanguageSwitcher />
           <SavedVibesButton />
           <AuthSection />
-          <NewTripButton />
         </div>
 
         {/* Mobile Navigation */}
@@ -242,10 +241,6 @@ export default function Navbar() {
 
                   <div className="px-2">
                     <AuthSection isMobile={true} />
-                  </div>
-
-                  <div className="px-2">
-                    <NewTripButton className="w-full h-11" />
                   </div>
                 </div>
               </li>

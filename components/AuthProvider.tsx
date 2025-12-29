@@ -85,7 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (currentUser) {
         setIsAnonymous(currentUser.is_anonymous ?? true);
-        // Check DB status, don't auto-create
+
+        // On SIGNED_IN (e.g., after email verification), ensure user is synced to DB
+        if (event === "SIGNED_IN") {
+          const { syncUserToDatabase } = await import("@/lib/auth-actions");
+          await syncUserToDatabase();
+        }
+
+        // Check DB status
         await fetchUserStatus();
       } else {
         setCredits(0);

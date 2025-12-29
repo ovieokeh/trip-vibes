@@ -22,21 +22,24 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: {
     template: "%s | TripVibes",
-    default: "TripVibes - Curated Travel Itineraries",
+    default: "TripVibes – AI-Powered Travel Itineraries Based on Your Vibe",
   },
-  description: "Convert aesthetic preferences into a geographically optimized itinerary.",
+  description:
+    "Swipe through aesthetic cards to build your ideal trip. TripVibes creates smart, location-aware itineraries personalized to your taste and travel style.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   openGraph: {
     siteName: "TripVibes",
     locale: "en_US",
     type: "website",
-    title: "TripVibes - Curated Travel Itineraries",
-    description: "Convert aesthetic preferences into a geographically optimized itinerary.",
+    title: "TripVibes – AI-Powered Travel Itineraries Based on Your Vibe",
+    description:
+      "Swipe through aesthetic cards to build your ideal trip. TripVibes creates smart, location-aware itineraries personalized to your taste and travel style.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TripVibes - Curated Travel Itineraries",
-    description: "Convert aesthetic preferences into a geographically optimized itinerary.",
+    title: "TripVibes – AI-Powered Travel Itineraries Based on Your Vibe",
+    description:
+      "Swipe through aesthetic cards to build your ideal trip. TripVibes creates smart, location-aware itineraries personalized to your taste and travel style.",
     creator: "@tripvibes",
   },
   icons: {

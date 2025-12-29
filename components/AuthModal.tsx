@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { syncUserToDatabase } from "@/lib/auth-actions";
 import { useAuth } from "./AuthProvider";
 import { useTranslations } from "next-intl";
-import { X, Mail, Lock, Sparkles, UserCircle } from "lucide-react";
+import { X, Mail, Lock, Sparkles, UserCircle, Eye, EyeOff } from "lucide-react";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,6 +25,7 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const supabase = createClient();
 
@@ -231,7 +232,7 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
             <label className="input input-bordered flex items-center gap-2">
               <Lock className="w-4 h-4 opacity-70" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="grow"
                 placeholder={t("passwordPlaceholder")}
                 value={password}
@@ -240,6 +241,14 @@ export function AuthModal({ isOpen, onClose, onSuccess, title, message, showGues
                 minLength={6}
                 disabled={loading}
               />
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs btn-circle"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4 opacity-70" /> : <Eye className="w-4 h-4 opacity-70" />}
+              </button>
             </label>
           </div>
 
