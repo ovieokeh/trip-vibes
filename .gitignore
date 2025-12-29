@@ -3,6 +3,5 @@ node_modules
 .DS_Store
 .env
 .next/
-.expo
 apps/mobile/.expo
 apps/mobile/ios
