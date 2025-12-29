@@ -6,9 +6,11 @@
   },
   "Navbar": {
     "newTrip": "Καινούργιο Ταξίδι",
-    "saved": "Φυλαγμένα",
+    "saved": "Φυλαγμένα Ταξίδια",
     "signIn": "Σύνδεση",
-    "signOut": "Αποσύνδεση"
+    "signOut": "Αποσύνδεση",
+    "menu": "Μενού",
+    "language": "Γλώσσα"
   },
   "Confirmation": {
     "newTrip": {

@@ -6,9 +6,11 @@
   },
   "Navbar": {
     "newTrip": "Neue Reise",
-    "saved": "Gespeichert",
+    "saved": "Gespeichert Reisen",
     "signIn": "Anmelden",
-    "signOut": "Abmelden"
+    "signOut": "Abmelden",
+    "menu": "Menü",
+    "language": "Sprache"
   },
   "Confirmation": {
     "newTrip": {

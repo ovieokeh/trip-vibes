@@ -153,9 +153,11 @@ export function DateRangePicker({ startDate, endDate, onChange, className }: Dat
             </button>
           </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
+        <div className="modal-backdrop bg-base-900/40 backdrop-blur-[2px]" onClick={() => modalRef.current?.close()}>
+          <button type="button" className="cursor-default w-full h-full">
+            close
+          </button>
+        </div>
       </dialog>
     </>
   );

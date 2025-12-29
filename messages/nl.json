@@ -6,9 +6,11 @@
   },
   "Navbar": {
     "newTrip": "Nieuwe Reis",
-    "saved": "Opgeslagen",
+    "saved": "Opgeslagen Reizen",
     "signIn": "Inloggen",
-    "signOut": "Uitloggen"
+    "signOut": "Uitloggen",
+    "menu": "Menu",
+    "language": "Taal"
   },
   "Confirmation": {
     "newTrip": {

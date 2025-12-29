@@ -6,9 +6,11 @@
   },
   "Navbar": {
     "newTrip": "Nuevo Viaje",
-    "saved": "Guardados",
+    "saved": "Guardados Viajes",
     "signIn": "Iniciar sesión",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "menu": "Menú",
+    "language": "Idioma"
   },
   "Confirmation": {
     "newTrip": {
