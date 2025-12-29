@@ -1,25 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/store/useStore";
 import { saveVibeDeckAction, VibeDeck } from "@/lib/db-actions";
 import { useTranslations } from "next-intl";
+import { useAuth } from "./AuthProvider";
 
 interface SaveDeckModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved: (deck: VibeDeck) => void;
   onSkip: () => void;
+  onNeedsAuth: () => void; // Called when auth is needed - parent handles auth modal
+  autoSave?: boolean; // If true, save immediately on mount (after auth completes)
 }
 
-export function SaveDeckModal({ isOpen, onClose, onSaved, onSkip }: SaveDeckModalProps) {
+export function SaveDeckModal({ isOpen, onClose, onSaved, onSkip, onNeedsAuth, autoSave = false }: SaveDeckModalProps) {
   const t = useTranslations("SaveDeck");
   const { likedVibes, vibeProfile } = useStore();
+  const { isSynced, loading: authLoading } = useAuth();
   const [name, setName] = useState(() => generateDefaultName(vibeProfile, t));
   const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
-    if (!name.trim()) return;
+  // Auto-save if requested (after auth completes)
+  useEffect(() => {
+    if (autoSave && isOpen && isSynced && !saving && name.trim()) {
+      handleSaveInternal();
+    }
+  }, [autoSave, isOpen, isSynced]);
+
+  const handleSaveInternal = async () => {
     setSaving(true);
     try {
       const deck = await saveVibeDeckAction(name.trim(), likedVibes, vibeProfile);
@@ -28,6 +38,18 @@ export function SaveDeckModal({ isOpen, onClose, onSaved, onSkip }: SaveDeckModa
       console.error("Failed to save deck:", error);
       setSaving(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+
+    // If user is not synced to DB, notify parent to show auth
+    if (!isSynced) {
+      onNeedsAuth();
+      return;
+    }
+
+    await handleSaveInternal();
   };
 
   if (!isOpen) return null;
@@ -68,7 +90,7 @@ export function SaveDeckModal({ isOpen, onClose, onSaved, onSkip }: SaveDeckModa
           <button className="btn btn-ghost" onClick={onSkip} disabled={saving}>
             {t("skip")}
           </button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={saving || !name.trim()}>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving || authLoading || !name.trim()}>
             {saving ? <span className="loading loading-spinner loading-sm"></span> : t("saveAndContinue")}
           </button>
         </div>

@@ -6,7 +6,9 @@
   },
   "Navbar": {
     "newTrip": "Nuevo Viaje",
-    "saved": "Guardados"
+    "saved": "Guardados",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión"
   },
   "Confirmation": {
     "newTrip": {
@@ -195,5 +197,26 @@
     "personalizing_activity": "Personalizando actividad {current}/{total}...",
     "finalizing": "Finalizando detalles...",
     "generic_error": "Ha ocurrido un error inesperado"
+  },
+  "Auth": {
+    "title": "Crea tu cuenta",
+    "description": "Regístrate para guardar tus viajes y obtener más créditos.",
+    "signUp": "Registrarse",
+    "signIn": "Iniciar sesión",
+    "emailPlaceholder": "Correo electrónico",
+    "passwordPlaceholder": "Contraseña (mín. 6 caracteres)",
+    "createAccount": "Crear cuenta",
+    "signInButton": "Iniciar sesión",
+    "signUpBonus": "✨ ¡Obtén 5 créditos de viaje gratis al registrarte!",
+    "continueAsGuest": "Continuar como invitado",
+    "or": "o crea una cuenta",
+    "guestNote": "Puedes añadir detalles de inicio de sesión a tu cuenta más tarde.",
+    "errors": {
+      "emailInUse": "Este correo ya está registrado.",
+      "invalidCredentials": "Correo o contraseña inválidos.",
+      "generic": "Algo salió mal. Por favor, inténtalo de nuevo."
+    },
+    "noCredits": "¡Has agotado tu viaje gratis!",
+    "noCreditsMessage": "Regístrate para obtener 5 viajes más."
   }
 }

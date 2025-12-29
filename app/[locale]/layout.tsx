@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AuthProvider } from "@/components/AuthProvider";
 
 import { getSavedItinerariesAction } from "@/lib/db-actions";
 import { NextIntlClientProvider } from "next-intl";
@@ -67,9 +68,11 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className="font-sans antialiased min-h-screen flex flex-col bg-base-100 text-base-content">
         <NextIntlClientProvider messages={messages}>
-          <Navbar savedCount={saved.length} />
-          <main className="container mx-auto max-w-2xl md:px-4 py-8 flex-grow">{children}</main>
-          <Footer />
+          <AuthProvider>
+            <Navbar savedCount={saved.length} />
+            <main className="container mx-auto max-w-2xl md:px-4 py-8 flex-grow">{children}</main>
+            <Footer />
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

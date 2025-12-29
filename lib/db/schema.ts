@@ -1,6 +1,16 @@
 import { pgTable, text, doublePrecision, integer, boolean, timestamp, primaryKey, uuid } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
+// Users table - synced with Supabase Auth
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey(), // Supabase auth.users.id - NOT defaultRandom()
+  email: text("email"),
+  isAnonymous: boolean("is_anonymous").default(true),
+  credits: integer("credits").default(1), // Anonymous: 1, Converted: configurable
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const cities = pgTable("cities", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
@@ -88,6 +98,7 @@ export const archetypesToPlacesRelations = relations(archetypesToPlaces, ({ one 
 
 export const itineraries = pgTable("itineraries", {
   id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
   cityId: uuid("city_id")
     .notNull()
     .references(() => cities.id),
@@ -112,6 +123,7 @@ export const vibeDescriptionsCache = pgTable("vibe_descriptions_cache", {
 
 export const vibeDecks = pgTable("vibe_decks", {
   id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
   name: text("name").notNull(), // "Foodie Adventure", "Cultural Explorer"
   likedVibes: text("liked_vibes").notNull(), // JSON stringified array of archetype IDs
   vibeProfile: text("vibe_profile").notNull(), // JSON stringified VibeProfile

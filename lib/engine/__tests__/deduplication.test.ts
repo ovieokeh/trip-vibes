@@ -39,7 +39,6 @@ describe("SchedulerEngine Deduplication", () => {
     itinerary.days.forEach((day) => {
       day.activities.forEach((act) => {
         if (act.vibe.id === "place-1") count++;
-        if (act.alternative?.id === "place-1") count++;
       });
     });
 

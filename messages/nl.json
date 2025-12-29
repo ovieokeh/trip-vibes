@@ -6,7 +6,9 @@
   },
   "Navbar": {
     "newTrip": "Nieuwe Reis",
-    "saved": "Opgeslagen"
+    "saved": "Opgeslagen",
+    "signIn": "Inloggen",
+    "signOut": "Uitloggen"
   },
   "Confirmation": {
     "newTrip": {
@@ -195,5 +197,26 @@
     "personalizing_activity": "Activiteit personaliseren {current}/{total}...",
     "finalizing": "Details afronden...",
     "generic_error": "Er is een onverwachte fout opgetreden"
+  },
+  "Auth": {
+    "title": "Account aanmaken",
+    "description": "Meld je aan om je reizen op te slaan en meer credits te krijgen.",
+    "signUp": "Aanmelden",
+    "signIn": "Inloggen",
+    "emailPlaceholder": "E-mailadres",
+    "passwordPlaceholder": "Wachtwoord (min. 6 tekens)",
+    "createAccount": "Account aanmaken",
+    "signInButton": "Inloggen",
+    "signUpBonus": "✨ Ontvang 5 gratis reis-credits bij aanmelding!",
+    "continueAsGuest": "Doorgaan als gast",
+    "or": "of maak een account aan",
+    "guestNote": "Je kunt later inloggegevens aan je account toevoegen.",
+    "errors": {
+      "emailInUse": "Dit e-mailadres is al geregistreerd.",
+      "invalidCredentials": "Ongeldig e-mailadres of wachtwoord.",
+      "generic": "Er is iets misgegaan. Probeer het opnieuw."
+    },
+    "noCredits": "Je hebt je gratis reis verbruikt!",
+    "noCreditsMessage": "Meld je aan om 5 extra reizen te krijgen."
   }
 }

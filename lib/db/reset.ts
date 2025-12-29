@@ -1,12 +1,20 @@
 import { db } from "./index";
 import { sql } from "drizzle-orm";
-import { seed } from "./seed";
-import { cities, archetypes, places, archetypesToPlaces, itineraries, vibeDescriptionsCache } from "./schema";
+import {
+  cities,
+  archetypes,
+  places,
+  archetypesToPlaces,
+  itineraries,
+  vibeDescriptionsCache,
+  vibeDecks,
+  users,
+} from "./schema";
 
 async function reset() {
   console.log("Truncating tables...");
 
-  const tables = [vibeDescriptionsCache, itineraries, archetypesToPlaces, places, archetypes, cities];
+  const tables = [vibeDescriptionsCache, itineraries, archetypesToPlaces, places, archetypes, cities, vibeDecks, users];
 
   for (const table of tables) {
     // Using sql directly to ensure proper truncation with CASCADE for Postgres

@@ -11,6 +11,16 @@ import { searchGoogleCities, getGooglePlaceDetails } from "./google-places";
 import { generateDefaultTripName } from "./formatting";
 import { isPlaceOpenAt } from "./activity";
 
+// Helper to get userId - uses dynamic import to avoid breaking tests
+async function getCurrentUserId(): Promise<string | null> {
+  try {
+    const { getCurrentUserId: getUser } = await import("./auth-actions");
+    return await getUser();
+  } catch {
+    return null;
+  }
+}
+
 export async function getVibeArchetypes() {
   return await db.select().from(archetypes);
 }
@@ -182,6 +192,7 @@ import { getLocale } from "next-intl/server";
 export async function saveItineraryAction(id: string, name?: string, itineraryData?: Itinerary) {
   let finalName = name;
   const locale = await getLocale();
+  const userId = await getCurrentUserId();
 
   // Generate default name if missing
   if (!finalName && itineraryData) {
@@ -203,6 +214,7 @@ export async function saveItineraryAction(id: string, name?: string, itineraryDa
     .update(itineraries)
     .set({
       isSaved: true,
+      userId: userId,
       name: finalName || (locale === "el" ? "Το Ταξίδι μου" : "My Trip"),
       ...(itineraryData ? { data: JSON.stringify(itineraryData) } : {}),
     })
@@ -212,6 +224,14 @@ export async function saveItineraryAction(id: string, name?: string, itineraryDa
 }
 
 export async function getSavedItinerariesAction() {
+  const userId = await getCurrentUserId();
+
+  // Build query conditions
+  const conditions = [eq(itineraries.isSaved, true)];
+  if (userId) {
+    conditions.push(eq(itineraries.userId, userId));
+  }
+
   const saved = await db
     .select({
       id: itineraries.id,
@@ -225,7 +245,7 @@ export async function getSavedItinerariesAction() {
     })
     .from(itineraries)
     .leftJoin(cities, eq(itineraries.cityId, cities.id))
-    .where(eq(itineraries.isSaved, true))
+    .where(and(...conditions))
     .orderBy(desc(itineraries.createdAt));
 
   return saved;
@@ -568,10 +588,13 @@ export async function saveVibeDeckAction(
   likedVibes: string[],
   vibeProfile: VibeProfile
 ): Promise<VibeDeck> {
+  const userId = await getCurrentUserId();
+
   const [inserted] = await db
     .insert(vibeDecks)
     .values({
       name,
+      userId: userId,
       likedVibes: JSON.stringify(likedVibes),
       vibeProfile: JSON.stringify(vibeProfile),
     })
@@ -588,7 +611,12 @@ export async function saveVibeDeckAction(
 }
 
 export async function getVibeDecksAction(): Promise<VibeDeck[]> {
-  const decks = await db.select().from(vibeDecks).orderBy(desc(vibeDecks.createdAt));
+  const userId = await getCurrentUserId();
+
+  // Only show decks for the current user
+  const decks = userId
+    ? await db.select().from(vibeDecks).where(eq(vibeDecks.userId, userId)).orderBy(desc(vibeDecks.createdAt))
+    : [];
 
   return decks.map((d) => ({
     id: d.id,

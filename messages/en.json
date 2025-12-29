@@ -6,7 +6,9 @@
   },
   "Navbar": {
     "newTrip": "New Trip",
-    "saved": "Saved"
+    "saved": "Saved",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
   },
   "Confirmation": {
     "newTrip": {
@@ -197,5 +199,26 @@
     "personalizing_activity": "Personalizing activity {current}/{total}...",
     "finalizing": "Finalizing details...",
     "generic_error": "An unexpected error occurred"
+  },
+  "Auth": {
+    "title": "Create Your Account",
+    "description": "Sign up to save your trips and get more credits.",
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "emailPlaceholder": "Email address",
+    "passwordPlaceholder": "Password (min 6 characters)",
+    "createAccount": "Create Account",
+    "signInButton": "Sign In",
+    "signUpBonus": "✨ Get 5 free trip credits when you sign up!",
+    "continueAsGuest": "Continue as Guest",
+    "or": "or create an account",
+    "guestNote": "You can add login details to your account later.",
+    "errors": {
+      "emailInUse": "This email is already registered.",
+      "invalidCredentials": "Invalid email or password.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "noCredits": "You've used your free trip!",
+    "noCreditsMessage": "Sign up to get 5 more trips."
   }
 }

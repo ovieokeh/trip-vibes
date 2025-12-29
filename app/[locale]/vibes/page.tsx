@@ -8,15 +8,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Vibe } from "@/lib/types";
 import { DeckEngine } from "@/lib/vibes/deck";
 import { SaveDeckModal } from "@/components/SaveDeckModal";
+import { AuthModal } from "@/components/AuthModal";
 import { useTranslations } from "next-intl";
 
 export default function VibesPage() {
   const t = useTranslations("Vibes");
+  const ta = useTranslations("Auth");
   const router = useRouter();
   const { cityId, addLike, addDislike, vibeProfile, likedVibes, dislikedVibes } = useStore();
   const [currentCard, setCurrentCard] = useState<AppVibe | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
   const [showSaveDeck, setShowSaveDeck] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  const [autoSaveDeck, setAutoSaveDeck] = useState(false);
   const [lastSwipeDirection, setLastSwipeDirection] = useState<"left" | "right">("right");
 
   // Initialize Engine
@@ -64,6 +68,25 @@ export default function VibesPage() {
   const handleContinueToItinerary = () => {
     setShowSaveDeck(false);
     router.push("/itinerary");
+  };
+
+  // Auth is needed - close SaveDeck, show Auth
+  const handleNeedsAuth = () => {
+    setShowSaveDeck(false);
+    setShowAuth(true);
+  };
+
+  // Auth completed - reopen SaveDeck with autoSave
+  const handleAuthSuccess = () => {
+    setShowAuth(false);
+    setAutoSaveDeck(true);
+    setShowSaveDeck(true);
+  };
+
+  // Auth cancelled - reopen SaveDeck normally
+  const handleAuthClose = () => {
+    setShowAuth(false);
+    setShowSaveDeck(true);
   };
 
   const handleSwipe = (direction: "left" | "right") => {
@@ -116,6 +139,17 @@ export default function VibesPage() {
           onClose={() => setShowSaveDeck(false)}
           onSaved={handleContinueToItinerary}
           onSkip={handleContinueToItinerary}
+          onNeedsAuth={handleNeedsAuth}
+          autoSave={autoSaveDeck}
+        />
+
+        <AuthModal
+          isOpen={showAuth}
+          onClose={handleAuthClose}
+          onSuccess={handleAuthSuccess}
+          title={ta("title")}
+          message={ta("description")}
+          showGuestOption={true}
         />
       </>
     );

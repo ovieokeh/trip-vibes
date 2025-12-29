@@ -6,7 +6,9 @@
   },
   "Navbar": {
     "newTrip": "Καινούργιο Ταξίδι",
-    "saved": "Φυλαγμένα"
+    "saved": "Φυλαγμένα",
+    "signIn": "Σύνδεση",
+    "signOut": "Αποσύνδεση"
   },
   "Confirmation": {
     "newTrip": {
@@ -197,5 +199,26 @@
     "personalizing_activity": "Προσαρμόζουμε τη δραστηριότητα {current}/{total}...",
     "finalizing": "Τελειοποιούμε τις λεπτομέρειες...",
     "generic_error": "Παρουσιάστηκε ένα απρόσμενο σφάλμα"
+  },
+  "Auth": {
+    "title": "Δημιούργησε Λογαριασμό",
+    "description": "Γράψου για να φυλάς τα ταξίδια σου τσαί να παίρνεις παραπάνω credits.",
+    "signUp": "Εγγραφή",
+    "signIn": "Σύνδεση",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Κωδικός (τουλάχιστον 6 γράμματα)",
+    "createAccount": "Φτιάξε Λογαριασμό",
+    "signInButton": "Σύνδεση",
+    "signUpBonus": "✨ Πάρε 5 δωρεάν ταξίδια με την εγγραφή σου!",
+    "continueAsGuest": "Συνέχεια ως Επισκέπτης",
+    "or": "ή φτιάξε λογαριασμό",
+    "guestNote": "Μπορείς να βάλεις στοιχεία σύνδεσης αργότερα.",
+    "errors": {
+      "emailInUse": "Αυτό το email το έχει άλλος.",
+      "invalidCredentials": "Λάθος email ή κωδικός.",
+      "generic": "Κάτι στράβωσε. Δοκίμασε πάλι."
+    },
+    "noCredits": "Τελείωσαν τα δωρεάν ταξίδια σου!",
+    "noCreditsMessage": "Γράψου για να πάρεις άλλα 5."
   }
 }

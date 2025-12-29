@@ -11,6 +11,8 @@ import AlertModal from "@/components/AlertModal";
 import AddActivityModal from "@/components/AddActivityModal";
 import LoadingScreen from "@/components/LoadingScreen";
 import ItineraryActions from "@/components/ItineraryActions";
+import { AuthModal } from "@/components/AuthModal";
+import { useAuth } from "@/components/AuthProvider";
 import { getTransitNote } from "@/lib/geo";
 import { useTranslations } from "next-intl";
 
@@ -23,12 +25,15 @@ export default function ItineraryPage() {
   const params = useParams();
   const locale = params.locale as string;
   const t = useTranslations("Itinerary");
+  const ta = useTranslations("Auth");
   const tl = useTranslations("Loading");
   const tloading = useTranslations("LoadingSteps");
   const router = useRouter();
   const prefs = useStore();
+  const { isSynced, loading: authLoading } = useAuth();
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Sync locale to store for backend actions
   useEffect(() => {
@@ -292,6 +297,31 @@ export default function ItineraryPage() {
         onClose={() => setAlert({ ...alert, isOpen: false })}
       />
 
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={async () => {
+          // After auth, save the trip
+          if (!itinerary) return;
+          setIsSaving(true);
+          try {
+            await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
+            router.push(`/saved/${itinerary.id}`);
+          } catch (e) {
+            setAlert({
+              isOpen: true,
+              title: t("errors.saveFailed"),
+              message: t("errors.saveFailedMessage"),
+              type: "error",
+            });
+            setIsSaving(false);
+          }
+        }}
+        title={ta("title")}
+        message={ta("description")}
+        showGuestOption={true}
+      />
+
       <AddActivityModal
         isOpen={addModal.isOpen}
         onClose={() => setAddModal({ ...addModal, isOpen: false })}
@@ -324,12 +354,19 @@ export default function ItineraryPage() {
       <div className="flex justify-center gap-4 pb-8 mt-6">
         <button
           className="btn btn-primary"
-          disabled={isSaving}
+          disabled={isSaving || authLoading}
           onClick={async () => {
             if (!itinerary) return;
+
+            // If user is not synced to our database, show auth modal
+            if (!isSynced) {
+              setShowAuthModal(true);
+              return;
+            }
+
+            // User is logged in, save directly
             setIsSaving(true);
             try {
-              // Persist the current state of the itinerary including edits
               await saveItineraryAction(itinerary.id, itinerary.name, itinerary);
               router.push(`/saved/${itinerary.id}`);
             } catch (e) {

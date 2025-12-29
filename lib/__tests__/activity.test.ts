@@ -27,7 +27,6 @@ const createMockActivity = (id: string, startTime: string, endTime: string, lat 
   startTime,
   endTime,
   note: "Test note",
-  isAlternative: false,
 });
 
 describe("activity utilities", () => {
