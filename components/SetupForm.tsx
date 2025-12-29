@@ -11,15 +11,11 @@ import { DeckSelector } from "./DeckSelector";
 import { getVibeDecksAction, VibeDeck } from "@/lib/db-actions";
 import { useTranslations } from "next-intl";
 import { Coins, Wallet, Gem, Sparkles } from "lucide-react";
-import { useAuth } from "./AuthProvider";
-import AlertModal from "./AlertModal";
 
 export default function SetupForm() {
   const t = useTranslations("SetupForm");
   const router = useRouter();
-  const { credits, loading: authLoading } = useAuth();
   const [showDeckModal, setShowDeckModal] = useState(false);
-  const [showNoCreditsModal, setShowNoCreditsModal] = useState(false);
   const [hasDecks, setHasDecks] = useState(false);
 
   const setupSchema = useMemo(
@@ -70,12 +66,6 @@ export default function SetupForm() {
   });
 
   const onSubmit = (data: SetupFormData) => {
-    // Check if user has credits before proceeding
-    if (!authLoading && credits !== null && credits <= 0) {
-      setShowNoCreditsModal(true);
-      return;
-    }
-
     setCity(data.cityId);
     setDates(data.startDate, data.endDate);
     setBudget(data.budget);
@@ -241,18 +231,6 @@ export default function SetupForm() {
           <div className="modal-backdrop bg-black/50" onClick={() => setShowDeckModal(false)}></div>
         </div>
       )}
-
-      {/* No Credits Alert Modal */}
-      <AlertModal
-        isOpen={showNoCreditsModal}
-        title={t("noCredits.title") || "Out of Credits"}
-        message={
-          t("noCredits.message") ||
-          "You've used all your free credits. Sign up for an account to get more credits and continue planning trips!"
-        }
-        type="warning"
-        onClose={() => setShowNoCreditsModal(false)}
-      />
     </>
   );
 }

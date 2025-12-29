@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "@/i18n/routing";
 import { useParams } from "next/navigation";
 import { useStore } from "@/store/useStore";
@@ -72,6 +72,9 @@ export default function ItineraryPage() {
   const [loadingMessage, setLoadingMessage] = useState(tl("initializing"));
   const [currentStep, setCurrentStep] = useState("init");
 
+  // Track if generation has started to prevent double-calls
+  const hasStartedGeneration = useRef(false);
+
   useEffect(() => {
     // Basic protection to ensure we have a city selected
     if (!prefs.cityId) {
@@ -142,11 +145,12 @@ export default function ItineraryPage() {
       }
     }
 
-    // Only run if we don't have an itinerary yet
-    if (!itinerary) {
+    // Only run if we don't have an itinerary yet AND haven't started generation
+    if (!itinerary && !hasStartedGeneration.current) {
+      hasStartedGeneration.current = true;
       generate();
     }
-  }, [prefs, router, itinerary, t, tloading]); // Added itinerary to deps to prevent re-run if set
+  }, [prefs.cityId, router, itinerary, t, tloading]); // Removed full prefs object to prevent re-triggers
 
   if (!itinerary) {
     return <LoadingScreen message={loadingMessage} step={currentStep} />;
