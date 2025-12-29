@@ -16,6 +16,7 @@ interface ButtonProps extends TouchableOpacityProps {
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   fullWidth?: boolean;
+  textStyle?: TextStyle;
 }
 
 export function Button({
@@ -26,6 +27,7 @@ export function Button({
   fullWidth = false,
   disabled,
   style,
+  textStyle,
   ...props
 }: ButtonProps) {
   const colors = Colors.light; // TODO: Add dark mode support with useColorScheme
@@ -99,7 +101,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={variantStyles.text.color} size={size === "sm" ? "small" : "small"} />
       ) : (
-        <Text style={[styles.text, variantStyles.text, sizeStyles.text]}>{title}</Text>
+        <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>{title}</Text>
       )}
     </TouchableOpacity>
   );

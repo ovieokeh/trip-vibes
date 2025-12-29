@@ -7,7 +7,7 @@ import { Colors } from "../../constants/Colors";
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { signUp } = useAuth();
+  const { signUp, updateUser, isAnonymous, user } = useAuth();
   const colors = Colors.light;
 
   const [email, setEmail] = useState("");
@@ -35,7 +35,17 @@ export default function SignupScreen() {
     setLoading(true);
     setError(null);
 
-    const { error: signUpError } = await signUp(email, password);
+    let signUpError;
+
+    if (user && isAnonymous) {
+      // Upgrade anonymous user
+      const { error } = await updateUser({ email, password });
+      signUpError = error;
+    } else {
+      // Create new user
+      const { error } = await signUp(email, password);
+      signUpError = error;
+    }
 
     if (signUpError) {
       setError(signUpError.message);

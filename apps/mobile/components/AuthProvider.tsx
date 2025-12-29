@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import { supabase } from "../lib/supabase";
-import type { User, Session } from "@supabase/supabase-js";
+import type { User, Session, UserAttributes } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +10,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInAnonymously: () => Promise<{ error: Error | null }>;
+  updateUser: (attributes: UserAttributes) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -20,6 +22,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
+  signInAnonymously: async () => ({ error: null }),
+  updateUser: async () => ({ error: null }),
   signOut: async () => {},
 });
 
@@ -47,6 +51,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.remove();
   }, []);
 
+  const signInAnonymously = async (): Promise<{ error: Error | null }> => {
+    try {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) return { error };
+
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.user);
+        setIsAnonymous(data.user?.is_anonymous ?? true);
+      }
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   // Initialize and listen to auth state changes
   useEffect(() => {
     const initializeAuth = async () => {
@@ -59,6 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(session);
           setUser(session.user);
           setIsAnonymous(session.user.is_anonymous ?? false);
+        } else {
+          // If no session, sign in anonymously
+          await signInAnonymously();
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
@@ -111,11 +134,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUser = async (attributes: UserAttributes): Promise<{ error: Error | null }> => {
+    try {
+      const { error } = await supabase.auth.updateUser(attributes);
+      if (error) {
+        return { error };
+      }
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setIsAnonymous(true);
+    // Optionally re-sign in anonymously after sign out?
+    // For now, leave as is, or trigger a re-init.
+    await signInAnonymously();
   };
 
   return (
@@ -127,6 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         signIn,
         signUp,
+        signInAnonymously,
+        updateUser,
         signOut,
       }}
     >

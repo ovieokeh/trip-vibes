@@ -28,10 +28,33 @@ export default function Home() {
         </View>
 
         <View style={styles.content}>
+          <View style={styles.mainAction}>
+            <Button
+              title="Create New Trip"
+              onPress={() => router.push("/vibes")}
+              fullWidth
+              style={styles.largeButton}
+              textStyle={styles.largeButtonText}
+            />
+          </View>
+
           {user && !isAnonymous ? (
             <View style={styles.userSection}>
-              <Text style={[styles.userEmail, { color: colors.foreground }]}>Logged in as: {user.email}</Text>
-              <Button title="Sign Out" variant="outline" onPress={signOut} fullWidth style={styles.button} />
+              <Text style={[styles.welcome, { color: colors.foreground }]}>Welcome back!</Text>
+              <Button
+                title="Your Saved Trips"
+                variant="secondary"
+                onPress={() => router.push("/saved-trips")}
+                fullWidth
+                style={styles.button}
+              />
+              <Button
+                title="Account"
+                variant="outline"
+                onPress={() => router.push("/account")}
+                fullWidth
+                style={styles.button}
+              />
             </View>
           ) : (
             <View style={styles.authSection}>
@@ -66,7 +89,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 60,
+    marginBottom: 40,
   },
   title: {
     fontSize: 36,
@@ -78,6 +101,21 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    justifyContent: "space-between",
+    paddingBottom: 20,
+  },
+  mainAction: {
+    flex: 1,
+    justifyContent: "center",
+    marginBottom: 40,
+  },
+  largeButton: {
+    paddingVertical: 16,
+    borderRadius: 16,
+  },
+  largeButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
   },
   userSection: {
     alignItems: "center",
@@ -90,10 +128,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   authText: {
-    fontSize: 16,
+    fontSize: 14,
     textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  welcome: {
+    fontSize: 20,
+    fontWeight: "bold",
     marginBottom: 24,
-    lineHeight: 24,
   },
   button: {
     marginBottom: 12,

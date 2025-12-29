@@ -6,12 +6,27 @@ interface ScreenProps extends ViewProps {
   scrollable?: boolean;
   padded?: boolean;
   safeArea?: boolean;
+  centered?: boolean;
 }
 
-export function Screen({ children, scrollable = false, padded = true, safeArea = true, style, ...props }: ScreenProps) {
+export function Screen({
+  children,
+  scrollable = false,
+  padded = true,
+  safeArea = true,
+  centered = false,
+  style,
+  ...props
+}: ScreenProps) {
   const colors = Colors.light; // TODO: Add dark mode support
 
-  const containerStyle = [styles.container, { backgroundColor: colors.background }, padded && styles.padded, style];
+  const containerStyle = [
+    styles.container,
+    { backgroundColor: colors.background },
+    padded && styles.padded,
+    centered && styles.centered,
+    style,
+  ];
   const wrapperStyle = { flex: 1 as const, backgroundColor: colors.background };
 
   if (scrollable && safeArea) {
@@ -65,5 +80,9 @@ const styles = StyleSheet.create({
   },
   padded: {
     paddingHorizontal: 20,
+  },
+  centered: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
