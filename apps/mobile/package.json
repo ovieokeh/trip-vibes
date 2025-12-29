@@ -1,0 +1,19 @@
+{
+  "name": "@trip-vibes/mobile",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@trip-vibes/shared": "workspace:*",
+    "expo": "~52.0.35",
+    "expo-status-bar": "~2.0.1",
+    "react": "18.3.1",
+    "react-native": "0.76.7"
+  },
+  "private": true
+}

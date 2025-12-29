@@ -1,3 +1,5 @@
+import { VibeProfile } from "./vibes/types";
+
 export interface City {
   id: string;
   name: string;
@@ -82,8 +84,6 @@ export interface Itinerary {
   startDate?: string;
   endDate?: string;
 }
-
-import { VibeProfile } from "./vibes/types";
 
 export interface UserPreferences {
   cityId: string;
