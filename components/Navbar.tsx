@@ -23,6 +23,7 @@ export default function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Fetch saved count on client
   useEffect(() => {
@@ -210,41 +211,54 @@ export default function Navbar() {
         <div className="flex md:hidden items-center gap-1">
           <CreditsDisplay />
           <div className="dropdown dropdown-end">
-            <label tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm">
-              <Menu className="w-5 h-5" />
-            </label>
-            <ul
-              tabIndex={0}
-              className="dropdown-content menu p-4 shadow-2xl bg-base-100 rounded-2xl w-64 mt-4 border border-base-200 z-[102] gap-4"
+            <button
+              type="button"
+              className="btn btn-ghost btn-circle btn-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              }}
             >
-              <li className="menu-title text-xs opacity-50 uppercase tracking-widest px-2">{t("menu") || "Menu"}</li>
+              <Menu className="w-5 h-5" />
+            </button>
+            {isMobileMenuOpen && (
+              <>
+                {/* Backdrop to close menu */}
+                <div className="fixed inset-0 z-[101]" onClick={() => setIsMobileMenuOpen(false)} />
+                <ul className="dropdown-content menu p-4 shadow-2xl bg-base-100 rounded-2xl w-64 mt-4 border border-base-200 z-[102] gap-4">
+                  <li className="menu-title text-xs opacity-50 uppercase tracking-widest px-2">
+                    {t("menu") || "Menu"}
+                  </li>
 
-              <li className="p-0">
-                <div className="flex flex-col gap-3 p-0 bg-transparent hover:bg-transparent active:bg-transparent">
-                  <div className="flex items-center justify-between w-full px-2">
-                    <span className="text-sm font-medium">{t("language") || "Language"}</span>
-                    <LanguageSwitcher />
-                  </div>
+                  <li className="p-0">
+                    <div className="flex flex-col gap-3 p-0 bg-transparent hover:bg-transparent active:bg-transparent">
+                      <div className="flex items-center justify-between w-full px-2">
+                        <span className="text-sm font-medium">{t("language") || "Language"}</span>
+                        <LanguageSwitcher />
+                      </div>
 
-                  <Link
-                    href="/saved"
-                    className="flex items-center justify-between w-full py-2 px-3 bg-base-200/50 rounded-xl hover:bg-base-200 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4" />
-                      <span className="text-sm">{t("saved")}</span>
+                      <Link
+                        href="/saved"
+                        className="flex items-center justify-between w-full py-2 px-3 bg-base-200/50 rounded-xl hover:bg-base-200 transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Heart className="w-4 h-4" />
+                          <span className="text-sm">{t("saved")}</span>
+                        </div>
+                        {savedCount > 0 && <span className="badge badge-sm badge-primary font-bold">{savedCount}</span>}
+                      </Link>
+
+                      <div className="divider my-0 opacity-50"></div>
+
+                      <div className="px-2" onClick={() => setIsMobileMenuOpen(false)}>
+                        <AuthSection isMobile={true} />
+                      </div>
                     </div>
-                    {savedCount > 0 && <span className="badge badge-sm badge-primary font-bold">{savedCount}</span>}
-                  </Link>
-
-                  <div className="divider my-0 opacity-50"></div>
-
-                  <div className="px-2">
-                    <AuthSection isMobile={true} />
-                  </div>
-                </div>
-              </li>
-            </ul>
+                  </li>
+                </ul>
+              </>
+            )}
           </div>
         </div>
       </div>
