@@ -153,7 +153,8 @@
     "downloadPDF": "PDF herunterladen",
     "generating": "Generiere...",
     "syncCalendar": "Mit Kalender synchronisieren",
-    "exporting": "Exportiere..."
+    "exporting": "Exportiere...",
+    "freshResults": "Neue Ergebnisse"
   },
   "DatePicker": {
     "pickDateRange": "Wähle einen Zeitraum aus",
@@ -220,5 +221,29 @@
     },
     "noCredits": "Du hast deine kostenlose Reise aufgebraucht!",
     "noCreditsMessage": "Registriere dich, um 5 weitere Reisen zu erhalten."
+  },
+  "Errors": {
+    "notFound": {
+      "title": "Seite nicht gefunden",
+      "description": "Die von Ihnen gesuchte Seite existiert nicht oder wurde verschoben.",
+      "backHome": "Zurück zur Startseite"
+    },
+    "runtime": {
+      "title": "Etwas ist schief gelaufen",
+      "description": "Ein unerwarteter Fehler ist aufgetreten. Wir wurden benachrichtigt und untersuchen das Problem.",
+      "tryAgain": "Erneut versuchen"
+    }
+  },
+  "Legal": {
+    "privacy": {
+      "title": "Datenschutzbestimmungen",
+      "lastUpdated": "Zuletzt aktualisiert: 29. Dezember 2024",
+      "content": "Ihr Datenschutz ist uns wichtig. Diese Richtlinie erklärt, wie wir mit Ihren Daten umgehen..."
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "lastUpdated": "Zuletzt aktualisiert: 29. Dezember 2024",
+      "content": "Durch die Nutzung von TripVibes erklären Sie sich mit den folgenden Bedingungen einverstanden..."
+    }
   }
 }

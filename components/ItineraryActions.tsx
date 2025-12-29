@@ -10,9 +10,10 @@ import { useTranslations, useLocale } from "next-intl";
 interface ItineraryActionsProps {
   itinerary: Itinerary;
   cityName: string;
+  onRefresh?: () => void;
 }
 
-export default function ItineraryActions({ itinerary, cityName }: ItineraryActionsProps) {
+export default function ItineraryActions({ itinerary, cityName, onRefresh }: ItineraryActionsProps) {
   const t = useTranslations("ItineraryActions");
   const tp = useTranslations("PDF");
   const locale = useLocale();
@@ -49,16 +50,29 @@ export default function ItineraryActions({ itinerary, cityName }: ItineraryActio
   };
 
   return (
-    <div className="flex gap-3 flex-wrap justify-center">
-      <button onClick={handleDownloadPDF} disabled={isExportingPDF} className="btn btn-outline btn-sm gap-2">
-        <FileDown className="w-4 h-4" />
-        {isExportingPDF ? t("generating") : t("downloadPDF")}
-      </button>
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-3 flex-wrap justify-center">
+        <button onClick={handleDownloadPDF} disabled={isExportingPDF} className="btn btn-outline btn-sm gap-2">
+          <FileDown className="w-4 h-4" />
+          {isExportingPDF ? t("generating") : t("downloadPDF")}
+        </button>
 
-      <button onClick={handleSyncCalendar} disabled={isExportingCalendar} className="btn btn-outline btn-sm gap-2">
-        <Calendar className="w-4 h-4" />
-        {isExportingCalendar ? t("exporting") : t("syncCalendar")}
-      </button>
+        <button onClick={handleSyncCalendar} disabled={isExportingCalendar} className="btn btn-outline btn-sm gap-2">
+          <Calendar className="w-4 h-4" />
+          {isExportingCalendar ? t("exporting") : t("syncCalendar")}
+        </button>
+      </div>
+
+      {onRefresh && (
+        <div className="flex justify-center">
+          <button
+            onClick={onRefresh}
+            className="btn btn-link btn-xs text-base-content/50 hover:text-primary no-underline"
+          >
+            {t("freshResults")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -153,7 +153,8 @@
     "downloadPDF": "Descargar PDF",
     "generating": "Generando...",
     "syncCalendar": "Sincronizar calendario",
-    "exporting": "Exportando..."
+    "exporting": "Exportando...",
+    "freshResults": "Nuevos Resultados"
   },
   "DatePicker": {
     "pickDateRange": "Elige un rango de fechas",
@@ -220,5 +221,29 @@
     },
     "noCredits": "¡Has agotado tu viaje gratis!",
     "noCreditsMessage": "Regístrate para obtener 5 viajes más."
+  },
+  "Errors": {
+    "notFound": {
+      "title": "Página no encontrada",
+      "description": "La página que buscas no existe o ha sido movida.",
+      "backHome": "Volver al Inicio"
+    },
+    "runtime": {
+      "title": "Algo salió mal",
+      "description": "Ha ocurrido un error inesperado. Hemos sido notificados y estamos investigando.",
+      "tryAgain": "Intentar de Nuevo"
+    }
+  },
+  "Legal": {
+    "privacy": {
+      "title": "Política de Privacidad",
+      "lastUpdated": "Última actualización: 29 de diciembre de 2024",
+      "content": "Tu privacidad es importante para nosotros. Esta política explica cómo manejamos tus datos..."
+    },
+    "terms": {
+      "title": "Términos de Servicio",
+      "lastUpdated": "Última actualización: 29 de diciembre de 2024",
+      "content": "Al usar TripVibes, aceptas los siguientes términos..."
+    }
   }
 }

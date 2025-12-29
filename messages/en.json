@@ -155,7 +155,8 @@
     "downloadPDF": "Download PDF",
     "generating": "Generating...",
     "syncCalendar": "Sync to Calendar",
-    "exporting": "Exporting..."
+    "exporting": "Exporting...",
+    "freshResults": "Get Fresh Results"
   },
   "DatePicker": {
     "pickDateRange": "Pick a date range",
@@ -222,5 +223,29 @@
     },
     "noCredits": "You've used your free trip!",
     "noCreditsMessage": "Sign up to get 5 more trips."
+  },
+  "Errors": {
+    "notFound": {
+      "title": "Page Not Found",
+      "description": "The page you are looking for doesn't exist or has been moved.",
+      "backHome": "Back to Home"
+    },
+    "runtime": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. We've been notified and are looking into it.",
+      "tryAgain": "Try Again"
+    }
+  },
+  "Legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: December 29, 2024",
+      "content": "Your privacy is important to us. This policy explains how we handle your data..."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "lastUpdated": "Last updated: December 29, 2024",
+      "content": "By using TripVibes, you agree to the following terms..."
+    }
   }
 }

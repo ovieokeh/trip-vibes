@@ -349,7 +349,14 @@ export default function ItineraryPage() {
 
       <div className="divider my-8">{t("endOfTrip")}</div>
 
-      <ItineraryActions itinerary={itinerary} cityName={prefs.cityId} />
+      <ItineraryActions
+        itinerary={itinerary}
+        cityName={prefs.cityId}
+        onRefresh={() => {
+          setItinerary(null);
+          prefs.setForceRefresh(true);
+        }}
+      />
 
       <div className="flex justify-center gap-4 pb-8 mt-6">
         <button

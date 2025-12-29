@@ -153,7 +153,8 @@
     "downloadPDF": "Download PDF",
     "generating": "Genereren...",
     "syncCalendar": "Synchroniseer met agenda",
-    "exporting": "Exporteren..."
+    "exporting": "Exporteren...",
+    "freshResults": "Nieuwe resultaten"
   },
   "DatePicker": {
     "pickDateRange": "Kies een datumbereik",
@@ -220,5 +221,29 @@
     },
     "noCredits": "Je hebt je gratis reis verbruikt!",
     "noCreditsMessage": "Meld je aan om 5 extra reizen te krijgen."
+  },
+  "Errors": {
+    "notFound": {
+      "title": "Pagina niet gevonden",
+      "description": "De pagina die je zoekt bestaat niet of is verplaatst.",
+      "backHome": "Terug naar Home"
+    },
+    "runtime": {
+      "title": "Er is iets misgegaan",
+      "description": "Er is een onverwachte fout opgetreden. We zijn hiervan op de hoogte gebracht en kijken er naar.",
+      "tryAgain": "Probeer het opnieuw"
+    }
+  },
+  "Legal": {
+    "privacy": {
+      "title": "Privacybeleid",
+      "lastUpdated": "Laatst bijgewerkt: 29 december 2024",
+      "content": "Jouw privacy is belangrijk voor ons. Dit beleid legt uit hoe we met jouw gegevens omgaan..."
+    },
+    "terms": {
+      "title": "Servicevoorwaarden",
+      "lastUpdated": "Laatst bijgewerkt: 29 december 2024",
+      "content": "Door TripVibes te gebruiken, ga je akkoord met de volgende voorwaarden..."
+    }
   }
 }
