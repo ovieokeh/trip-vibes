@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
               height: "100%",
               objectFit: "cover",
               opacity: 0.6,
+              filter: "blur(10px) brightness(0.5)",
             }}
           />
         )}
@@ -127,8 +128,7 @@ export async function GET(req: NextRequest) {
       </div>,
       {
         width: 1200,
-        height: 630,
-        // Make sure to cache this response heavily
+        height: 400,
         headers: {
           "Cache-Control": "public, max-age=31536000, immutable",
         },
