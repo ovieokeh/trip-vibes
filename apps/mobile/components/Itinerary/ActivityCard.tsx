@@ -1,8 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import { TripActivity } from "@trip-vibes/shared";
-import { Colors } from "../../constants/Colors";
-import { Clock, MapPin } from "lucide-react-native";
+import { useTheme } from "../ThemeProvider";
+import { Clock } from "lucide-react-native";
 
 interface ActivityCardProps {
   activity: TripActivity;
@@ -10,35 +10,33 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity, onPress }: ActivityCardProps) {
-  const colors = Colors.light;
+  const { colors } = useTheme();
 
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.8}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <View style={styles.timeContainer}>
-        <Text style={[styles.time, { color: colors.primary }]}>{activity.startTime}</Text>
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} className="flex-row mb-5 px-5 bg-background">
+      <View className="w-[60px] items-center mr-2.5">
+        <Text className="font-bold text-sm mb-2 text-primary">{activity.startTime}</Text>
+        <View className="w-0.5 flex-1 rounded-sm bg-border" />
       </View>
 
-      <View style={[styles.card, { backgroundColor: "#fff", shadowColor: "#000" }]}>
-        {activity.vibe.imageUrl && <Image source={{ uri: activity.vibe.imageUrl }} style={styles.image} />}
+      <View className="flex-1 rounded-2xl overflow-hidden shadow-md bg-card border border-border">
+        {activity.vibe.imageUrl && (
+          <Image source={{ uri: activity.vibe.imageUrl }} className="w-full h-[120px] bg-muted" />
+        )}
 
-        <View style={styles.content}>
-          <Text style={styles.title} numberOfLines={1}>
+        <View className="p-3">
+          <Text className="text-base font-bold mb-1 text-foreground" numberOfLines={1}>
             {activity.vibe.title}
           </Text>
-          <Text style={styles.category}>{activity.vibe.category}</Text>
-          <Text style={styles.note} numberOfLines={2}>
+          <Text className="text-[12px] text-muted-foreground mb-2 capitalize">{activity.vibe.category}</Text>
+          <Text className="text-sm text-foreground mb-3" numberOfLines={2}>
             {activity.note}
           </Text>
 
-          <View style={styles.footer}>
-            <View style={styles.meta}>
+          <View className="flex-row items-center">
+            <View className="flex-row items-center mr-3">
               <Clock size={14} color={colors.mutedForeground} />
-              <Text style={[styles.metaText, { color: colors.mutedForeground }]}>
+              <Text className="text-[12px] text-muted-foreground ml-1">
                 {activity.startTime} - {activity.endTime}
               </Text>
             </View>
@@ -48,72 +46,3 @@ export function ActivityCard({ activity, onPress }: ActivityCardProps) {
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    marginBottom: 20,
-    paddingHorizontal: 20,
-  },
-  timeContainer: {
-    width: 60,
-    alignItems: "center",
-    marginRight: 10,
-  },
-  time: {
-    fontWeight: "bold",
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  line: {
-    width: 2,
-    flex: 1,
-    borderRadius: 1,
-  },
-  card: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: "hidden",
-    elevation: 3,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  image: {
-    width: "100%",
-    height: 120,
-    backgroundColor: "#eee",
-  },
-  content: {
-    padding: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  category: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 8,
-    textTransform: "capitalize",
-  },
-  note: {
-    fontSize: 14,
-    color: "#444",
-    marginBottom: 12,
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  meta: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  metaText: {
-    fontSize: 12,
-    marginLeft: 4,
-  },
-});

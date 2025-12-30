@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { Vibe, DeckEngine, ArchetypeDefinition } from "@trip-vibes/shared";
 import { VibeStack } from "../components/VibeStack";
@@ -14,7 +14,7 @@ const REQUIRED_LIKES = 6;
 
 export default function VibesScreen() {
   const router = useRouter();
-  const { colors, theme } = useTheme();
+  const { colors } = useTheme();
   const { city, likeVibe, dislikeVibe, likedVibes, dislikedVibes, vibeProfile } = useCreationFlow();
 
   const [currentVibe, setCurrentVibe] = useState<Vibe | null>(null);
@@ -90,18 +90,21 @@ export default function VibesScreen() {
   if (complete) {
     return (
       <Screen centered padded>
-        <LinearGradient colors={[colors.primary + "20", colors.accent + "20"]} style={styles.completeBg}>
-          <Sparkles size={64} color={colors.primary} style={{ marginBottom: 24 }} />
-          <Text style={[styles.completeTitle, { color: colors.foreground }]}>All Set! 🎉</Text>
-          <Text style={[styles.completeSubtitle, { color: colors.mutedForeground }]}>
+        <LinearGradient
+          colors={[colors.primary + "20", colors.accent + "20"]}
+          className="w-full items-center py-12 px-6 rounded-3xl mb-8"
+        >
+          <Sparkles size={64} color={colors.primary} className="mb-6" />
+          <Text className="text-[32px] font-bold mb-2 text-foreground text-center">All Set! 🎉</Text>
+          <Text className="text-[18px] mb-2 text-muted-foreground text-center">
             You liked {likedVibes.length} vibes
           </Text>
-          <Text style={[styles.completeText, { color: colors.mutedForeground }]}>
+          <Text className="text-[15px] text-center text-muted-foreground">
             Ready to create your personalized itinerary?
           </Text>
         </LinearGradient>
 
-        <View style={styles.completeActions}>
+        <View className="w-full px-5">
           <Button
             title="Generate Itinerary"
             onPress={handleGenerate}
@@ -114,7 +117,7 @@ export default function VibesScreen() {
             variant="ghost"
             onPress={() => router.replace("/")}
             leftIcon={<RotateCcw size={18} color={colors.primary} />}
-            style={{ marginTop: 12 }}
+            className="mt-3"
           />
         </View>
       </Screen>
@@ -124,14 +127,13 @@ export default function VibesScreen() {
   if (!currentVibe) {
     return (
       <Screen centered>
-        <Text style={{ color: colors.mutedForeground }}>Loading Vibes...</Text>
+        <Text className="text-muted-foreground">Loading Vibes...</Text>
       </Screen>
     );
   }
 
   return (
     <>
-      {/* Dynamic header right showing progress */}
       <Stack.Screen
         options={{
           headerRight: () => (
@@ -140,22 +142,19 @@ export default function VibesScreen() {
         }}
       />
 
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <GestureHandlerRootView className="flex-1">
+        <View className="flex-1 bg-background">
           {/* Progress Bar */}
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressTrack, { backgroundColor: colors.muted }]}>
+          <View className="px-5 pt-2 pb-4">
+            <View className="h-1.5 rounded-full overflow-hidden bg-muted">
               <View
-                style={[
-                  styles.progressFill,
-                  {
-                    backgroundColor: colors.primary,
-                    width: `${(likedVibes.length / REQUIRED_LIKES) * 100}%`,
-                  },
-                ]}
+                className="h-full rounded-full bg-primary"
+                style={{
+                  width: `${(likedVibes.length / REQUIRED_LIKES) * 100}%`,
+                }}
               />
             </View>
-            <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>
+            <Text className="text-[12px] mt-2 text-center text-muted-foreground">
               {likedVibes.length < REQUIRED_LIKES
                 ? `${REQUIRED_LIKES - likedVibes.length} more to go`
                 : "Ready to generate!"}
@@ -163,7 +162,7 @@ export default function VibesScreen() {
           </View>
 
           {/* Card Stack */}
-          <View style={styles.cardContainer}>
+          <View className="flex-1 px-4">
             <VibeStack
               currentVibe={currentVibe}
               nextVibe={nextVibe}
@@ -173,19 +172,19 @@ export default function VibesScreen() {
           </View>
 
           {/* Action Hints */}
-          <View style={styles.actionHints}>
-            <View style={styles.hintItem}>
-              <View style={[styles.hintCircle, { backgroundColor: colors.error + "20" }]}>
+          <View className="flex-row justify-around px-10 pb-10 pt-4">
+            <View className="items-center gap-2">
+              <View className="w-12 h-12 rounded-full items-center justify-center bg-error/20">
                 <ThumbsDown size={20} color={colors.error} />
               </View>
-              <Text style={[styles.hintText, { color: colors.mutedForeground }]}>Swipe Left</Text>
+              <Text className="text-[12px] font-medium text-muted-foreground">Swipe Left</Text>
             </View>
 
-            <View style={styles.hintItem}>
-              <View style={[styles.hintCircle, { backgroundColor: colors.success + "20" }]}>
+            <View className="items-center gap-2">
+              <View className="w-12 h-12 rounded-full items-center justify-center bg-success/20">
                 <ThumbsUp size={20} color={colors.success} />
               </View>
-              <Text style={[styles.hintText, { color: colors.mutedForeground }]}>Swipe Right</Text>
+              <Text className="text-[12px] font-medium text-muted-foreground">Swipe Right</Text>
             </View>
           </View>
         </View>
@@ -193,79 +192,3 @@ export default function VibesScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  progressContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  progressLabel: {
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: "center",
-  },
-  cardContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  actionHints: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 40,
-    paddingBottom: 40,
-    paddingTop: 16,
-  },
-  hintItem: {
-    alignItems: "center",
-    gap: 8,
-  },
-  hintCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  hintText: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  completeBg: {
-    width: "100%",
-    alignItems: "center",
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-    marginBottom: 32,
-  },
-  completeTitle: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  completeSubtitle: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  completeText: {
-    fontSize: 15,
-    textAlign: "center",
-  },
-  completeActions: {
-    width: "100%",
-    paddingHorizontal: 20,
-  },
-});

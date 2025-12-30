@@ -1,6 +1,5 @@
 import React from "react";
-import { TouchableOpacity, StyleSheet, ViewStyle, TouchableOpacityProps } from "react-native";
-import { useTheme } from "../ThemeProvider";
+import { TouchableOpacity, TouchableOpacityProps } from "react-native";
 
 type IconButtonVariant = "default" | "primary" | "ghost" | "outline";
 type IconButtonSize = "sm" | "md" | "lg";
@@ -10,6 +9,7 @@ interface IconButtonProps extends TouchableOpacityProps {
   variant?: IconButtonVariant;
   size?: IconButtonSize;
   rounded?: boolean;
+  className?: string;
 }
 
 export function IconButton({
@@ -18,70 +18,41 @@ export function IconButton({
   size = "md",
   rounded = true,
   disabled,
+  className = "",
   style,
   ...props
 }: IconButtonProps) {
-  const { colors, theme } = useTheme();
-
-  const getVariantStyles = (): ViewStyle => {
+  const getVariantClasses = () => {
     switch (variant) {
       case "primary":
-        return {
-          backgroundColor: colors.primary,
-        };
+        return "bg-primary";
       case "ghost":
-        return {
-          backgroundColor: "transparent",
-        };
+        return "bg-transparent";
       case "outline":
-        return {
-          backgroundColor: "transparent",
-          borderWidth: 1,
-          borderColor: colors.border,
-        };
+        return "bg-transparent border border-border";
       default:
-        return {
-          backgroundColor: colors.muted,
-        };
+        return "bg-muted";
     }
   };
 
-  const getSizeStyles = (): ViewStyle => {
+  const getSizeClasses = () => {
     switch (size) {
       case "sm":
-        return { width: 32, height: 32 };
+        return "w-8 h-8";
       case "lg":
-        return { width: 48, height: 48 };
+        return "w-12 h-12";
       default:
-        return { width: 40, height: 40 };
+        return "w-10 h-10";
     }
   };
 
+  const baseClasses = `items-center justify-center ${getVariantClasses()} ${getSizeClasses()} ${
+    rounded ? "rounded-full" : "rounded-md"
+  } ${disabled ? "opacity-50" : ""} ${className}`;
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.button,
-        getVariantStyles(),
-        getSizeStyles(),
-        { borderRadius: rounded ? theme.radius.full : theme.radius.md },
-        disabled && styles.disabled,
-        style,
-      ]}
-      disabled={disabled}
-      activeOpacity={0.7}
-      {...props}
-    >
+    <TouchableOpacity className={baseClasses} style={style} disabled={disabled} activeOpacity={0.7} {...props}>
       {icon}
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-});

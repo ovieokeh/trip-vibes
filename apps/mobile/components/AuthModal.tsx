@@ -1,8 +1,8 @@
 import React from "react";
-import { Modal, View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Modal, View, Text, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "./ui";
-import { Colors } from "../constants/Colors";
+import { useTheme } from "./ThemeProvider";
 import { X } from "lucide-react-native";
 
 interface AuthModalProps {
@@ -13,7 +13,7 @@ interface AuthModalProps {
 
 export function AuthModal({ visible, onClose, message = "Sign in to continue" }: AuthModalProps) {
   const router = useRouter();
-  const colors = Colors.light;
+  const { colors } = useTheme();
 
   const navigateTo = (route: "/(auth)/login" | "/(auth)/signup") => {
     onClose();
@@ -22,28 +22,28 @@ export function AuthModal({ visible, onClose, message = "Sign in to continue" }:
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={[styles.content, { backgroundColor: colors.background }]}>
+      <View className="flex-1 bg-black/50 justify-center items-center p-5">
+        <View className="w-full max-w-[340px] rounded-2xl p-6 shadow-lg bg-background">
           <TouchableOpacity
-            style={styles.closeButton}
+            className="absolute right-4 top-4 z-10"
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <X size={24} color={colors.foreground} />
           </TouchableOpacity>
 
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.foreground }]}>Trip Vibes</Text>
-            <Text style={[styles.message, { color: colors.mutedForeground }]}>{message}</Text>
+          <View className="items-center mb-6 mt-2">
+            <Text className="text-2xl font-bold mb-2 text-foreground">Trip Vibes</Text>
+            <Text className="text-base text-center text-muted-foreground">{message}</Text>
           </View>
 
-          <View style={styles.actions}>
-            <Button title="Log In" onPress={() => navigateTo("/(auth)/login")} style={styles.button} />
+          <View className="gap-3">
+            <Button title="Log In" onPress={() => navigateTo("/(auth)/login")} className="w-full" />
             <Button
               title="Create Account"
               onPress={() => navigateTo("/(auth)/signup")}
               variant="outline"
-              style={styles.button}
+              className="w-full"
             />
           </View>
         </View>
@@ -51,53 +51,3 @@ export function AuthModal({ visible, onClose, message = "Sign in to continue" }:
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  content: {
-    width: "100%",
-    maxWidth: 340,
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  closeButton: {
-    position: "absolute",
-    right: 16,
-    top: 16,
-    zIndex: 1,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 24,
-    marginTop: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  message: {
-    fontSize: 16,
-    textAlign: "center",
-  },
-  actions: {
-    gap: 12,
-  },
-  button: {
-    width: "100%",
-  },
-});

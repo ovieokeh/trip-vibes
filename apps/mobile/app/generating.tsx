@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Animated } from "react-native";
+import { View, Text, ActivityIndicator, Animated } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen, Button } from "../components/ui";
 import { useTheme } from "../components/ThemeProvider";
@@ -22,7 +22,7 @@ const STEP_MAPPING: Record<string, string> = {
 
 export default function GeneratingScreen() {
   const router = useRouter();
-  const { colors, theme } = useTheme();
+  const { colors } = useTheme();
   const { city, likedVibes, startDate, endDate, resetFlow } = useCreationFlow();
 
   const [currentStep, setCurrentStep] = useState("Initializing...");
@@ -106,20 +106,20 @@ export default function GeneratingScreen() {
   if (error) {
     return (
       <Screen centered padded>
-        <View style={styles.errorContainer}>
-          <View style={[styles.errorIconBg, { backgroundColor: colors.error + "15" }]}>
+        <View className="items-center w-full px-5">
+          <View className="w-24 h-24 rounded-full items-center justify-center mb-6 bg-error/15">
             <AlertCircle size={48} color={colors.error} />
           </View>
-          <Text style={[styles.errorTitle, { color: colors.foreground }]}>Oops! Something went wrong</Text>
-          <Text style={[styles.errorText, { color: colors.mutedForeground }]}>{error}</Text>
-          <View style={styles.errorActions}>
+          <Text className="text-[22px] font-bold mb-3 text-center text-foreground">Oops! Something went wrong</Text>
+          <Text className="text-[15px] text-center leading-[22px] mb-8 text-muted-foreground">{error}</Text>
+          <View className="w-full">
             <Button
               title="Try Again"
               onPress={handleRetry}
               leftIcon={<RefreshCw size={18} color={colors.primaryForeground} />}
               fullWidth
             />
-            <Button title="Go Home" variant="ghost" onPress={handleGoHome} style={{ marginTop: 12 }} />
+            <Button title="Go Home" variant="ghost" onPress={handleGoHome} className="mt-3" />
           </View>
         </View>
       </Screen>
@@ -128,31 +128,31 @@ export default function GeneratingScreen() {
 
   return (
     <Screen centered padded>
-      <View style={styles.container}>
+      <View className="items-center justify-center w-full">
         {/* Animated Icon */}
-        <Animated.View style={[styles.iconContainer, { transform: [{ scale: pulseAnim }] }]}>
+        <Animated.View className="mb-8" style={{ transform: [{ scale: pulseAnim }] }}>
           <LinearGradient
             colors={[colors.primary, colors.accent]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.iconGradient}
+            className="w-[88px] h-[88px] rounded-full items-center justify-center"
           >
             <Sparkles size={40} color="#fff" />
           </LinearGradient>
         </Animated.View>
 
         {/* Loading Indicator */}
-        <ActivityIndicator size="small" color={colors.primary} style={styles.spinner} />
+        <ActivityIndicator size="small" color={colors.primary} className="mb-6" />
 
         {/* Current Step */}
-        <Text style={[styles.step, { color: colors.foreground }]}>{currentStep}</Text>
+        <Text className="text-[22px] font-bold mb-2 text-center text-foreground">{currentStep}</Text>
 
         {/* Subtitle */}
-        <Text style={[styles.subtext, { color: colors.mutedForeground }]}>Building your perfect trip...</Text>
+        <Text className="text-[15px] text-center mb-6 text-muted-foreground">Building your perfect trip...</Text>
 
         {/* City Info */}
-        <View style={[styles.cityBadge, { backgroundColor: colors.muted }]}>
-          <Text style={[styles.cityText, { color: colors.mutedForeground }]}>
+        <View className="px-4 py-2 rounded-full bg-muted">
+          <Text className="text-sm font-medium text-muted-foreground">
             {city?.name ? city.name : "Your destination"}
           </Text>
         </View>
@@ -160,72 +160,3 @@ export default function GeneratingScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-  },
-  iconContainer: {
-    marginBottom: 32,
-  },
-  iconGradient: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  spinner: {
-    marginBottom: 24,
-  },
-  step: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  subtext: {
-    fontSize: 15,
-    textAlign: "center",
-    marginBottom: 24,
-  },
-  cityBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  cityText: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  errorContainer: {
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 20,
-  },
-  errorIconBg: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
-  },
-  errorTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  errorText: {
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-  errorActions: {
-    width: "100%",
-  },
-});

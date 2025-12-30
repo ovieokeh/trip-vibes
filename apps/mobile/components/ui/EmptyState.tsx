@@ -1,8 +1,7 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Colors } from "../../constants/Colors";
+import { View, Text } from "react-native";
 import { Button } from "./Button";
-import { MapPinOff } from "lucide-react-native"; // Assuming lucide or similar
+import { MapPinOff } from "lucide-react-native";
 
 interface EmptyStateProps {
   title?: string;
@@ -10,6 +9,7 @@ interface EmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   icon?: React.ReactNode;
+  className?: string;
 }
 
 export function EmptyState({
@@ -18,47 +18,18 @@ export function EmptyState({
   actionLabel,
   onAction,
   icon,
+  className = "",
 }: EmptyStateProps) {
-  const colors = Colors.light;
-
   return (
-    <View style={styles.container}>
-      <View style={[styles.iconContainer, { backgroundColor: colors.border }]}>
-        {icon || <MapPinOff size={32} color={colors.mutedForeground} />}
+    <View className={`flex-1 items-center justify-center p-8 ${className}`}>
+      <View className="w-16 h-16 rounded-full bg-border items-center justify-center mb-5">
+        {icon || <MapPinOff size={32} className="text-muted-foreground" />}
       </View>
 
-      <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-      <Text style={[styles.description, { color: colors.mutedForeground }]}>{description}</Text>
+      <Text className="text-xl font-bold text-foreground text-center mb-2">{title}</Text>
+      <Text className="text-base text-muted-foreground text-center leading-6">{description}</Text>
 
-      {actionLabel && onAction && <Button title={actionLabel} onPress={onAction} style={{ marginTop: 24 }} />}
+      {actionLabel && onAction && <Button title={actionLabel} onPress={onAction} className="mt-6" />}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 32,
-  },
-  iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 24,
-  },
-});

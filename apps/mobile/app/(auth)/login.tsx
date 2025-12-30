@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen, Input, Button } from "../../components/ui";
 import { useAuth } from "../../components/AuthProvider";
@@ -10,7 +10,7 @@ import { Sparkles } from "lucide-react-native";
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
-  const { colors, theme } = useTheme();
+  const { colors } = useTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,30 +38,27 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1, backgroundColor: colors.background }}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1 bg-background">
       <Screen scrollable padded>
-        <View style={styles.container}>
+        <View className="flex-1 justify-center py-10">
           {/* Header with Icon */}
-          <View style={styles.header}>
+          <View className="items-center mb-10">
             <LinearGradient
               colors={[colors.primary, colors.accent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.iconGradient}
+              className="w-16 h-16 rounded-full items-center justify-center mb-5"
             >
               <Sparkles size={28} color="#fff" />
             </LinearGradient>
-            <Text style={[styles.title, { color: colors.foreground }]}>Welcome Back</Text>
-            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            <Text className="text-[28px] font-bold mb-2 text-foreground">Welcome Back</Text>
+            <Text className="text-[15px] text-center leading-[22px] text-muted-foreground">
               Sign in to continue your trip planning
             </Text>
           </View>
 
           {/* Form */}
-          <View style={styles.form}>
+          <View className="mb-6">
             <Input
               label="Email"
               placeholder="you@example.com"
@@ -82,23 +79,23 @@ export default function LoginScreen() {
             />
 
             {error && (
-              <View style={[styles.errorBox, { backgroundColor: colors.error + "10" }]}>
-                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+              <View className="p-3 rounded-lg mb-4 bg-error/10">
+                <Text className="text-sm text-center text-error">{error}</Text>
               </View>
             )}
 
-            <Button title="Sign In" onPress={handleLogin} loading={loading} fullWidth size="lg" style={styles.button} />
+            <Button title="Sign In" onPress={handleLogin} loading={loading} fullWidth size="lg" className="mt-2" />
 
-            <TouchableOpacity onPress={() => router.push("/forgot-password")} style={styles.forgotLink}>
-              <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot password?</Text>
+            <TouchableOpacity onPress={() => router.push("/forgot-password")} className="items-center mt-4">
+              <Text className="text-sm font-medium text-primary">Forgot password?</Text>
             </TouchableOpacity>
           </View>
 
           {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={{ color: colors.mutedForeground }}>Don't have an account? </Text>
+          <View className="flex-row justify-center items-center">
+            <Text className="text-muted-foreground">Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push("/signup")}>
-              <Text style={{ color: colors.primary, fontWeight: "600" }}>Sign Up</Text>
+              <Text className="text-primary font-semibold">Sign Up</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -106,61 +103,3 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    paddingVertical: 40,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  iconGradient: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  form: {
-    marginBottom: 24,
-  },
-  errorBox: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 14,
-    textAlign: "center",
-  },
-  button: {
-    marginTop: 8,
-  },
-  forgotLink: {
-    alignItems: "center",
-    marginTop: 16,
-  },
-  forgotText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

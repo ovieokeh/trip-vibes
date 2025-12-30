@@ -1,13 +1,7 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, Dimensions, Platform } from "react-native";
+import { View, Text, Image, useWindowDimensions } from "react-native";
 import { Vibe } from "@trip-vibes/shared";
-import { Colors } from "../constants/Colors";
 import { LinearGradient } from "expo-linear-gradient";
-import { Info } from "lucide-react-native";
-
-const { width, height } = Dimensions.get("window");
-const CARD_WIDTH = width * 0.9;
-const CARD_HEIGHT = height * 0.6;
 
 interface VibeCardProps {
   vibe: Vibe;
@@ -15,85 +9,39 @@ interface VibeCardProps {
 }
 
 export function VibeCard({ vibe, onInfoPress }: VibeCardProps) {
-  const colors = Colors.light;
+  const { width, height } = useWindowDimensions();
+  const CARD_WIDTH = width * 0.9;
+  const CARD_HEIGHT = height * 0.6;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.background }]}>
-      <Image source={{ uri: vibe.imageUrl }} style={styles.image} resizeMode="cover" />
+    <View
+      className="rounded-[20px] overflow-hidden shadow-lg bg-background"
+      style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
+    >
+      <Image source={{ uri: vibe.imageUrl }} className="w-full h-full" resizeMode="cover" />
 
-      <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.gradient} />
+      <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} className="absolute inset-x-0 bottom-0 h-[200px]" />
 
-      <View style={styles.content}>
-        <View style={styles.textContainer}>
-          <Text style={styles.title} numberOfLines={2}>
+      <View className="absolute bottom-0 inset-x-0 p-5 flex-row items-end justify-between">
+        <View className="flex-1">
+          <Text
+            className="text-white text-[28px] font-bold mb-2"
+            numberOfLines={2}
+            style={{
+              textShadowColor: "rgba(0, 0, 0, 0.75)",
+              textShadowOffset: { width: -1, height: 1 },
+              textShadowRadius: 10,
+            }}
+          >
             {vibe.title}
           </Text>
-          <Text style={styles.category}>{vibe.category}</Text>
+          <Text className="text-[#ddd] text-base capitalize font-semibold">{vibe.category}</Text>
         </View>
 
-        {/* <TouchableOpacity onPress={onInfoPress} style={styles.infoButton}>
+        {/* <TouchableOpacity onPress={onInfoPress} className="p-2.5 bg-white/20 rounded-full ml-2.5">
           <Info color="#fff" size={24} />
         </TouchableOpacity> */}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: 20,
-    overflow: "hidden",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  gradient: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 200,
-  },
-  content: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-  },
-  textContainer: {
-    flex: 1,
-  },
-  title: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 8,
-    textShadowColor: "rgba(0, 0, 0, 0.75)",
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
-  },
-  category: {
-    color: "#ddd", // slightly dimmed white
-    fontSize: 16,
-    textTransform: "capitalize",
-    fontWeight: "600",
-  },
-  infoButton: {
-    padding: 10,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 50,
-    marginLeft: 10,
-  },
-});

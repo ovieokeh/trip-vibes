@@ -26,6 +26,13 @@
     --ring: #6366f1;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
+
+    --success: #22c55e;
+    --success-foreground: #ffffff;
+    --warning: #f59e0b;
+    --warning-foreground: #171717;
+    --error: #ef4444;
+    --error-foreground: #ffffff;
   }
 
   .dark {
@@ -51,5 +58,12 @@
     --ring: #818cf8;
     --destructive: #f87171;
     --destructive-foreground: #0a0a0a;
+
+    --success: #4ade80;
+    --success-foreground: #0a0a0a;
+    --warning: #fbbf24;
+    --warning-foreground: #0a0a0a;
+    --error: #f87171;
+    --error-foreground: #0a0a0a;
   }
 }

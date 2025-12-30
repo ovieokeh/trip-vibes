@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ViewStyle, TouchableOpacity, TouchableOpacityProps } from "react-native";
+import { View, TouchableOpacity, TouchableOpacityProps } from "react-native";
 import { useTheme } from "../ThemeProvider";
 
 interface CardProps extends TouchableOpacityProps {
@@ -14,79 +14,78 @@ export function Card({
   variant = "elevated",
   padding = "md",
   pressable = false,
+  className = "",
   style,
   ...props
-}: CardProps) {
-  const { colors, theme } = useTheme();
-
-  const getVariantStyles = (): ViewStyle => {
+}: CardProps & { className?: string }) {
+  const getVariantClasses = () => {
     switch (variant) {
       case "outlined":
-        return {
-          backgroundColor: colors.card,
-          borderWidth: 1,
-          borderColor: colors.cardBorder,
-        };
+        return "bg-card border border-card-border";
       case "filled":
-        return {
-          backgroundColor: colors.muted,
-        };
+        return "bg-muted";
       default: // elevated
-        return {
-          backgroundColor: colors.card,
-          ...theme.shadows.md,
-        };
+        return "bg-card shadow-md";
     }
   };
 
-  const getPaddingStyles = (): ViewStyle => {
+  const getPaddingClasses = () => {
     switch (padding) {
       case "none":
-        return { padding: 0 };
+        return "p-0";
       case "sm":
-        return { padding: theme.spacing.sm };
+        return "p-2"; // 8px
       case "lg":
-        return { padding: theme.spacing.xl };
-      default:
-        return { padding: theme.spacing.lg };
+        return "p-5"; // 20px
+      default: // md
+        return "p-4"; // 16px
     }
   };
 
-  const cardStyles = [styles.card, { borderRadius: theme.radius.xl }, getVariantStyles(), getPaddingStyles(), style];
+  const baseClasses = `overflow-hidden rounded-xl ${getVariantClasses()} ${getPaddingClasses()} ${className}`;
 
   if (pressable) {
     return (
-      <TouchableOpacity style={cardStyles} activeOpacity={0.7} {...props}>
+      <TouchableOpacity className={baseClasses} style={style} activeOpacity={0.7} {...props}>
         {children}
       </TouchableOpacity>
     );
   }
 
-  return <View style={cardStyles}>{children}</View>;
+  return (
+    <View className={baseClasses} style={style}>
+      {children}
+    </View>
+  );
 }
 
 // Sub-components for structured cards
 interface CardHeaderProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  className?: string;
+  style?: any;
 }
 
-export function CardHeader({ children, style }: CardHeaderProps) {
-  const { theme } = useTheme();
-  return <View style={[{ marginBottom: theme.spacing.md }, style]}>{children}</View>;
+export function CardHeader({ children, className = "", style }: CardHeaderProps) {
+  return (
+    <View className={`mb-3 ${className}`} style={style}>
+      {children}
+    </View>
+  );
 }
 
-export function CardContent({ children, style }: CardHeaderProps) {
-  return <View style={style}>{children}</View>;
+export function CardContent({ children, className = "", style }: CardHeaderProps) {
+  return (
+    <View className={className} style={style}>
+      {children}
+    </View>
+  );
 }
 
-export function CardFooter({ children, style }: CardHeaderProps) {
-  const { theme } = useTheme();
-  return <View style={[{ marginTop: theme.spacing.md }, style]}>{children}</View>;
+export function CardFooter({ children, className = "", style }: CardHeaderProps) {
+  return (
+    <View className={`mt-3 ${className}`} style={style}>
+      {children}
+    </View>
+  );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    overflow: "hidden",
-  },
-});

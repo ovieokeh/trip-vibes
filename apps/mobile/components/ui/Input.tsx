@@ -3,11 +3,10 @@ import {
   View,
   TextInput as RNTextInput,
   Text,
-  StyleSheet,
   TextInputProps as RNTextInputProps,
   TouchableOpacity,
 } from "react-native";
-import { Colors } from "../../constants/Colors";
+import { useTheme } from "../ThemeProvider";
 
 interface InputProps extends RNTextInputProps {
   label?: string;
@@ -15,68 +14,38 @@ interface InputProps extends RNTextInputProps {
   isPassword?: boolean;
 }
 
-export function Input({ label, error, isPassword = false, style, ...props }: InputProps) {
+export function Input({
+  label,
+  error,
+  isPassword = false,
+  style,
+  className = "",
+  ...props
+}: InputProps & { className?: string }) {
   const [showPassword, setShowPassword] = useState(false);
-  const colors = Colors.light; // TODO: Add dark mode support
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
-      {label && <Text style={[styles.label, { color: colors.foreground }]}>{label}</Text>}
-      <View style={styles.inputContainer}>
+    <View className="w-full mb-4">
+      {label && <Text className="text-sm font-medium text-foreground mb-1.5">{label}</Text>}
+      <View className="relative justify-center">
         <RNTextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: colors.muted,
-              color: colors.foreground,
-              borderColor: error ? colors.error : colors.border,
-            },
-            style,
-          ]}
+          className={`w-full border rounded-xl py-3.5 px-4 text-base bg-muted text-foreground ${
+            error ? "border-error" : "border-border"
+          } ${className}`}
           placeholderTextColor={colors.mutedForeground}
           secureTextEntry={isPassword && !showPassword}
           autoCapitalize="none"
+          style={style}
           {...props}
         />
         {isPassword && (
-          <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
-            <Text style={{ color: colors.mutedForeground }}>{showPassword ? "Hide" : "Show"}</Text>
+          <TouchableOpacity className="absolute right-4 py-1" onPress={() => setShowPassword(!showPassword)}>
+            <Text className="text-muted-foreground">{showPassword ? "Hide" : "Show"}</Text>
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
+      {error && <Text className="text-xs text-error mt-1">{error}</Text>}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    width: "100%",
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 6,
-  },
-  inputContainer: {
-    position: "relative",
-    justifyContent: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  eyeButton: {
-    position: "absolute",
-    right: 16,
-    paddingVertical: 4,
-  },
-  error: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-});

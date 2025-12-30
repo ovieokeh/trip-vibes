@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ViewStyle } from "react-native";
+import { View, Text } from "react-native";
 import { BlurView } from "expo-blur";
 import { useTheme } from "../ThemeProvider";
 
@@ -11,7 +11,7 @@ interface HeaderProps {
   large?: boolean;
   transparent?: boolean;
   blur?: boolean;
-  style?: ViewStyle;
+  className?: string;
 }
 
 export function Header({
@@ -22,38 +22,37 @@ export function Header({
   large = false,
   transparent = false,
   blur = false,
-  style,
+  className = "",
 }: HeaderProps) {
-  const { colors, theme, isDark } = useTheme();
+  const { isDark } = useTheme();
 
   const content = (
-    <View style={[styles.container, style]}>
-      <View style={styles.leftSection}>{leftAction}</View>
+    <View className={`flex-row items-center justify-between px-4 py-3 min-h-[56px] ${className}`}>
+      <View className="flex-1 flex-row items-center justify-start">{leftAction}</View>
 
-      <View style={styles.centerSection}>
+      <View className="flex-[2] items-center justify-center">
         {title && (
-          <Text style={[large ? styles.largeTitle : styles.title, { color: colors.foreground }]} numberOfLines={1}>
+          <Text
+            className={`${large ? "text-[28px] font-bold" : "text-[17px] font-semibold"} text-foreground text-center`}
+            numberOfLines={1}
+          >
             {title}
           </Text>
         )}
         {subtitle && (
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]} numberOfLines={1}>
+          <Text className="text-[13px] text-muted-foreground text-center mt-0.5" numberOfLines={1}>
             {subtitle}
           </Text>
         )}
       </View>
 
-      <View style={styles.rightSection}>{rightAction}</View>
+      <View className="flex-1 flex-row items-center justify-end">{rightAction}</View>
     </View>
   );
 
   if (blur) {
     return (
-      <BlurView
-        intensity={80}
-        tint={isDark ? "dark" : "light"}
-        style={[styles.blurContainer, { borderBottomColor: colors.border }]}
-      >
+      <BlurView intensity={80} tint={isDark ? "dark" : "light"} className="border-b-[0.5px] border-border">
         {content}
       </BlurView>
     );
@@ -61,64 +60,11 @@ export function Header({
 
   return (
     <View
-      style={[
-        styles.solidContainer,
-        {
-          backgroundColor: transparent ? "transparent" : colors.background,
-          borderBottomColor: transparent ? "transparent" : colors.border,
-        },
-      ]}
+      className={`border-b-[0.5px] ${
+        transparent ? "bg-transparent border-transparent" : "bg-background border-border"
+      }`}
     >
       {content}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  blurContainer: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  solidContainer: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 56,
-  },
-  leftSection: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  centerSection: {
-    flex: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rightSection: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  largeTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 13,
-    marginTop: 2,
-    textAlign: "center",
-  },
-});

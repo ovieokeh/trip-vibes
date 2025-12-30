@@ -1,15 +1,5 @@
-import React from "react";
-import {
-  Modal,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  FlatList,
-  Text,
-  SafeAreaView,
-} from "react-native";
+import React, { useRef, useState, useEffect } from "react";
+import { Modal, View, TouchableOpacity, Image, Dimensions, FlatList, Text, SafeAreaView } from "react-native";
 import { X, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useTheme } from "../../components/ThemeProvider";
 import { API_URL } from "../../lib/api";
@@ -38,10 +28,10 @@ interface PhotoGalleryModalProps {
 
 export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex = 0, title }: PhotoGalleryModalProps) {
   const { colors } = useTheme();
-  const flatListRef = React.useRef<FlatList>(null);
-  const [currentIndex, setCurrentIndex] = React.useState(initialIndex);
+  const flatListRef = useRef<FlatList>(null);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
       // Wait for next tick to ensure layout
@@ -62,29 +52,29 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex = 0, t
   };
 
   const renderItem = ({ item }: { item: Photo }) => (
-    <View style={styles.imageContainer}>
+    <View className="w-screen h-full justify-center items-center" style={{ width: SCREEN_WIDTH }}>
       {item.url ? (
-        <Image source={{ uri: getImageUri(item.url) }} style={styles.fullImage} resizeMode="contain" />
+        <Image source={{ uri: getImageUri(item.url) }} className="w-full h-full" resizeMode="contain" />
       ) : (
-        <View style={[styles.placeholder, { backgroundColor: colors.muted }]} />
+        <View className="w-full aspect-square" style={{ backgroundColor: colors.muted }} />
       )}
     </View>
   );
 
   return (
     <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.title} numberOfLines={1}>
+      <View className="flex-1 bg-black/95">
+        <SafeAreaView className="flex-1">
+          <View className="h-[60px] flex-row items-center justify-between px-5 z-10">
+            <View className="flex-1">
+              <Text className="text-white text-base font-bold" numberOfLines={1}>
                 {title || "Photos"}
               </Text>
-              <Text style={styles.subtitle}>
+              <Text className="text-white/60 text-[12px]">
                 {currentIndex + 1} of {photos.length}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={onClose} className="p-2">
               <X color="#fff" size={24} />
             </TouchableOpacity>
           </View>
@@ -107,11 +97,11 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex = 0, t
           />
 
           {photos.length > 1 && (
-            <View style={styles.controls}>
+            <View className="absolute bottom-10 inset-x-0 flex-row justify-between px-10">
               <TouchableOpacity
                 onPress={() => flatListRef.current?.scrollToIndex({ index: Math.max(0, currentIndex - 1) })}
                 disabled={currentIndex === 0}
-                style={[styles.navButton, currentIndex === 0 && styles.disabled]}
+                className={`p-2.5 bg-white/10 rounded-full ${currentIndex === 0 ? "opacity-30" : ""}`}
               >
                 <ChevronLeft color="#fff" size={32} />
               </TouchableOpacity>
@@ -122,7 +112,7 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex = 0, t
                   })
                 }
                 disabled={currentIndex === photos.length - 1}
-                style={[styles.navButton, currentIndex === photos.length - 1 && styles.disabled]}
+                className={`p-2.5 bg-white/10 rounded-full ${currentIndex === photos.length - 1 ? "opacity-30" : ""}`}
               >
                 <ChevronRight color="#fff" size={32} />
               </TouchableOpacity>
@@ -133,68 +123,3 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex = 0, t
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.95)",
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    height: 60,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    zIndex: 10,
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  title: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  subtitle: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 12,
-  },
-  closeButton: {
-    padding: 8,
-  },
-  imageContainer: {
-    width: SCREEN_WIDTH,
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  fullImage: {
-    width: "100%",
-    height: "100%",
-  },
-  placeholder: {
-    width: "100%",
-    aspectRatio: 1,
-  },
-  controls: {
-    position: "absolute",
-    bottom: 40,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 40,
-    pointerEvents: "box-none",
-  },
-  navButton: {
-    padding: 10,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 30,
-  },
-  disabled: {
-    opacity: 0.3,
-  },
-});

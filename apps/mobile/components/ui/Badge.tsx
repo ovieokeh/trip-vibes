@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ViewStyle, TextStyle } from "react-native";
+import { View, Text, ViewStyle, TextStyle } from "react-native";
 import { useTheme } from "../ThemeProvider";
 
 type BadgeVariant = "primary" | "secondary" | "success" | "warning" | "error" | "muted";
@@ -12,6 +12,7 @@ interface BadgeProps {
   size?: BadgeSize;
   dot?: boolean;
   pulse?: boolean;
+  className?: string;
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
@@ -23,107 +24,60 @@ export function Badge({
   size = "md",
   dot = false,
   pulse = false,
+  className = "",
   style,
   textStyle,
 }: BadgeProps) {
-  const { colors, theme } = useTheme();
-
-  const getVariantStyles = (): { bg: string; text: string } => {
+  const getVariantClasses = () => {
     switch (variant) {
       case "secondary":
-        return { bg: colors.secondary, text: colors.secondaryForeground };
+        return { container: "bg-secondary", text: "text-secondary-foreground" };
       case "success":
-        return { bg: colors.success, text: colors.successForeground };
+        return { container: "bg-success", text: "text-success-foreground" };
       case "warning":
-        return { bg: colors.warning, text: colors.warningForeground };
+        return { container: "bg-warning", text: "text-warning-foreground" };
       case "error":
-        return { bg: colors.error, text: colors.errorForeground };
+        return { container: "bg-error", text: "text-error-foreground" };
       case "muted":
-        return { bg: colors.muted, text: colors.mutedForeground };
+        return { container: "bg-muted", text: "text-muted-foreground" };
       default:
-        return { bg: colors.primary, text: colors.primaryForeground };
+        return { container: "bg-primary", text: "text-primary-foreground" };
     }
   };
 
-  const getSizeStyles = (): { container: ViewStyle; text: TextStyle; dot: number } => {
+  const getSizeClasses = () => {
     switch (size) {
       case "sm":
-        return {
-          container: { paddingHorizontal: 6, paddingVertical: 2 },
-          text: { fontSize: 10 },
-          dot: 6,
-        };
+        return { container: "px-1.5 py-0.5", text: "text-[10px]", dot: "w-1.5 h-1.5" };
       case "lg":
-        return {
-          container: { paddingHorizontal: 12, paddingVertical: 6 },
-          text: { fontSize: 14 },
-          dot: 10,
-        };
-      default:
-        return {
-          container: { paddingHorizontal: 8, paddingVertical: 4 },
-          text: { fontSize: 12 },
-          dot: 8,
-        };
+        return { container: "px-3 py-1.5", text: "text-sm", dot: "w-2.5 h-2.5" };
+      default: // md
+        return { container: "px-2 py-1", text: "text-[12px]", dot: "w-2 h-2" };
     }
   };
 
-  const variantStyles = getVariantStyles();
-  const sizeStyles = getSizeStyles();
+  const variants = getVariantClasses();
+  const sizes = getSizeClasses();
 
-  // Dot-only badge
   if (dot) {
     return (
       <View
-        style={[
-          styles.dot,
-          {
-            backgroundColor: variantStyles.bg,
-            width: sizeStyles.dot,
-            height: sizeStyles.dot,
-            borderRadius: sizeStyles.dot / 2,
-          },
-          pulse && styles.pulse,
-          style,
-        ]}
+        className={`rounded-full ${variants.container} ${sizes.dot} ${pulse ? "opacity-90" : ""} ${className}`}
+        style={style}
       />
     );
   }
 
   return (
     <View
-      style={[
-        styles.badge,
-        {
-          backgroundColor: variantStyles.bg,
-          borderRadius: theme.radius.full,
-        },
-        sizeStyles.container,
-        style,
-      ]}
+      className={`self-start flex-row items-center justify-center rounded-full ${variants.container} ${sizes.container} ${className}`}
+      style={style}
     >
       {children || (
-        <Text style={[styles.text, { color: variantStyles.text }, sizeStyles.text, textStyle]}>{label}</Text>
+        <Text className={`font-semibold ${variants.text} ${sizes.text}`} style={textStyle}>
+          {label}
+        </Text>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  text: {
-    fontWeight: "600",
-  },
-  dot: {
-    alignSelf: "flex-start",
-  },
-  pulse: {
-    // Note: Actual pulse animation would need Animated API
-    opacity: 0.9,
-  },
-});

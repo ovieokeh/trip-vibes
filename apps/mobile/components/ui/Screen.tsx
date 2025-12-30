@@ -1,6 +1,6 @@
-import { View, StyleSheet, ViewProps, ScrollView } from "react-native";
+import React from "react";
+import { View, ViewProps, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../ThemeProvider";
 
 interface ScreenProps extends ViewProps {
   scrollable?: boolean;
@@ -8,6 +8,8 @@ interface ScreenProps extends ViewProps {
   safeArea?: boolean;
   centered?: boolean;
   refreshControl?: React.ReactElement;
+  className?: string;
+  contentContainerClassName?: string;
 }
 
 export function Screen({
@@ -16,29 +18,26 @@ export function Screen({
   padded = true,
   safeArea = true,
   centered = false,
+  className = "",
+  contentContainerClassName = "",
   style,
   refreshControl,
   ...props
 }: ScreenProps) {
-  const { colors, theme } = useTheme();
-
-  const containerStyle = [
-    styles.container,
-    { backgroundColor: colors.background },
-    padded && { paddingHorizontal: theme.spacing.xl },
-    centered && styles.centered,
-    style,
-  ];
-  const wrapperStyle = { flex: 1 as const, backgroundColor: colors.background };
+  const baseClasses = "flex-1";
+  const containerClasses = `${baseClasses} ${padded ? "px-5" : ""} ${
+    centered ? "items-center justify-center" : ""
+  } ${className}`;
 
   if (scrollable && safeArea) {
     return (
-      <SafeAreaView style={wrapperStyle}>
+      <SafeAreaView className="flex-1 bg-background">
         <ScrollView
-          contentContainerStyle={containerStyle}
+          contentContainerClassName={`${containerClasses} ${contentContainerClassName}`}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}
+          style={style}
           {...props}
         >
           {children}
@@ -49,11 +48,12 @@ export function Screen({
 
   if (scrollable) {
     return (
-      <View style={wrapperStyle}>
+      <View className="flex-1 bg-background">
         <ScrollView
-          contentContainerStyle={containerStyle}
+          contentContainerClassName={`${containerClasses} ${contentContainerClassName}`}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          style={style}
           {...props}
         >
           {children}
@@ -64,25 +64,19 @@ export function Screen({
 
   if (safeArea) {
     return (
-      <SafeAreaView style={wrapperStyle} {...props}>
-        <View style={containerStyle}>{children}</View>
+      <SafeAreaView className="flex-1 bg-background" {...props}>
+        <View className={containerClasses} style={style}>
+          {children}
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <View style={wrapperStyle} {...props}>
-      <View style={containerStyle}>{children}</View>
+    <View className="flex-1 bg-background" {...props}>
+      <View className={containerClasses} style={style}>
+        {children}
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  centered: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

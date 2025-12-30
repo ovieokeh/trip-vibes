@@ -1,23 +1,20 @@
 import React from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, Text } from "react-native";
 import { Itinerary } from "@trip-vibes/shared";
 import { ActivityCard } from "./ActivityCard";
-import { Colors } from "../../constants/Colors";
 
 interface TimelineProps {
   itinerary: Itinerary;
 }
 
 export function Timeline({ itinerary }: TimelineProps) {
-  const colors = Colors.light;
-
   return (
-    <View style={styles.container}>
+    <View className="py-5">
       {itinerary.days.map((day) => (
-        <View key={day.id} style={styles.dayContainer}>
-          <View style={styles.dayHeader}>
-            <Text style={[styles.dayTitle, { color: colors.foreground }]}>Day {day.dayNumber}</Text>
-            <Text style={[styles.dayNeighborhood, { color: colors.mutedForeground }]}>{day.neighborhood}</Text>
+        <View key={day.id} className="mb-[30px]">
+          <View className="px-5 mb-5">
+            <Text className="text-2xl font-bold text-foreground">Day {day.dayNumber}</Text>
+            <Text className="text-base mt-1 text-muted-foreground">{day.neighborhood}</Text>
           </View>
 
           {day.activities.map((activity) => (
@@ -28,24 +25,3 @@ export function Timeline({ itinerary }: TimelineProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 20,
-  },
-  dayContainer: {
-    marginBottom: 30,
-  },
-  dayHeader: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  dayTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  dayNeighborhood: {
-    fontSize: 16,
-    marginTop: 4,
-  },
-});

@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from "react";
-import { View, StyleSheet, Dimensions, Text } from "react-native";
+import React, { useCallback } from "react";
+import { View, Dimensions, Text } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -11,7 +11,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { Vibe } from "@trip-vibes/shared";
 import { VibeCard } from "./VibeCard";
-import { Colors } from "../constants/Colors";
 
 const { width } = Dimensions.get("window");
 const SWIPE_THRESHOLD = width * 0.3;
@@ -81,44 +80,25 @@ export function VibeStack({ currentVibe, nextVibe, onSwipeRight, onSwipeLeft }: 
 
   if (!currentVibe) {
     return (
-      <View style={styles.center}>
-        <Text>Loading more vibes...</Text>
+      <View className="flex-1 items-center justify-center">
+        <Text className="text-foreground">Loading more vibes...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 items-center justify-center">
       {nextVibe && (
-        <Animated.View style={[styles.cardContainer, nextCardStyle]}>
+        <Animated.View className="absolute w-full items-center justify-center" style={nextCardStyle}>
           <VibeCard vibe={nextVibe} />
         </Animated.View>
       )}
 
       <GestureDetector gesture={gesture}>
-        <Animated.View style={[styles.cardContainer, animatedStyle]}>
+        <Animated.View className="absolute w-full items-center justify-center" style={animatedStyle}>
           <VibeCard vibe={currentVibe} />
         </Animated.View>
       </GestureDetector>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardContainer: {
-    position: "absolute",
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

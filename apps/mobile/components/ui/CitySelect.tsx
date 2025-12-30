@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Modal, StyleSheet, TouchableOpacity, FlatList, TextInput, ActivityIndicator } from "react-native";
-import { Colors } from "../../constants/Colors";
+import { View, Text, Modal, TouchableOpacity, FlatList, TextInput, ActivityIndicator } from "react-native";
 import { X, Search, Check } from "lucide-react-native";
+import { useTheme } from "../ThemeProvider";
 import { useDebounce } from "../../hooks/use-debounce";
-import { searchCities, getCityById } from "../../lib/vibe-api";
+import { searchCities } from "../../lib/vibe-api";
 import { City } from "@trip-vibes/shared";
 
 interface CitySelectProps {
@@ -14,7 +14,7 @@ interface CitySelectProps {
 }
 
 export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CitySelectProps) {
-  const colors = Colors.light;
+  const { colors } = useTheme();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [results, setResults] = useState<City[]>([]);
@@ -57,25 +57,25 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Select Destination</Text>
+      <View className="flex-1 bg-background">
+        <View className="flex-row justify-between items-center p-4 pt-6 border-b border-border">
+          <Text className="text-lg font-semibold text-foreground">Select Destination</Text>
           <TouchableOpacity onPress={onClose}>
             <X color={colors.foreground} size={24} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.searchContainer}>
-          <Search size={20} color={colors.mutedForeground} style={{ marginRight: 8 }} />
+        <View className="flex-row items-center p-3 m-4 bg-muted rounded-xl">
+          <Search size={20} color={colors.mutedForeground} className="mr-2" />
           <TextInput
             placeholder="Search cities..."
             value={search}
             onChangeText={setSearch}
-            style={[styles.input, { color: colors.foreground }]}
+            className="flex-1 text-base h-6 text-foreground"
             placeholderTextColor={colors.mutedForeground}
             autoFocus={false}
           />
-          {isLoading && <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />}
+          {isLoading && <ActivityIndicator size="small" color={colors.primary} className="ml-2" />}
         </View>
 
         <FlatList
@@ -83,18 +83,17 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[
-                styles.item,
-                { backgroundColor: selectedCityId === item.id ? colors.primary + "10" : "transparent" },
-              ]}
+              className={`flex-row justify-between items-center py-4 px-5 border-b border-border ${
+                selectedCityId === item.id ? "bg-primary/10" : "bg-transparent"
+              }`}
               onPress={() => {
                 onSelect(item);
                 onClose();
               }}
             >
               <View>
-                <Text style={[styles.cityName, { color: colors.foreground }]}>{item.name}</Text>
-                <Text style={[styles.countryName, { color: colors.mutedForeground }]}>{item.country}</Text>
+                <Text className="text-base font-semibold text-foreground mb-1">{item.name}</Text>
+                <Text className="text-sm text-muted-foreground">{item.country}</Text>
               </View>
               {selectedCityId === item.id && <Check color={colors.primary} size={20} />}
             </TouchableOpacity>
@@ -102,12 +101,12 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
           contentContainerStyle={{ paddingBottom: 40 }}
           ListEmptyComponent={
             !isLoading && search.length >= 2 ? (
-              <View style={styles.emptyContainer}>
-                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No cities found</Text>
+              <View className="p-8 items-center">
+                <Text className="text-sm text-muted-foreground">No cities found</Text>
               </View>
             ) : search.length > 0 && search.length < 2 ? (
-              <View style={styles.emptyContainer}>
-                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Type at least 2 characters</Text>
+              <View className="p-8 items-center">
+                <Text className="text-sm text-muted-foreground">Type at least 2 characters</Text>
               </View>
             ) : null
           }
@@ -116,59 +115,3 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    paddingTop: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    margin: 16,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 12,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    height: 24,
-  },
-  item: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  cityName: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  countryName: {
-    fontSize: 14,
-  },
-  emptyContainer: {
-    padding: 32,
-    alignItems: "center",
-  },
-  emptyText: {
-    fontSize: 14,
-  },
-});

@@ -1,20 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  Share,
-  TouchableOpacity,
-  Dimensions,
-  Platform,
-} from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, RefreshControl, Share, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Itinerary } from "@trip-vibes/shared";
 import { getItinerary } from "../../lib/vibe-api";
-import { Screen, Button, Badge, Card } from "../../components/ui";
+import { Screen, Button } from "../../components/ui";
 import { ItineraryDay } from "../../components/Itinerary/ItineraryDay";
 import { useTheme } from "../../components/ThemeProvider";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,12 +11,10 @@ import { MapPin, Calendar, Sparkles, Share2, Bookmark, Home, AlertCircle, Trendi
 import { format } from "date-fns";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
 export default function ItineraryScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const { colors, theme } = useTheme();
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
@@ -78,7 +65,7 @@ export default function ItineraryScreen() {
     return (
       <Screen centered>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Loading Itinerary...</Text>
+        <Text className="mt-4 text-base font-semibold text-muted-foreground">Loading Itinerary...</Text>
       </Screen>
     );
   }
@@ -86,11 +73,11 @@ export default function ItineraryScreen() {
   if (error || !itinerary) {
     return (
       <Screen centered padded>
-        <View style={[styles.errorIconBg, { backgroundColor: colors.error + "15" }]}>
+        <View className="w-24 h-24 rounded-full items-center justify-center mb-6 bg-error/15">
           <AlertCircle size={48} color={colors.error} />
         </View>
-        <Text style={[styles.errorTitle, { color: colors.foreground }]}>Couldn't Load Trip</Text>
-        <Text style={[styles.errorText, { color: colors.mutedForeground }]}>{error || "Itinerary not found"}</Text>
+        <Text className="text-[22px] font-bold mb-2 text-foreground">Couldn't Load Trip</Text>
+        <Text className="text-[15px] mb-6 text-center text-muted-foreground">{error || "Itinerary not found"}</Text>
         <Button title="Go Home" onPress={() => router.replace("/")} />
       </Screen>
     );
@@ -106,7 +93,10 @@ export default function ItineraryScreen() {
           headerTransparent: true,
           headerTintColor: "#fff",
           headerRight: () => (
-            <TouchableOpacity onPress={handleShare} style={styles.headerIconButton}>
+            <TouchableOpacity
+              onPress={handleShare}
+              className="w-9 h-9 rounded-full bg-black/20 items-center justify-center mr-4"
+            >
               <Share2 size={20} color="#fff" />
             </TouchableOpacity>
           ),
@@ -114,89 +104,92 @@ export default function ItineraryScreen() {
       />
 
       <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        contentContainerStyle={styles.scrollContent}
+        className="flex-1 bg-background"
+        contentContainerClassName="pb-5"
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* Hero Section */}
-        <View style={styles.heroWrapper}>
+        <View className="mb-[60px]">
           <LinearGradient
             colors={[colors.primary, colors.accent]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.heroGradient, { paddingTop: insets.top + 20 }]}
+            className="pb-20 px-6 rounded-b-[32px]"
+            style={{ paddingTop: insets.top + 20 }}
           >
-            <View style={styles.heroContent}>
-              <View style={styles.sparkleContainer}>
+            <View className="items-center">
+              <View className="mb-4">
                 <Sparkles size={24} color="rgba(255,255,255,0.6)" />
               </View>
-              <Text style={styles.heroTitle}>{headerTitle}</Text>
+              <Text className="text-[28px] font-black text-white text-center mb-3 tracking-tighter">{headerTitle}</Text>
 
-              <View style={styles.heroStatsRow}>
-                <View style={styles.heroStatItem}>
+              <View className="flex-row items-center gap-2 mb-5">
+                <View className="flex-row items-center gap-1.5">
                   <MapPin size={14} color="rgba(255,255,255,0.8)" />
-                  <Text style={styles.heroStatText}>{itinerary.name}</Text>
+                  <Text className="text-white/90 text-sm font-semibold">{itinerary.name}</Text>
                 </View>
-                <View style={styles.bullet} />
-                <View style={styles.heroStatItem}>
+                <View className="w-1 h-1 rounded-full bg-white/40" />
+                <View className="flex-row items-center gap-1.5">
                   <Calendar size={14} color="rgba(255,255,255,0.8)" />
-                  <Text style={styles.heroStatText}>{itinerary.days.length} Days</Text>
+                  <Text className="text-white/90 text-sm font-semibold">{itinerary.days.length} Days</Text>
                 </View>
               </View>
 
-              <View style={styles.chipRow}>
+              <View className="flex-row gap-2">
                 {itinerary.startDate && (
-                  <View style={styles.dateChip}>
-                    <Text style={styles.dateChipText}>
+                  <View className="bg-white/20 px-3 py-1.5 rounded-full flex-row items-center gap-1">
+                    <Text className="text-white text-[12px] font-bold">
                       {format(new Date(itinerary.startDate), "MMM d")} -{" "}
                       {itinerary.endDate ? format(new Date(itinerary.endDate), "MMM d, yyyy") : ""}
                     </Text>
                   </View>
                 )}
-                <View style={[styles.dateChip, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+                <View className="bg-white/10 px-3 py-1.5 rounded-full flex-row items-center gap-1">
                   <TrendingUp size={12} color="#fff" />
-                  <Text style={styles.dateChipText}>Optimized</Text>
+                  <Text className="text-white text-[12px] font-bold">Optimized</Text>
                 </View>
               </View>
             </View>
           </LinearGradient>
 
           {/* Quick Stats Overlap Card */}
-          <View style={[styles.statsOverlap, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: colors.foreground }]}>{itinerary.days.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>DAYS</Text>
+          <View className="absolute -bottom-10 left-6 right-6 h-20 rounded-[20px] flex-row items-center px-3 border border-border shadow-lg bg-card shadow-black/10">
+            <View className="flex-1 items-center">
+              <Text className="text-[20px] font-black text-foreground">{itinerary.days.length}</Text>
+              <Text className="text-[10px] font-bold tracking-widest mt-0.5 text-muted-foreground">DAYS</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: colors.foreground }]}>{totalActivities}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>STOPS</Text>
+            <View className="w-[1px] h-[30px] opacity-50 bg-border" />
+            <View className="flex-1 items-center">
+              <Text className="text-[20px] font-black text-foreground">{totalActivities}</Text>
+              <Text className="text-[10px] font-bold tracking-widest mt-0.5 text-muted-foreground">STOPS</Text>
             </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: colors.foreground }]}>{itinerary.name}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>DEST</Text>
+            <View className="w-[1px] h-[30px] opacity-50 bg-border" />
+            <View className="flex-1 items-center">
+              <Text className="text-[20px] font-black text-foreground" numberOfLines={1}>
+                {itinerary.name}
+              </Text>
+              <Text className="text-[10px] font-bold tracking-widest mt-0.5 text-muted-foreground">DEST</Text>
             </View>
           </View>
         </View>
 
         {/* Days List */}
-        <View style={styles.daysSection}>
+        <View className="px-4 mt-5">
           {itinerary.days.map((day) => (
             <ItineraryDay key={day.id} day={day} />
           ))}
         </View>
 
         {/* Footer Actions */}
-        <View style={styles.footer}>
+        <View className="px-6 pt-8 items-center">
           <Button
             title="Explore Saved Trips"
             onPress={() => router.push("/saved-trips")}
             variant="outline"
             leftIcon={<Bookmark size={18} color={colors.primary} />}
             fullWidth
-            style={styles.footerButton}
+            className="mb-4"
           />
           <Button
             title="Back Home"
@@ -207,167 +200,8 @@ export default function ItineraryScreen() {
           />
         </View>
 
-        <View style={{ height: 60 }} />
+        <View className="h-[60px]" />
       </ScrollView>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  errorIconBg: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 24,
-  },
-  errorTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  errorText: {
-    fontSize: 15,
-    marginBottom: 24,
-    textAlign: "center",
-  },
-  headerIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(0,0,0,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 16,
-  },
-  heroWrapper: {
-    marginBottom: 60,
-  },
-  heroGradient: {
-    paddingBottom: 80,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-  },
-  heroContent: {
-    alignItems: "center",
-  },
-  sparkleContainer: {
-    marginBottom: 16,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#fff",
-    textAlign: "center",
-    marginBottom: 12,
-    letterSpacing: -0.5,
-  },
-  heroStatsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 20,
-  },
-  heroStatItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  heroStatText: {
-    color: "rgba(255,255,255,0.9)",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  bullet: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.4)",
-  },
-  chipRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  dateChip: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  dateChipText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  statsOverlap: {
-    position: "absolute",
-    bottom: -40,
-    left: 24,
-    right: 24,
-    height: 80,
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "900",
-  },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    opacity: 0.5,
-  },
-  daysSection: {
-    paddingHorizontal: 16,
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-    marginBottom: 20,
-    paddingHorizontal: 16,
-    letterSpacing: -0.5,
-  },
-  footer: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    alignItems: "center",
-  },
-  footerButton: {
-    marginBottom: 16,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});

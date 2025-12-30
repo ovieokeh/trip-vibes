@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, Modal, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, Modal, TouchableOpacity } from "react-native";
 import { CalendarList, DateData } from "react-native-calendars";
-import { Colors } from "../../constants/Colors";
+import { useTheme } from "../ThemeProvider";
 import { Button } from "./Button";
 import { X } from "lucide-react-native";
 
@@ -20,7 +20,7 @@ export function DateRangePicker({
   initialStartDate,
   initialEndDate,
 }: DateRangePickerProps) {
-  const colors = Colors.light;
+  const { colors } = useTheme();
   const [startDate, setStartDate] = useState<string | null>(
     initialStartDate ? initialStartDate.toISOString().split("T")[0] : null
   );
@@ -47,7 +47,6 @@ export function DateRangePicker({
           const newEnd = new Date(start);
           newEnd.setDate(start.getDate() + 13); // +13 because start date counts as day 1
           setEndDate(newEnd.toISOString().split("T")[0]);
-          // Ideally show a toast here, but for now just clamp
         } else {
           setEndDate(day.dateString);
         }
@@ -86,19 +85,19 @@ export function DateRangePicker({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Select Dates</Text>
+      <View className="flex-1 bg-background">
+        <View className="flex-row justify-between items-center p-4 pt-6 border-b border-border">
+          <Text className="text-lg font-semibold text-foreground">Select Dates</Text>
           <TouchableOpacity onPress={onClose}>
             <X color={colors.foreground} size={24} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.footer}>
-          <Text style={{ color: colors.mutedForeground, marginBottom: 10, textAlign: "center" }}>
+        <View className="p-4 pb-8 border-t border-border">
+          <Text className="text-muted-foreground text-center mb-2.5">
             {startDate && endDate ? "Selected: " + startDate + " to " + endDate : "Select a date range (max 14 days)"}
           </Text>
-          <Button title="Confirm Dates" onPress={handleConfirm} fullWidth disabled={!startDate || !endDate} />
+          <Button title="Confirm Dates" onPress={handleConfirm} className="w-full" disabled={!startDate || !endDate} />
         </View>
 
         <CalendarList
@@ -133,28 +132,3 @@ export function DateRangePicker({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    paddingTop: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  footer: {
-    padding: 16,
-    paddingBottom: 32,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-});

@@ -1,7 +1,7 @@
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { TouchableOpacity } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { AuthProvider } from "../components/AuthProvider";
 import { ThemeProvider, useTheme } from "../components/ThemeProvider";
 import { ChevronLeft, X, Share2 } from "lucide-react-native";
@@ -24,7 +24,7 @@ function RootLayoutNav() {
   );
 
   return (
-    <>
+    <View className={`flex-1 ${isDark ? "dark" : ""}`}>
       <Stack
         screenOptions={{
           headerStyle: {
@@ -108,7 +108,7 @@ function RootLayoutNav() {
         />
       </Stack>
       <StatusBar style={isDark ? "light" : "dark"} />
-    </>
+    </View>
   );
 }
 

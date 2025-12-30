@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from "react-native-maps";
-import { Itinerary, TripActivity } from "@trip-vibes/shared";
-import { Colors } from "../constants/Colors";
+import { Itinerary } from "@trip-vibes/shared";
+import { useTheme } from "./ThemeProvider";
 
 interface ResultMapProps {
   itinerary: Itinerary;
@@ -10,7 +10,7 @@ interface ResultMapProps {
 }
 
 export function ResultMap({ itinerary, selectedDay = 1 }: ResultMapProps) {
-  const colors = Colors.light;
+  const { colors } = useTheme();
 
   // Filter activities for the selected day
   const dayActivities = useMemo(() => {
@@ -54,15 +54,15 @@ export function ResultMap({ itinerary, selectedDay = 1 }: ResultMapProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <View className="h-[250px] w-full rounded-2xl overflow-hidden my-2.5">
       <MapView
         provider={PROVIDER_DEFAULT}
-        style={styles.map}
+        className="w-full h-full"
         initialRegion={initialRegion}
         showsUserLocation={true}
         showsCompass={true}
       >
-        {dayActivities.map((activity, index) => (
+        {dayActivities.map((activity) => (
           <Marker
             key={activity.id}
             coordinate={{
@@ -72,11 +72,7 @@ export function ResultMap({ itinerary, selectedDay = 1 }: ResultMapProps) {
             title={activity.vibe.title}
             description={activity.note}
             pinColor={colors.primary}
-          >
-            <View style={[styles.markerBadge, { backgroundColor: colors.primary }]}>
-              {/* Simple number badge or similar if needed, default marker is fine too */}
-            </View>
-          </Marker>
+          />
         ))}
 
         {/* Draw line between sequential points */}
@@ -92,20 +88,3 @@ export function ResultMap({ itinerary, selectedDay = 1 }: ResultMapProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    height: 250,
-    width: "100%",
-    borderRadius: 16,
-    overflow: "hidden",
-    marginVertical: 10,
-  },
-  map: {
-    width: "100%",
-    height: "100%",
-  },
-  markerBadge: {
-    // Custom marker styling if we move away from default
-  },
-});
