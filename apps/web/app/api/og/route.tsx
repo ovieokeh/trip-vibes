@@ -12,9 +12,19 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get("date")?.slice(0, 50) || "";
     const ref = searchParams.get("ref");
 
-    let bgUrl = null;
+    let imageData: string | null = null;
+
+    // 1. Fetch the image server-side to ensure it's available to Satori
     if (ref && process.env.GOOGLE_PLACES_API_KEY) {
-      bgUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+      const bgUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+
+      const res = await fetch(bgUrl);
+      if (res.ok) {
+        const buffer = await res.arrayBuffer();
+        // Convert to base64 to embed directly
+        const base64Image = Buffer.from(buffer).toString("base64");
+        imageData = `data:image/jpeg;base64,${base64Image}`;
+      }
     }
 
     return new ImageResponse(
@@ -26,15 +36,14 @@ export async function GET(req: NextRequest) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#0f172a", // Fallback color
+          backgroundColor: "#0f172a",
           color: "white",
           position: "relative",
         }}
       >
-        {/* Background Image with Overlay */}
-        {bgUrl && (
+        {imageData && (
           <img
-            src={bgUrl}
+            src={imageData}
             alt="Background"
             style={{
               position: "absolute",
@@ -43,13 +52,12 @@ export async function GET(req: NextRequest) {
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              opacity: 0.6,
-              filter: "blur(10px) brightness(0.5)",
+              opacity: 0.5,
             }}
           />
         )}
 
-        {/* Dark Gradient Overlay for readability */}
+        {/* Gradient Overlay */}
         <div
           style={{
             position: "absolute",
@@ -57,87 +65,57 @@ export async function GET(req: NextRequest) {
             left: 0,
             width: "100%",
             height: "100%",
-            background: "linear-gradient(to bottom, rgba(15,23,42,0.3), rgba(15,23,42,0.8))",
+            background: "linear-gradient(to bottom, rgba(15,23,42,0.2), rgba(15,23,42,0.8))",
           }}
         />
 
-        {/* Content */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10,
             textAlign: "center",
-            padding: "40px",
+            zIndex: 10,
           }}
         >
-          {/* Logo / Brand */}
           <div
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              marginBottom: 20,
-              color: "#e2e8f0",
-              letterSpacing: "-0.05em",
-              textTransform: "uppercase",
-            }}
+            style={{ fontSize: 24, fontWeight: 700, marginBottom: 20, color: "#e2e8f0", textTransform: "uppercase" }}
           >
             TripVibes
           </div>
-
-          {/* Title */}
           <div
             style={{
-              fontSize: 72,
+              fontSize: 80, // Increased for 630px height
               fontWeight: 900,
-              lineHeight: 1.1,
-              marginBottom: 20,
-              backgroundImage: "linear-gradient(90deg, #fff, #cbd5e1)",
-              backgroundClip: "text",
-              color: "transparent",
-              textShadow: "0 4px 8px rgba(0,0,0,0.3)",
-              letterSpacing: "-0.03em",
-              maxWidth: "900px",
+              marginBottom: 30,
+              color: "white",
+              padding: "0 60px",
             }}
           >
             {title}
           </div>
-
-          {/* City & Date Badge */}
           <div
             style={{
               display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              fontSize: 28,
-              color: "#94a3b8",
-              fontWeight: 500,
-              background: "rgba(15, 23, 42, 0.6)",
-              padding: "10px 24px",
+              fontSize: 32,
+              background: "rgba(15, 23, 42, 0.8)",
+              padding: "12px 32px",
               borderRadius: "100px",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.2)",
             }}
           >
             <span style={{ color: "#fff" }}>{city}</span>
-            {date && <span>•</span>}
+            {date && <span style={{ margin: "0 10px" }}>•</span>}
             {date && <span>{date}</span>}
           </div>
         </div>
       </div>,
       {
         width: 1200,
-        height: 400,
-        headers: {
-          "Cache-Control": "public, max-age=31536000, immutable",
-        },
+        height: 630, // Matches standard OG specs
       }
     );
   } catch (e: any) {
-    console.error(e.message);
-    return new Response(`Failed to generate the image`, {
-      status: 500,
-    });
+    return new Response(`Failed to generate the image`, { status: 500 });
   }
 }
