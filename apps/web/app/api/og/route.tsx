@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     // 1. Fetch the image server-side to ensure it's available to Satori
     if (ref && process.env.GOOGLE_PLACES_API_KEY) {
-      const bgUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+      const bgUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
 
       const res = await fetch(bgUrl);
       if (res.ok) {
@@ -111,8 +111,8 @@ export async function GET(req: NextRequest) {
         </div>
       </div>,
       {
-        width: 1200,
-        height: 630, // Matches standard OG specs
+        width: 600,
+        height: 315, // Matches standard OG specs
       }
     );
   } catch (e: any) {
