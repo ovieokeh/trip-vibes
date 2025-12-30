@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
 
     let bgUrl = null;
     if (ref && process.env.GOOGLE_PLACES_API_KEY) {
-      bgUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+      bgUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
     }
 
     return new ImageResponse(
