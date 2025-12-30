@@ -14,7 +14,7 @@ export async function OPTIONS() {
   });
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const city = await getCityById(id);
