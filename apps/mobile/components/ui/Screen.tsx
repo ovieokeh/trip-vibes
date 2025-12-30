@@ -28,10 +28,9 @@ export function Screen({
   refreshControl,
   ...props
 }: ScreenProps) {
-  const baseClasses = "flex-1";
-  const containerClasses = `${baseClasses} ${padded ? "px-5" : ""} ${
-    centered ? "items-center justify-center" : ""
-  } ${className}`;
+  const containerClasses = `${scrollable ? "grow" : "flex-1"} ${
+    padded ? "px-5" : ""
+  } ${centered ? "items-center justify-center" : ""} ${className}`;
 
   if (scrollable && safeArea) {
     return (

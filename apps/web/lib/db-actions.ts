@@ -240,6 +240,7 @@ export async function getSavedItinerariesAction() {
       name: itineraries.name,
       startDate: itineraries.startDate,
       endDate: itineraries.endDate,
+      isSaved: itineraries.isSaved,
       createdAt: itineraries.createdAt,
       data: itineraries.data,
       city: cities.name,
@@ -277,6 +278,7 @@ export async function getItineraryByIdAction(id: string): Promise<Itinerary | nu
       name: record.name,
       startDate: record.startDate,
       endDate: record.endDate,
+      isSaved: record.isSaved ?? false,
     };
   }
   return null;

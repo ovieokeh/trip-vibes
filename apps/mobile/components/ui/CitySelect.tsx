@@ -74,7 +74,7 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
             onChangeText={setSearch}
             className="flex-1 text-base h-6 text-foreground"
             placeholderTextColor={colors.mutedForeground}
-            autoFocus={false}
+            autoFocus
           />
           {isLoading && <ActivityIndicator size="small" color={colors.primary} className="ml-2" />}
         </View>

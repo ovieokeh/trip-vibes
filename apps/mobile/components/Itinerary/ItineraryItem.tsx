@@ -85,9 +85,12 @@ export function ItineraryItem({ item, dayDate }: ItineraryItemProps) {
             <View className="w-0.5 flex-1 rounded-sm bg-border border-dashed border" />
           </View>
           <View className="flex-1 py-3 relative justify-center">
-            <View className="absolute -left-3 inset-y-0 border-border" />
-            <View className="self-start px-2 py-1 rounded-lg ml-3 bg-accent/20">
-              <Text className="text-[10px] font-extrabold uppercase tracking-[0.5px] text-primary">
+            <View
+              className="absolute -left-3 inset-y-0 border-l border-dashed"
+              style={{ borderColor: colors.border + "40" }}
+            />
+            <View className="self-start px-2 py-1 rounded-lg ml-3 bg-accent/10">
+              <Text className="text-[10px] font-extrabold uppercase tracking-[0.5px] text-accent-foreground">
                 {item.transitNote || (transit ? `${transit.durationMinutes} min ${transit.mode}` : "Getting there")}
               </Text>
             </View>
@@ -98,10 +101,13 @@ export function ItineraryItem({ item, dayDate }: ItineraryItemProps) {
       <View className="flex-row">
         <View className="w-[45px] items-center mr-3">
           <Text className="text-[12px] font-bold mb-2 text-foreground font-mono">{item.startTime}</Text>
-          <View className="w-0.5 flex-1 rounded-sm bg-border" />
+          <View className="w-0.5 flex-1 rounded-sm" style={{ backgroundColor: colors.border + "50" }} />
         </View>
 
-        <View className="flex-1 rounded-2xl overflow-hidden border mb-6 shadow-sm bg-card border-border">
+        <View
+          className="flex-1 rounded-2xl overflow-hidden border mb-6 shadow-sm bg-card"
+          style={{ borderColor: colors.border + "30" }}
+        >
           {/* Image Grid */}
           {hasPhotos ? (
             <View className="flex-row h-[180px] gap-0.5">
@@ -182,7 +188,10 @@ export function ItineraryItem({ item, dayDate }: ItineraryItemProps) {
             </View>
 
             {/* Actions */}
-            <View className="flex-row flex-wrap gap-3 pt-3 border-t border-border">
+            <View
+              className="flex-row flex-wrap gap-3 pt-3"
+              style={{ borderTopWidth: 1, borderTopColor: colors.border + "30" }}
+            >
               {item.vibe.website && (
                 <TouchableOpacity
                   className="flex-row items-center gap-1"

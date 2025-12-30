@@ -34,8 +34,8 @@ export function ItineraryDay({ day, onAddActivity }: ItineraryDayProps) {
           ) : null}
         </View>
         {day.neighborhood && (
-          <View className="px-2 py-1 rounded-lg bg-muted">
-            <Text className="text-[11px] font-bold uppercase text-muted-foreground">{day.neighborhood}</Text>
+          <View className="px-2.5 py-1 rounded-lg bg-primary/10">
+            <Text className="text-[10px] font-bold uppercase tracking-wider text-primary">{day.neighborhood}</Text>
           </View>
         )}
       </View>
@@ -52,7 +52,10 @@ export function ItineraryDay({ day, onAddActivity }: ItineraryDayProps) {
               activeOpacity={0.6}
             >
               <View className="absolute left-[38.5px] inset-y-0 w-[1px] bg-border" />
-              <View className="flex-row items-center justify-center gap-1.5 border border-dashed rounded-xl py-2 ml-[57px] bg-background border-border">
+              <View
+                className="flex-row items-center justify-center gap-1.5 border border-dashed rounded-xl py-2 ml-[57px] bg-background"
+                style={{ borderColor: colors.border + "60" }}
+              >
                 <Plus size={14} color={colors.mutedForeground} />
                 <Text className="text-[12px] font-semibold text-muted-foreground">Add Activity</Text>
               </View>
@@ -62,7 +65,8 @@ export function ItineraryDay({ day, onAddActivity }: ItineraryDayProps) {
 
         {day.activities.length === 0 && (
           <TouchableOpacity
-            className="mx-4 ml-[73px] p-6 border-2 border-dashed rounded-2xl items-center justify-center gap-2 border-border"
+            className="mx-4 ml-[73px] p-6 border-2 border-dashed rounded-2xl items-center justify-center gap-2"
+            style={{ borderColor: colors.border + "60" }}
             onPress={() => onAddActivity?.()}
             activeOpacity={0.6}
           >

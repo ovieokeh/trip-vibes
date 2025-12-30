@@ -117,12 +117,15 @@ export interface PDFLabels {
 /**
  * PDF GENERATION ENGINE
  */
-export async function generateItineraryPDF(
+/**
+ * PDF GENERATION ENGINE
+ */
+export async function generateItineraryPDFDoc(
   itinerary: Itinerary,
   cityName: string,
   locale: string = "en-US",
   labels?: PDFLabels
-): Promise<void> {
+): Promise<jsPDF> {
   // Default fallback labels
   const defaultLabels: PDFLabels = {
     day: "Day",
@@ -239,6 +242,16 @@ export async function generateItineraryPDF(
     doc.text(activeLabels.generatedBy, MARGIN.LEFT, pageHeight - 10);
   }
 
+  return doc;
+}
+
+export async function generateItineraryPDF(
+  itinerary: Itinerary,
+  cityName: string,
+  locale: string = "en-US",
+  labels?: PDFLabels
+): Promise<void> {
+  const doc = await generateItineraryPDFDoc(itinerary, cityName, locale, labels);
   const fileName = `${(itinerary.name || cityName).replace(/[^a-zA-Z0-9]/g, "_")}_itinerary.pdf`;
   doc.save(fileName);
 }

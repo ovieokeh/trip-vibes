@@ -115,6 +115,41 @@ export async function getItinerary(id: string) {
   }
 }
 
+export async function saveItinerary(id: string, name?: string) {
+  try {
+    return await api<{ success: boolean }>(`/api/itinerary/${id}`, {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    });
+  } catch (error) {
+    console.error("Save Itinerary Error:", error);
+    throw error;
+  }
+}
+
+export async function updateItinerary(id: string, updates: { name?: string }) {
+  try {
+    return await api<{ success: boolean }>(`/api/itinerary/${id}`, {
+      method: "POST",
+      body: JSON.stringify(updates),
+    });
+  } catch (error) {
+    console.error("Update Itinerary Error:", error);
+    throw error;
+  }
+}
+
+export async function deleteItinerary(id: string) {
+  try {
+    return await api<{ success: boolean }>(`/api/itinerary/${id}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    console.error("Delete Itinerary Error:", error);
+    throw error;
+  }
+}
+
 export async function searchCities(query: string) {
   try {
     return await api<any[]>(`/api/cities/search`, { params: { query } });

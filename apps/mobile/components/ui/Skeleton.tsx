@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { View, DimensionValue, ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
@@ -119,18 +119,49 @@ export function SkeletonTripsList({ count = 3, className = "" }: { count?: numbe
 export function SkeletonItinerary({ className = "" }: { className?: string }) {
   return (
     <View className={`gap-4 ${className}`}>
-      {/* Day header skeleton */}
-      <View className="flex-row items-center gap-2 px-1">
-        <Skeleton width={80} height={24} borderRadius={12} />
-        <Skeleton width={120} height={16} />
-      </View>
-      {/* Items skeleton */}
-      {[1, 2, 3].map((i) => (
-        <View key={i} className="bg-card rounded-xl overflow-hidden">
-          <Skeleton width="100%" height={140} borderRadius={0} />
-          <View className="p-4 gap-2">
-            <Skeleton height={18} width="70%" />
-            <Skeleton height={14} width="50%" />
+      {[1, 2].map((day) => (
+        <View key={day} className="mb-2">
+          {/* Day Header */}
+          <View className="flex-row items-center px-4 mb-6 gap-3">
+            <Skeleton width={12} height={12} borderRadius={6} />
+            <View className="gap-1.5 py-1">
+              <Skeleton width={120} height={22} borderRadius={6} />
+              <Skeleton width={80} height={13} borderRadius={4} />
+            </View>
+          </View>
+
+          {/* Items */}
+          <View className="pl-0">
+            {[1, 2].map((item, idx) => (
+              <View key={`${day}-${item}`} className="flex-row px-4 mb-2">
+                {/* Timeline Column */}
+                <View className="w-[45px] items-center mr-3">
+                  <Skeleton width={35} height={12} borderRadius={4} className="mb-2" />
+                  <View className="w-0.5 flex-1 bg-muted rounded-sm" />
+                </View>
+
+                {/* Card content */}
+                <View
+                  className={`flex-1 bg-card rounded-2xl overflow-hidden mb-6 border border-border ${
+                    idx === 1 ? "opacity-60" : ""
+                  }`}
+                >
+                  <Skeleton width="100%" height={150} borderRadius={0} />
+                  <View className="p-4 gap-3">
+                    <Skeleton width={80} height={10} borderRadius={4} />
+                    <Skeleton width="70%" height={20} borderRadius={6} />
+                    <View className="gap-1.5">
+                      <Skeleton width="90%" height={14} borderRadius={4} />
+                      <Skeleton width="60%" height={14} borderRadius={4} />
+                    </View>
+                    <View className="flex-row gap-2 mt-2">
+                      <Skeleton width={60} height={24} borderRadius={12} />
+                      <Skeleton width={60} height={24} borderRadius={12} />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            ))}
           </View>
         </View>
       ))}

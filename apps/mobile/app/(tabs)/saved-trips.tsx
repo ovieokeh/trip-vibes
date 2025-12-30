@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { getUserItineraries } from "../../lib/vibe-api";
 import { Itinerary } from "@trip-vibes/shared";
 import { useTheme } from "../../components/ThemeProvider";
@@ -30,9 +30,11 @@ export default function SavedTripsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    loadTrips();
-  }, [loadTrips]);
+  useFocusEffect(
+    useCallback(() => {
+      loadTrips();
+    }, [loadTrips])
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -47,32 +49,66 @@ export default function SavedTripsScreen() {
     ][index % 3] as [string, string];
 
     return (
-      <TouchableOpacity className="mb-4" onPress={() => router.push(`/itinerary/${item.id}`)} activeOpacity={0.7}>
-        <Card variant="elevated" padding="none" className="overflow-hidden">
+      <TouchableOpacity className="mb-5" onPress={() => router.push(`/itinerary/${item.id}`)} activeOpacity={0.9}>
+        <Card
+          variant="elevated"
+          padding="none"
+          className="overflow-hidden shadow-sm bg-card"
+          style={{ borderWidth: 1, borderColor: colors.cardBorder }}
+        >
           {/* Gradient Accent Bar */}
-          <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} className="h-1" />
+          <LinearGradient
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={{ height: 8, width: "100%" }}
+          />
 
-          <View className="p-4 gap-2">
-            <Text className="text-[12px] text-muted-foreground">
-              {item.startDate ? format(new Date(item.startDate), "MMM d, yyyy") : "Draft"}
-            </Text>
-
-            <Text className="text-[18px] font-bold mb-3 text-foreground">
-              {item.name || `Trip to ${formatCity(item.cityId)}`}
-            </Text>
-
-            <View className="flex-row items-center gap-4">
-              <View className="flex-row items-center gap-1">
-                <Calendar size={14} color={colors.mutedForeground} />
-                <Text className="text-[13px] text-muted-foreground">{item.days?.length || 0} Days</Text>
-              </View>
-              <View className="flex-row items-center gap-1">
-                <MapPin size={14} color={colors.mutedForeground} />
-                <Text className="text-[13px] text-muted-foreground">
-                  {item.days?.reduce((acc, day) => acc + (day.activities?.length || 0), 0) || 0} Activities
+          <View className="p-5">
+            <View className="flex-row justify-between items-start mb-3">
+              <View>
+                <Text className="text-[20px] font-black text-foreground max-w-[240px] leading-tight" numberOfLines={1}>
+                  {item.name || `Trip to ${formatCity(item.cityId)}`}
+                </Text>
+                <Text className="text-sm font-medium text-muted-foreground mt-1">
+                  {item.startDate ? format(new Date(item.startDate), "MMMM d, yyyy") : "Date TBD"}
                 </Text>
               </View>
-              <ChevronRight size={20} color={colors.mutedForeground} className="ml-auto" />
+              {
+                /* Status Badge - simplified */
+                !item.startDate && (
+                  <View className="bg-muted px-2 py-1 rounded-md">
+                    <Text className="text-[10px] font-bold text-muted-foreground uppercase">Draft</Text>
+                  </View>
+                )
+              }
+            </View>
+
+            <View className="h-[1px] my-3" style={{ backgroundColor: colors.border + "40" }} />
+
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-4">
+                <View
+                  className="flex-row items-center gap-1.5 bg-muted/30 px-2.5 py-1.5 rounded-lg"
+                  style={{ borderWidth: 1, borderColor: colors.border + "20" }}
+                >
+                  <Calendar size={14} color={colors.primary} />
+                  <Text className="text-[13px] font-semibold text-foreground">{item.days?.length || 0} Days</Text>
+                </View>
+                <View
+                  className="flex-row items-center gap-1.5 bg-muted/30 px-2.5 py-1.5 rounded-lg"
+                  style={{ borderWidth: 1, borderColor: colors.border + "20" }}
+                >
+                  <MapPin size={14} color={colors.secondary} />
+                  <Text className="text-[13px] font-semibold text-foreground">
+                    {item.days?.reduce((acc, day) => acc + (day.activities?.length || 0), 0) || 0} Stops
+                  </Text>
+                </View>
+              </View>
+
+              <View className="w-8 h-8 rounded-full bg-muted/50 items-center justify-center">
+                <ChevronRight size={18} color={colors.mutedForeground} />
+              </View>
             </View>
           </View>
         </Card>
@@ -82,14 +118,14 @@ export default function SavedTripsScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-background">
+      <View className="flex-1 bg-muted/20">
         <SkeletonTripsList count={4} />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-muted/20">
       {trips.length === 0 ? (
         <View className="flex-1 justify-center px-10">
           <EmptyState

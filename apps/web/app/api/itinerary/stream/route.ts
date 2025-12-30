@@ -3,8 +3,9 @@ import { MatchingEngine } from "@/lib/engine/engine";
 import { UserPreferences } from "@/lib/types";
 import { cacheItinerary, getCachedItinerary, getVibeDescription } from "@/lib/engine/architect";
 import { db } from "@/lib/db";
-import { archetypes } from "@/lib/db/schema";
+import { archetypes, cities } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { generateDefaultTripName } from "@/lib/formatting";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,17 @@ export async function GET(req: NextRequest) {
 
             activity.note = vibeDesc.note;
           }
+        }
+
+        // 3.5. Generate and assign itinerary Name
+        const cityRecord = (await db.select().from(cities).where(eq(cities.id, prefs.cityId)).limit(1))[0];
+        if (cityRecord) {
+          itinerary.name = generateDefaultTripName(
+            cityRecord.name,
+            itinerary.startDate || prefs.startDate,
+            itinerary.endDate || prefs.endDate,
+            prefs.locale || "en"
+          );
         }
 
         // 4. Cache full itinerary

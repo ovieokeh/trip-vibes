@@ -1,9 +1,9 @@
 import { Platform } from "react-native";
 import { supabase } from "./supabase";
 
-// Helper to get local IP for Android emulator
-// Update this with your machine's local IP if testing on physical device
+// Update this with machine's local IP when testing on physical device
 export const API_URL = Platform.OS === "android" ? "http://10.0.2.2:3000" : "http://localhost:3000";
+export const WEB_URL = "https://trip-vibes.vercel.app";
 
 interface ApiOptions extends RequestInit {
   params?: Record<string, string>;

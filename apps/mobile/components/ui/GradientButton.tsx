@@ -130,16 +130,7 @@ export function GradientButton({
         ) : (
           <View className="flex-row items-center justify-center">
             {leftIcon && <View style={{ marginRight: iconGap }}>{leftIcon}</View>}
-            <Text
-              className={`font-bold text-white ${getTextSizeStyles()} ${textClassName}`}
-              style={{
-                textShadowColor: "rgba(0,0,0,0.2)",
-                textShadowOffset: { width: 0, height: 1 },
-                textShadowRadius: 2,
-              }}
-            >
-              {title}
-            </Text>
+            <Text className={`font-bold text-white ${getTextSizeStyles()} ${textClassName}`}>{title}</Text>
             {rightIcon && <View style={{ marginLeft: iconGap }}>{rightIcon}</View>}
           </View>
         )}

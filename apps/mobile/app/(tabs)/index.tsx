@@ -64,7 +64,7 @@ export default function Home() {
         <View className="gap-6">
           {/* Destination */}
           <View>
-            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1 opacity-80">
+            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1">
               Destination
             </Text>
             <Card variant="outlined" padding="md" pressable onPress={() => setCityModalVisible(true)}>
@@ -94,7 +94,7 @@ export default function Home() {
 
           {/* Dates */}
           <View>
-            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1 opacity-80">
+            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1">
               Dates
             </Text>
             <Card variant="outlined" padding="md" pressable onPress={() => setDateModalVisible(true)}>
@@ -126,7 +126,7 @@ export default function Home() {
 
           {/* Budget */}
           <View>
-            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1 opacity-80">
+            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1">
               Budget
             </Text>
             <BudgetSelect value={budget} onChange={setBudget} />

@@ -24,18 +24,10 @@ export function VibeCard({ vibe, onInfoPress }: VibeCardProps) {
 
       <View className="absolute bottom-0 inset-x-0 p-5 flex-row items-end justify-between">
         <View className="flex-1">
-          <Text
-            className="text-white text-[28px] font-bold mb-2"
-            numberOfLines={2}
-            style={{
-              textShadowColor: "rgba(0, 0, 0, 0.75)",
-              textShadowOffset: { width: -1, height: 1 },
-              textShadowRadius: 10,
-            }}
-          >
+          <Text className="text-white text-[28px] font-bold mb-2 leading-tight" numberOfLines={2}>
             {vibe.title}
           </Text>
-          <Text className="text-[#ddd] text-base capitalize font-semibold">{vibe.category}</Text>
+          <Text className="text-white/80 text-base capitalize font-semibold">{vibe.category}</Text>
         </View>
 
         {/* <TouchableOpacity onPress={onInfoPress} className="p-2.5 bg-white/20 rounded-full ml-2.5">

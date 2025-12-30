@@ -78,7 +78,10 @@ function createEvent(activity: TripActivity, dateStr: string, tripName: string):
 /**
  * Generate an ICS calendar file for the itinerary
  */
-export function generateCalendarFile(itinerary: Itinerary, cityName: string): void {
+/**
+ * Generate the ICS content string for the itinerary
+ */
+export function generateICSContent(itinerary: Itinerary, cityName: string): { content: string; filename: string } {
   const tripName = itinerary.name || `Trip to ${cityName}`;
   const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
@@ -102,12 +105,23 @@ export function generateCalendarFile(itinerary: Itinerary, cityName: string): vo
     "END:VCALENDAR",
   ].join("\r\n");
 
+  const filename = `${tripName.replace(/[^a-zA-Z0-9]/g, "_")}.ics`;
+
+  return { content: icsContent, filename };
+}
+
+/**
+ * Generate an ICS calendar file for the itinerary and trigger download
+ */
+export function generateCalendarFile(itinerary: Itinerary, cityName: string): void {
+  const { content, filename } = generateICSContent(itinerary, cityName);
+
   // Create and download file
-  const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+  const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${tripName.replace(/[^a-zA-Z0-9]/g, "_")}.ics`;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

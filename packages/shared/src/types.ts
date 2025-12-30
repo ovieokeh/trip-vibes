@@ -83,6 +83,7 @@ export interface Itinerary {
   name?: string;
   startDate?: string;
   endDate?: string;
+  isSaved?: boolean;
 }
 
 export interface UserPreferences {
