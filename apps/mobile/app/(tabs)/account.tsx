@@ -10,7 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 export default function AccountScreen() {
   const router = useRouter();
   const { user, isAnonymous, signOut } = useAuth();
-  const { colors, theme } = useTheme();
+  const { colors, theme, colorScheme, setColorScheme } = useTheme();
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -106,6 +106,33 @@ export default function AccountScreen() {
 
         <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 24 }]}>APPEARANCE</Text>
+
+        <View style={[styles.themeSelector, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <ThemeOption
+            label="Light"
+            active={colorScheme === "light"}
+            onPress={() => setColorScheme("light")}
+            colors={colors}
+          />
+          <View style={[styles.themeDivider, { backgroundColor: colors.border }]} />
+          <ThemeOption
+            label="Dark"
+            active={colorScheme === "dark"}
+            onPress={() => setColorScheme("dark")}
+            colors={colors}
+          />
+          <View style={[styles.themeDivider, { backgroundColor: colors.border }]} />
+          <ThemeOption
+            label="System"
+            active={colorScheme === "system"}
+            onPress={() => setColorScheme("system")}
+            colors={colors}
+          />
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 24 }]}>LEGAL</Text>
 
         <MenuItem
@@ -129,7 +156,6 @@ export default function AccountScreen() {
           variant="ghost"
           onPress={handleSignOut}
           leftIcon={<LogOut size={18} color={colors.error} />}
-          textStyle={{ color: colors.error }}
         />
       </View>
 
@@ -158,6 +184,35 @@ function MenuItem({ icon, label, onPress, colors, badge }: MenuItemProps) {
         {badge && <Badge label={badge} variant="primary" size="sm" />}
         <ChevronRight size={20} color={colors.mutedForeground} />
       </View>
+    </TouchableOpacity>
+  );
+}
+
+function ThemeOption({
+  label,
+  active,
+  onPress,
+  colors,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  colors: any;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.themeOption, active && { backgroundColor: colors.primary + "15" }]}
+    >
+      <Text
+        style={[
+          styles.themeOptionLabel,
+          { color: active ? colors.primary : colors.mutedForeground },
+          active && { fontWeight: "700" },
+        ]}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -276,5 +331,26 @@ const styles = StyleSheet.create({
   signOutSection: {
     alignItems: "center",
     marginTop: 8,
+  },
+  themeSelector: {
+    flexDirection: "row",
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  themeOption: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+  },
+  themeOptionLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  themeDivider: {
+    width: 1,
+    height: "100%",
   },
 });

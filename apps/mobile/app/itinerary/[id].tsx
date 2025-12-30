@@ -20,6 +20,7 @@ import { useTheme } from "../../components/ThemeProvider";
 import { LinearGradient } from "expo-linear-gradient";
 import { MapPin, Calendar, Sparkles, Share2, Bookmark, Home, AlertCircle, TrendingUp } from "lucide-react-native";
 import { format } from "date-fns";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -27,6 +28,7 @@ export default function ItineraryScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { colors, theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,9 +125,8 @@ export default function ItineraryScreen() {
             colors={[colors.primary, colors.accent]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.heroGradient}
+            style={[styles.heroGradient, { paddingTop: insets.top + 20 }]}
           >
-            <SafeAreaSpacer />
             <View style={styles.heroContent}>
               <View style={styles.sparkleContainer}>
                 <Sparkles size={24} color="rgba(255,255,255,0.6)" />
@@ -210,10 +211,6 @@ export default function ItineraryScreen() {
       </ScrollView>
     </>
   );
-}
-
-function SafeAreaSpacer() {
-  return <View style={{ height: Platform.OS === "ios" ? 60 : 40 }} />;
 }
 
 const styles = StyleSheet.create({
