@@ -94,6 +94,13 @@ export function DateRangePicker({
           </TouchableOpacity>
         </View>
 
+        <View style={styles.footer}>
+          <Text style={{ color: colors.mutedForeground, marginBottom: 10, textAlign: "center" }}>
+            {startDate && endDate ? "Selected: " + startDate + " to " + endDate : "Select a date range (max 14 days)"}
+          </Text>
+          <Button title="Confirm Dates" onPress={handleConfirm} fullWidth disabled={!startDate || !endDate} />
+        </View>
+
         <CalendarList
           markingType={"period"}
           markedDates={markedDates}
@@ -122,13 +129,6 @@ export function DateRangePicker({
             textDayHeaderFontSize: 14,
           }}
         />
-
-        <View style={styles.footer}>
-          <Text style={{ color: colors.mutedForeground, marginBottom: 10, textAlign: "center" }}>
-            {startDate && endDate ? "Selected: " + startDate + " to " + endDate : "Select a date range (max 14 days)"}
-          </Text>
-          <Button title="Confirm Dates" onPress={handleConfirm} fullWidth disabled={!startDate || !endDate} />
-        </View>
       </View>
     </Modal>
   );

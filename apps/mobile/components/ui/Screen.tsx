@@ -1,6 +1,6 @@
 import { View, StyleSheet, ViewProps, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors } from "../../constants/Colors";
+import { useTheme } from "../ThemeProvider";
 
 interface ScreenProps extends ViewProps {
   scrollable?: boolean;
@@ -20,12 +20,12 @@ export function Screen({
   refreshControl,
   ...props
 }: ScreenProps) {
-  const colors = Colors.light; // TODO: Add dark mode support
+  const { colors, theme } = useTheme();
 
   const containerStyle = [
     styles.container,
     { backgroundColor: colors.background },
-    padded && styles.padded,
+    padded && { paddingHorizontal: theme.spacing.xl },
     centered && styles.centered,
     style,
   ];
@@ -80,9 +80,6 @@ export function Screen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  padded: {
-    paddingHorizontal: 20,
   },
   centered: {
     alignItems: "center",

@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen, Input, Button } from "../../components/ui";
 import { useAuth } from "../../components/AuthProvider";
-import { Colors } from "../../constants/Colors";
+import { useTheme } from "../../components/ThemeProvider";
+import { LinearGradient } from "expo-linear-gradient";
+import { UserPlus } from "lucide-react-native";
 
 export default function SignupScreen() {
   const router = useRouter();
   const { signUp, updateUser, isAnonymous, user } = useAuth();
-  const colors = Colors.light;
+  const { colors, theme } = useTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,54 +70,82 @@ export default function SignupScreen() {
   };
 
   return (
-    <Screen scrollable padded>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.foreground }]}>Create Account</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Start planning your perfect trips</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: colors.background }}
+    >
+      <Screen scrollable padded>
+        <View style={styles.container}>
+          {/* Header with Icon */}
+          <View style={styles.header}>
+            <LinearGradient
+              colors={[colors.primary, colors.accent]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconGradient}
+            >
+              <UserPlus size={28} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.title, { color: colors.foreground }]}>Create Account</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Start planning your perfect trips</Text>
+          </View>
+
+          {/* Form */}
+          <View style={styles.form}>
+            <Input
+              label="Email"
+              placeholder="you@example.com"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoComplete="email"
+              autoCapitalize="none"
+            />
+
+            <Input
+              label="Password"
+              placeholder="Create a password"
+              value={password}
+              onChangeText={setPassword}
+              isPassword
+              autoComplete="new-password"
+            />
+
+            <Input
+              label="Confirm Password"
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              isPassword
+              autoComplete="new-password"
+            />
+
+            {error && (
+              <View style={[styles.errorBox, { backgroundColor: colors.error + "10" }]}>
+                <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+              </View>
+            )}
+
+            <Button
+              title="Create Account"
+              onPress={handleSignup}
+              loading={loading}
+              fullWidth
+              size="lg"
+              style={styles.button}
+            />
+          </View>
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <Text style={{ color: colors.mutedForeground }}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => router.push("/login")}>
+              <Text style={{ color: colors.primary, fontWeight: "600" }}>Sign In</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <View style={styles.form}>
-          <Input
-            label="Email"
-            placeholder="you@example.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoComplete="email"
-          />
-
-          <Input
-            label="Password"
-            placeholder="Create a password"
-            value={password}
-            onChangeText={setPassword}
-            isPassword
-            autoComplete="new-password"
-          />
-
-          <Input
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            isPassword
-            autoComplete="new-password"
-          />
-
-          {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
-
-          <Button title="Create Account" onPress={handleSignup} loading={loading} fullWidth style={styles.button} />
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={{ color: colors.mutedForeground }}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/login")}>
-            <Text style={{ color: colors.primary, fontWeight: "600" }}>Sign In</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Screen>
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -129,21 +159,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 40,
   },
+  iconGradient: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
   title: {
     fontSize: 28,
     fontWeight: "700",
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: "center",
+    lineHeight: 22,
   },
   form: {
     marginBottom: 24,
   },
-  error: {
-    fontSize: 14,
+  errorBox: {
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 14,
     textAlign: "center",
   },
   button: {
