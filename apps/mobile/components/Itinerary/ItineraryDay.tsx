@@ -43,7 +43,7 @@ export function ItineraryDay({ day, onAddActivity }: ItineraryDayProps) {
       <View className="pl-0">
         {day.activities.map((item, index) => (
           <React.Fragment key={item.id}>
-            <ItineraryItem item={item} dayDate={day.date} />
+            <ItineraryItem item={item} dayDate={day.date} isLastInDay={index === day.activities.length - 1} />
 
             {/* Add Activity Button after each item */}
             <TouchableOpacity
@@ -51,7 +51,7 @@ export function ItineraryDay({ day, onAddActivity }: ItineraryDayProps) {
               onPress={() => onAddActivity?.(index)}
               activeOpacity={0.6}
             >
-              <View className="absolute left-[38.5px] inset-y-0 w-[1px] bg-border" />
+              {/* <View className="absolute left-[38.5px] inset-y-0 w-[1px] bg-border" /> */}
               <View
                 className="flex-row items-center justify-center gap-1.5 border border-dashed rounded-xl py-2 ml-[57px] bg-background"
                 style={{ borderColor: colors.border + "60" }}

@@ -15,7 +15,7 @@ export function VibeCard({ vibe, onInfoPress }: VibeCardProps) {
 
   return (
     <View
-      className="rounded-[20px] overflow-hidden shadow-lg bg-background"
+      className="rounded-3xl overflow-hidden shadow-xl shadow-indigo-500/20 bg-background"
       style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}
     >
       <Image source={{ uri: vibe.imageUrl }} className="w-full h-full" resizeMode="cover" />

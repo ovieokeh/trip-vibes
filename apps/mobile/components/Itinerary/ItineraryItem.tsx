@@ -9,6 +9,7 @@ import { API_URL } from "../../lib/api";
 interface ItineraryItemProps {
   item: ItineraryItemType;
   dayDate?: string; // YYYY-MM-DD
+  isLastInDay?: boolean;
 }
 
 const getImageUri = (url?: string) => {
@@ -19,7 +20,7 @@ const getImageUri = (url?: string) => {
   return url;
 };
 
-export function ItineraryItem({ item, dayDate }: ItineraryItemProps) {
+export function ItineraryItem({ item, dayDate, isLastInDay }: ItineraryItemProps) {
   const { colors } = useTheme();
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [initialImageIndex, setInitialImageIndex] = useState(0);
@@ -85,10 +86,6 @@ export function ItineraryItem({ item, dayDate }: ItineraryItemProps) {
             <View className="w-0.5 flex-1 rounded-sm bg-border border-dashed border" />
           </View>
           <View className="flex-1 py-3 relative justify-center">
-            <View
-              className="absolute -left-3 inset-y-0 border-l border-dashed"
-              style={{ borderColor: colors.border + "40" }}
-            />
             <View className="self-start px-2 py-1 rounded-lg ml-3 bg-accent/10">
               <Text className="text-[10px] font-extrabold uppercase tracking-[0.5px] text-accent-foreground">
                 {item.transitNote || (transit ? `${transit.durationMinutes} min ${transit.mode}` : "Getting there")}
@@ -99,13 +96,15 @@ export function ItineraryItem({ item, dayDate }: ItineraryItemProps) {
       )}
 
       <View className="flex-row">
-        <View className="w-[45px] items-center mr-3">
+        <View className="w-[45px] items-center mr-3 relative">
           <Text className="text-[12px] font-bold mb-2 text-foreground font-mono">{item.startTime}</Text>
-          <View className="w-0.5 flex-1 rounded-sm" style={{ backgroundColor: colors.border + "50" }} />
+          <View
+            className={`absolute top-6 left-1/2 -ml-[0.5px] w-[1px] bg-border ${isLastInDay ? "-bottom-12" : "-bottom-28"}`}
+          />
         </View>
 
         <View
-          className="flex-1 rounded-2xl overflow-hidden border mb-6 shadow-sm bg-card"
+          className="flex-1 rounded-3xl overflow-hidden border border-accent/50 mb-6 shadow-lg shadow-indigo-500/10 bg-card"
           style={{ borderColor: colors.border + "30" }}
         >
           {/* Image Grid */}

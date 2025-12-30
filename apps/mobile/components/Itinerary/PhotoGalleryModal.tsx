@@ -4,6 +4,8 @@ import { X, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useTheme } from "../../components/ThemeProvider";
 import { API_URL } from "../../lib/api";
 
+import { BlurView } from "expo-blur";
+
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const getImageUri = (url?: string) => {
@@ -64,61 +66,63 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex = 0, t
   return (
     <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 bg-black/95">
-        <SafeAreaView className="flex-1">
-          <View className="h-[60px] flex-row items-center justify-between px-5 z-10">
-            <View className="flex-1">
-              <Text className="text-white text-base font-bold" numberOfLines={1}>
-                {title || "Photos"}
-              </Text>
-              <Text className="text-white/60 text-[12px]">
-                {currentIndex + 1} of {photos.length}
-              </Text>
+        <BlurView intensity={20} tint="dark" className="absolute top-0 inset-x-0 z-10">
+          <SafeAreaView>
+            <View className="h-[60px] flex-row items-center justify-between px-5">
+              <View className="flex-1">
+                <Text className="text-white text-base font-bold" numberOfLines={1}>
+                  {title || "Photos"}
+                </Text>
+                <Text className="text-white/60 text-[12px]">
+                  {currentIndex + 1} of {photos.length}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={onClose} className="p-2">
+                <X color="#fff" size={24} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={onClose} className="p-2">
-              <X color="#fff" size={24} />
+          </SafeAreaView>
+        </BlurView>
+
+        <FlatList
+          ref={flatListRef}
+          data={photos}
+          renderItem={renderItem}
+          keyExtractor={(_, index) => index.toString()}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          getItemLayout={(_, index) => ({
+            length: SCREEN_WIDTH,
+            offset: SCREEN_WIDTH * index,
+            index,
+          })}
+        />
+
+        {photos.length > 1 && (
+          <View className="absolute bottom-10 inset-x-0 flex-row justify-between px-10">
+            <TouchableOpacity
+              onPress={() => flatListRef.current?.scrollToIndex({ index: Math.max(0, currentIndex - 1) })}
+              disabled={currentIndex === 0}
+              className={`p-2.5 bg-white/10 rounded-full ${currentIndex === 0 ? "opacity-30" : ""}`}
+            >
+              <ChevronLeft color="#fff" size={32} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                flatListRef.current?.scrollToIndex({
+                  index: Math.min(photos.length - 1, currentIndex + 1),
+                })
+              }
+              disabled={currentIndex === photos.length - 1}
+              className={`p-2.5 bg-white/10 rounded-full ${currentIndex === photos.length - 1 ? "opacity-30" : ""}`}
+            >
+              <ChevronRight color="#fff" size={32} />
             </TouchableOpacity>
           </View>
-
-          <FlatList
-            ref={flatListRef}
-            data={photos}
-            renderItem={renderItem}
-            keyExtractor={(_, index) => index.toString()}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            getItemLayout={(_, index) => ({
-              length: SCREEN_WIDTH,
-              offset: SCREEN_WIDTH * index,
-              index,
-            })}
-          />
-
-          {photos.length > 1 && (
-            <View className="absolute bottom-10 inset-x-0 flex-row justify-between px-10">
-              <TouchableOpacity
-                onPress={() => flatListRef.current?.scrollToIndex({ index: Math.max(0, currentIndex - 1) })}
-                disabled={currentIndex === 0}
-                className={`p-2.5 bg-white/10 rounded-full ${currentIndex === 0 ? "opacity-30" : ""}`}
-              >
-                <ChevronLeft color="#fff" size={32} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() =>
-                  flatListRef.current?.scrollToIndex({
-                    index: Math.min(photos.length - 1, currentIndex + 1),
-                  })
-                }
-                disabled={currentIndex === photos.length - 1}
-                className={`p-2.5 bg-white/10 rounded-full ${currentIndex === photos.length - 1 ? "opacity-30" : ""}`}
-              >
-                <ChevronRight color="#fff" size={32} />
-              </TouchableOpacity>
-            </View>
-          )}
-        </SafeAreaView>
+        )}
       </View>
     </Modal>
   );

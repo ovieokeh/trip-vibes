@@ -4,7 +4,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { getUserItineraries } from "../../lib/vibe-api";
 import { Itinerary } from "@trip-vibes/shared";
 import { useTheme } from "../../components/ThemeProvider";
-import { Card, Badge, EmptyState, TAB_BAR_HEIGHT, SkeletonTripsList } from "../../components/ui";
+import { Card, Badge, EmptyState, TAB_BAR_HEIGHT, SkeletonTripsList, Screen } from "../../components/ui";
 import { format } from "date-fns";
 import { MapPin, Calendar, ChevronRight, Compass } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -125,7 +125,7 @@ export default function SavedTripsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-muted/20">
+    <Screen>
       {trips.length === 0 ? (
         <View className="flex-1 justify-center px-10">
           <EmptyState
@@ -141,12 +141,12 @@ export default function SavedTripsScreen() {
           data={trips}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 20, paddingBottom: TAB_BAR_HEIGHT + 20 }}
+          contentContainerStyle={{ padding: 8, paddingBottom: TAB_BAR_HEIGHT + 20 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         />
       )}
-    </View>
+    </Screen>
   );
 }
 

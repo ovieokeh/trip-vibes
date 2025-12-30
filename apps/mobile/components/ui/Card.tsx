@@ -48,7 +48,7 @@ export function Card({
       case "filled":
         return "bg-muted";
       default: // elevated
-        return "bg-card shadow-md";
+        return "bg-card shadow-lg shadow-indigo-500/10";
     }
   };
 
@@ -65,7 +65,7 @@ export function Card({
     }
   };
 
-  const baseClasses = `overflow-hidden rounded-xl ${getVariantClasses()} ${getPaddingClasses()} ${className}`;
+  const baseClasses = `overflow-hidden rounded-3xl ${getVariantClasses()} ${getPaddingClasses()} ${className}`;
 
   if (pressable) {
     return (
