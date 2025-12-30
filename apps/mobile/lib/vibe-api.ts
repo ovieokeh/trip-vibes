@@ -72,7 +72,7 @@ export function generateItineraryStream(
               callbacks.onResult(payload.data);
               es?.close();
             } else if (payload.type === "error") {
-              callbacks.onError(new Error(payload.message || "Unknown stream error"));
+              callbacks.onError(new Error(payload.message || payload.key || "Unknown stream error"));
               es?.close();
             }
           } catch (e) {
@@ -112,6 +112,24 @@ export async function getItinerary(id: string) {
     console.error("Get Itinerary Error:", error);
     if (__DEV__) return MOCK_ITINERARY;
     throw error;
+  }
+}
+
+export async function searchCities(query: string) {
+  try {
+    return await api<any[]>(`/api/cities/search`, { params: { query } });
+  } catch (error) {
+    console.error("Search Cities Error:", error);
+    return [];
+  }
+}
+
+export async function getCityById(id: string) {
+  try {
+    return await api<any>(`/api/cities/${id}`);
+  } catch (error) {
+    console.error("Get City By Id Error:", error);
+    return null;
   }
 }
 

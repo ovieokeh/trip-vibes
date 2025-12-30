@@ -74,12 +74,12 @@ export default function SavedTripsScreen() {
             <View style={styles.cardFooter}>
               <View style={styles.stat}>
                 <Calendar size={14} color={colors.mutedForeground} />
-                <Text style={[styles.statText, { color: colors.mutedForeground }]}>{item.days.length} Days</Text>
+                <Text style={[styles.statText, { color: colors.mutedForeground }]}>{item.days?.length || 0} Days</Text>
               </View>
               <View style={styles.stat}>
                 <MapPin size={14} color={colors.mutedForeground} />
                 <Text style={[styles.statText, { color: colors.mutedForeground }]}>
-                  {item.days.reduce((acc, day) => acc + day.activities.length, 0)} Activities
+                  {item.days?.reduce((acc, day) => acc + (day.activities?.length || 0), 0) || 0} Activities
                 </Text>
               </View>
               <ChevronRight size={20} color={colors.mutedForeground} style={{ marginLeft: "auto" }} />

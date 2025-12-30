@@ -1,16 +1,6 @@
 import React from "react";
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-  TouchableOpacityProps,
-  View,
-} from "react-native";
+import { TouchableOpacity, Text, ActivityIndicator, View, TouchableOpacityProps } from "react-native";
 import * as Haptics from "expo-haptics";
-import { useTheme } from "../ThemeProvider";
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -18,7 +8,8 @@ interface ButtonProps extends TouchableOpacityProps {
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   fullWidth?: boolean;
-  textStyle?: TextStyle;
+  className?: string;
+  textClassName?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   haptic?: boolean;
@@ -30,17 +21,15 @@ export function Button({
   size = "md",
   loading = false,
   fullWidth = false,
+  className = "",
+  textClassName = "",
   disabled,
-  style,
-  textStyle,
   leftIcon,
   rightIcon,
   haptic = true,
   onPress,
   ...props
 }: ButtonProps) {
-  const { colors, theme } = useTheme();
-
   const handlePress = (e: any) => {
     if (haptic && !disabled && !loading) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -48,112 +37,94 @@ export function Button({
     onPress?.(e);
   };
 
-  const getVariantStyles = (): { container: ViewStyle; text: TextStyle } => {
+  // Base styles
+  const baseStyles = "flex-row items-center justify-center rounded-2xl";
+  const disabledStyles = disabled || loading ? "opacity-50" : "";
+  const widthStyles = fullWidth ? "w-full" : "self-start";
+
+  // Variant styles
+  const getVariantStyles = () => {
     switch (variant) {
       case "secondary":
-        return {
-          container: { backgroundColor: colors.secondary },
-          text: { color: colors.secondaryForeground },
-        };
+        return "bg-secondary";
       case "outline":
-        return {
-          container: {
-            backgroundColor: "transparent",
-            borderWidth: 1.5,
-            borderColor: colors.primary,
-          },
-          text: { color: colors.primary },
-        };
+        return "bg-transparent border-[1.5px] border-primary";
       case "ghost":
-        return {
-          container: { backgroundColor: "transparent" },
-          text: { color: colors.primary },
-        };
+        return "bg-transparent";
       case "destructive":
-        return {
-          container: { backgroundColor: colors.destructive },
-          text: { color: colors.destructiveForeground },
-        };
+        return "bg-destructive";
       default:
-        return {
-          container: { backgroundColor: colors.primary },
-          text: { color: colors.primaryForeground },
-        };
+        return "bg-primary";
     }
   };
 
-  const getSizeStyles = (): { container: ViewStyle; text: TextStyle; iconGap: number } => {
+  // Text color styles
+  const getTextStyles = () => {
+    switch (variant) {
+      case "secondary":
+        return "text-secondary-foreground";
+      case "outline":
+      case "ghost":
+        return "text-primary";
+      case "destructive":
+        return "text-destructive-foreground";
+      default:
+        return "text-primary-foreground";
+    }
+  };
+
+  // Size styles
+  const getSizeStyles = () => {
     switch (size) {
       case "sm":
-        return {
-          container: { paddingVertical: 8, paddingHorizontal: 16 },
-          text: { fontSize: 14 },
-          iconGap: 6,
-        };
+        return "py-2 px-4";
       case "lg":
-        return {
-          container: { paddingVertical: 16, paddingHorizontal: 32 },
-          text: { fontSize: 18 },
-          iconGap: 10,
-        };
+        return "py-4 px-8";
       default:
-        return {
-          container: { paddingVertical: 12, paddingHorizontal: 24 },
-          text: { fontSize: 16 },
-          iconGap: 8,
-        };
+        return "py-3 px-6";
     }
   };
 
-  const variantStyles = getVariantStyles();
-  const sizeStyles = getSizeStyles();
+  const getTextSizeStyles = () => {
+    switch (size) {
+      case "sm":
+        return "text-sm";
+      case "lg":
+        return "text-lg";
+      default:
+        return "text-base";
+    }
+  };
+
+  // Icon spacing
+  const iconGap = size === "sm" ? 6 : size === "lg" ? 10 : 8;
 
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        { borderRadius: theme.radius.lg },
-        variantStyles.container,
-        sizeStyles.container,
-        fullWidth && styles.fullWidth,
-        disabled && styles.disabled,
-        style,
-      ]}
+      className={`${baseStyles} ${getVariantStyles()} ${getSizeStyles()} ${widthStyles} ${disabledStyles} ${className}`}
       disabled={disabled || loading}
       activeOpacity={0.8}
       onPress={handlePress}
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={variantStyles.text.color} size="small" />
+        <ActivityIndicator
+          color={
+            variant === "outline" || variant === "ghost"
+              ? "#6366f1" // primary color hardcoded or could use theme
+              : variant === "secondary"
+                ? "#000"
+                : "#FFF"
+          }
+          size="small"
+        />
       ) : (
-        <View style={styles.content}>
-          {leftIcon && <View style={{ marginRight: sizeStyles.iconGap }}>{leftIcon}</View>}
-          <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>{title}</Text>
-          {rightIcon && <View style={{ marginLeft: sizeStyles.iconGap }}>{rightIcon}</View>}
+        <View className="flex-row items-center justify-center">
+          {leftIcon && <View style={{ marginRight: iconGap }}>{leftIcon}</View>}
+          <Text className={`font-semibold ${getTextStyles()} ${getTextSizeStyles()} ${textClassName}`}>{title}</Text>
+          {rightIcon && <View style={{ marginLeft: iconGap }}>{rightIcon}</View>}
         </View>
       )}
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  content: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fullWidth: {
-    width: "100%",
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  text: {
-    fontWeight: "600",
-  },
-});

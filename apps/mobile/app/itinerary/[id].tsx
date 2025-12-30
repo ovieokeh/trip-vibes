@@ -8,6 +8,8 @@ import {
   RefreshControl,
   Share,
   TouchableOpacity,
+  Dimensions,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Itinerary } from "@trip-vibes/shared";
@@ -16,8 +18,10 @@ import { Screen, Button, Badge, Card } from "../../components/ui";
 import { ItineraryDay } from "../../components/Itinerary/ItineraryDay";
 import { useTheme } from "../../components/ThemeProvider";
 import { LinearGradient } from "expo-linear-gradient";
-import { MapPin, Calendar, Sparkles, Share2, Bookmark, Home, AlertCircle } from "lucide-react-native";
+import { MapPin, Calendar, Sparkles, Share2, Bookmark, Home, AlertCircle, TrendingUp } from "lucide-react-native";
 import { format } from "date-fns";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function ItineraryScreen() {
   const { id } = useLocalSearchParams();
@@ -57,8 +61,8 @@ export default function ItineraryScreen() {
     if (!itinerary) return;
     try {
       await Share.share({
-        message: `Check out my trip to ${formatCity(itinerary.cityId)}! 🌍✨`,
-        title: itinerary.name || `Trip to ${formatCity(itinerary.cityId)}`,
+        message: `Check out my trip to ${itinerary.name}! 🌍✨`,
+        title: itinerary.name || `Trip to ${itinerary.name}`,
       });
     } catch (e) {
       console.error("Share error:", e);
@@ -66,7 +70,7 @@ export default function ItineraryScreen() {
   };
 
   // Dynamic header
-  const headerTitle = itinerary ? itinerary.name || `Trip to ${formatCity(itinerary.cityId)}` : "Your Trip";
+  const headerTitle = itinerary ? itinerary.name : "Your Trip";
 
   if (loading) {
     return (
@@ -94,13 +98,14 @@ export default function ItineraryScreen() {
 
   return (
     <>
-      {/* Dynamic header with share button */}
       <Stack.Screen
         options={{
-          title: headerTitle,
+          headerTitle: "",
+          headerTransparent: true,
+          headerTintColor: "#fff",
           headerRight: () => (
-            <TouchableOpacity onPress={handleShare} style={{ padding: 8 }}>
-              <Share2 size={22} color={colors.foreground} />
+            <TouchableOpacity onPress={handleShare} style={styles.headerIconButton}>
+              <Share2 size={20} color="#fff" />
             </TouchableOpacity>
           ),
         }}
@@ -113,53 +118,70 @@ export default function ItineraryScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* Hero Section */}
-        <LinearGradient
-          colors={[colors.primary, colors.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.heroGradient}
-        >
-          <Sparkles size={32} color="rgba(255,255,255,0.3)" style={styles.heroIcon} />
-          <Text style={styles.heroTitle}>{itinerary.name || `Trip to ${formatCity(itinerary.cityId)}`}</Text>
-          <View style={styles.heroStats}>
-            <View style={styles.heroStat}>
-              <MapPin size={14} color="rgba(255,255,255,0.8)" />
-              <Text style={styles.heroStatText}>{formatCity(itinerary.cityId)}</Text>
-            </View>
-            <View style={styles.heroStat}>
-              <Calendar size={14} color="rgba(255,255,255,0.8)" />
-              <Text style={styles.heroStatText}>{itinerary.days.length} Days</Text>
-            </View>
-          </View>
-          {itinerary.startDate && (
-            <Badge
-              label={format(new Date(itinerary.startDate), "MMM d, yyyy")}
-              variant="muted"
-              size="sm"
-              style={{ marginTop: 12, backgroundColor: "rgba(255,255,255,0.2)" }}
-              textStyle={{ color: "#fff" }}
-            />
-          )}
-        </LinearGradient>
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={[colors.primary, colors.accent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroGradient}
+          >
+            <SafeAreaSpacer />
+            <View style={styles.heroContent}>
+              <View style={styles.sparkleContainer}>
+                <Sparkles size={24} color="rgba(255,255,255,0.6)" />
+              </View>
+              <Text style={styles.heroTitle}>{headerTitle}</Text>
 
-        {/* Quick Stats Card */}
-        <Card variant="outlined" padding="md" style={styles.statsCard}>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: colors.primary }]}>{itinerary.days.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Days</Text>
+              <View style={styles.heroStatsRow}>
+                <View style={styles.heroStatItem}>
+                  <MapPin size={14} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.heroStatText}>{itinerary.name}</Text>
+                </View>
+                <View style={styles.bullet} />
+                <View style={styles.heroStatItem}>
+                  <Calendar size={14} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.heroStatText}>{itinerary.days.length} Days</Text>
+                </View>
+              </View>
+
+              <View style={styles.chipRow}>
+                {itinerary.startDate && (
+                  <View style={styles.dateChip}>
+                    <Text style={styles.dateChipText}>
+                      {format(new Date(itinerary.startDate), "MMM d")} -{" "}
+                      {itinerary.endDate ? format(new Date(itinerary.endDate), "MMM d, yyyy") : ""}
+                    </Text>
+                  </View>
+                )}
+                <View style={[styles.dateChip, { backgroundColor: "rgba(255,255,255,0.15)" }]}>
+                  <TrendingUp size={12} color="#fff" />
+                  <Text style={styles.dateChipText}>Optimized</Text>
+                </View>
+              </View>
+            </View>
+          </LinearGradient>
+
+          {/* Quick Stats Overlap Card */}
+          <View style={[styles.statsOverlap, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.statBox}>
+              <Text style={[styles.statValue, { color: colors.foreground }]}>{itinerary.days.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>DAYS</Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: colors.secondary }]}>{totalActivities}</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>Activities</Text>
+            <View style={styles.statBox}>
+              <Text style={[styles.statValue, { color: colors.foreground }]}>{totalActivities}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>STOPS</Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statBox}>
+              <Text style={[styles.statValue, { color: colors.foreground }]}>{itinerary.name}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>DEST</Text>
             </View>
           </View>
-        </Card>
+        </View>
 
         {/* Days List */}
         <View style={styles.daysSection}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Itinerary</Text>
           {itinerary.days.map((day) => (
             <ItineraryDay key={day.id} day={day} />
           ))}
@@ -168,31 +190,30 @@ export default function ItineraryScreen() {
         {/* Footer Actions */}
         <View style={styles.footer}>
           <Button
-            title="View Saved Trips"
+            title="Explore Saved Trips"
             onPress={() => router.push("/saved-trips")}
             variant="outline"
             leftIcon={<Bookmark size={18} color={colors.primary} />}
             fullWidth
-            style={{ marginBottom: 12 }}
+            style={styles.footerButton}
           />
           <Button
             title="Back Home"
             onPress={() => router.push("/")}
             variant="ghost"
             leftIcon={<Home size={18} color={colors.primary} />}
+            fullWidth
           />
         </View>
 
-        {/* Bottom spacing for safe area */}
-        <View style={{ height: 40 }} />
+        <View style={{ height: 60 }} />
       </ScrollView>
     </>
   );
 }
 
-function formatCity(id: string) {
-  if (!id) return "";
-  return id.charAt(0).toUpperCase() + id.slice(1);
+function SafeAreaSpacer() {
+  return <View style={{ height: Platform.OS === "ios" ? 60 : 40 }} />;
 }
 
 const styles = StyleSheet.create({
@@ -201,10 +222,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 20,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 15,
   },
   errorIconBg: {
     width: 96,
@@ -224,31 +241,45 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: "center",
   },
+  headerIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 16,
+  },
+  heroWrapper: {
+    marginBottom: 60,
+  },
   heroGradient: {
-    marginHorizontal: 20,
-    marginTop: 8,
-    marginBottom: 20,
-    borderRadius: 20,
-    padding: 24,
+    paddingBottom: 80,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  heroContent: {
     alignItems: "center",
   },
-  heroIcon: {
-    position: "absolute",
-    top: 16,
-    right: 16,
+  sparkleContainer: {
+    marginBottom: 16,
   },
   heroTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "900",
     color: "#fff",
     textAlign: "center",
     marginBottom: 12,
+    letterSpacing: -0.5,
   },
-  heroStats: {
+  heroStatsRow: {
     flexDirection: "row",
-    gap: 24,
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 20,
   },
-  heroStat: {
+  heroStatItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -256,43 +287,90 @@ const styles = StyleSheet.create({
   heroStatText: {
     color: "rgba(255,255,255,0.9)",
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
   },
-  statsCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
+  bullet: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.4)",
   },
-  statsRow: {
+  chipRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  dateChip: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
   },
-  statItem: {
+  dateChipText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  statsOverlap: {
+    position: "absolute",
+    bottom: -40,
+    left: 24,
+    right: 24,
+    height: 80,
+    borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  statBox: {
     flex: 1,
     alignItems: "center",
   },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 4,
+  statValue: {
+    fontSize: 20,
+    fontWeight: "900",
   },
   statLabel: {
-    fontSize: 13,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginTop: 2,
   },
   statDivider: {
     width: 1,
-    height: 40,
+    height: 30,
+    opacity: 0.5,
   },
   daysSection: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
+    marginTop: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 16,
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    letterSpacing: -0.5,
   },
   footer: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingHorizontal: 24,
+    paddingTop: 32,
     alignItems: "center",
+  },
+  footerButton: {
+    marginBottom: 16,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

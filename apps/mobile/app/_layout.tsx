@@ -5,6 +5,7 @@ import { TouchableOpacity } from "react-native";
 import { AuthProvider } from "../components/AuthProvider";
 import { ThemeProvider, useTheme } from "../components/ThemeProvider";
 import { ChevronLeft, X, Share2 } from "lucide-react-native";
+import "../global.css";
 
 function RootLayoutNav() {
   const { colors, isDark } = useTheme();

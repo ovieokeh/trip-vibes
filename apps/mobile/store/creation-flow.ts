@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { Vibe, DeckEngine, VibeProfile } from "@trip-vibes/shared";
+import { City, DeckEngine, VibeProfile } from "@trip-vibes/shared";
 
 interface CreationFlowState {
   // Trip Details
-  cityId: string | null;
+  city: City | null;
   startDate: Date | null;
   endDate: Date | null;
 
@@ -13,7 +13,7 @@ interface CreationFlowState {
   vibeProfile: VibeProfile;
 
   // Actions
-  setCityId: (id: string) => void;
+  setCity: (city: City) => void;
   setDates: (start: Date, end: Date) => void;
   likeVibe: (vibeId: string) => void;
   dislikeVibe: (vibeId: string) => void;
@@ -21,14 +21,14 @@ interface CreationFlowState {
 }
 
 export const useCreationFlow = create<CreationFlowState>((set) => ({
-  cityId: null,
+  city: null,
   startDate: null,
   endDate: null,
   likedVibes: [],
   dislikedVibes: [],
   vibeProfile: { weights: {}, swipes: 0 },
 
-  setCityId: (id) => set({ cityId: id }),
+  setCity: (city) => set({ city }),
   setDates: (start, end) => set({ startDate: start, endDate: end }),
 
   likeVibe: (vibeId) =>
@@ -45,7 +45,7 @@ export const useCreationFlow = create<CreationFlowState>((set) => ({
 
   resetFlow: () =>
     set({
-      cityId: null,
+      city: null,
       startDate: null,
       endDate: null,
       likedVibes: [],

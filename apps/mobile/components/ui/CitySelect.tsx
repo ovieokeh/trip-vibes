@@ -1,26 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, Modal, StyleSheet, TouchableOpacity, FlatList, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Modal, StyleSheet, TouchableOpacity, FlatList, TextInput, ActivityIndicator } from "react-native";
 import { Colors } from "../../constants/Colors";
 import { X, Search, Check } from "lucide-react-native";
-
-// Shared interface or local definition
-interface City {
-  id: string;
-  name: string;
-  country: string;
-}
-
-// Temporary hardcoded list matching some likely database entries
-const POPULAR_CITIES: City[] = [
-  { id: "amsterdam", name: "Amsterdam", country: "Netherlands" },
-  { id: "london", name: "London", country: "United Kingdom" },
-  { id: "paris", name: "Paris", country: "France" },
-  { id: "new-york", name: "New York", country: "United States" },
-  { id: "tokyo", name: "Tokyo", country: "Japan" },
-  { id: "barcelona", name: "Barcelona", country: "Spain" },
-  { id: "berlin", name: "Berlin", country: "Germany" },
-  { id: "rome", name: "Rome", country: "Italy" },
-];
+import { useDebounce } from "../../hooks/use-debounce";
+import { searchCities, getCityById } from "../../lib/vibe-api";
+import { City } from "@trip-vibes/shared";
 
 interface CitySelectProps {
   visible: boolean;
@@ -32,8 +16,44 @@ interface CitySelectProps {
 export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CitySelectProps) {
   const colors = Colors.light;
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
+  const [results, setResults] = useState<City[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const filteredCities = POPULAR_CITIES.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    if (!visible) {
+      setSearch("");
+      setResults([]);
+      return;
+    }
+
+    const query = debouncedSearch.trim();
+    if (query.length < 2) {
+      setResults([]);
+      return;
+    }
+
+    let active = true;
+    const fetchResults = async () => {
+      setIsLoading(true);
+      try {
+        const data = await searchCities(query);
+        if (active) {
+          setResults(data);
+        }
+      } catch (err) {
+        console.error("Search failed:", err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    fetchResults();
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedSearch, visible]);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -55,10 +75,11 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
             placeholderTextColor={colors.mutedForeground}
             autoFocus={false}
           />
+          {isLoading && <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />}
         </View>
 
         <FlatList
-          data={filteredCities}
+          data={results}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -79,6 +100,17 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
             </TouchableOpacity>
           )}
           contentContainerStyle={{ paddingBottom: 40 }}
+          ListEmptyComponent={
+            !isLoading && search.length >= 2 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No cities found</Text>
+              </View>
+            ) : search.length > 0 && search.length < 2 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Type at least 2 characters</Text>
+              </View>
+            ) : null
+          }
         />
       </View>
     </Modal>
@@ -130,6 +162,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   countryName: {
+    fontSize: 14,
+  },
+  emptyContainer: {
+    padding: 32,
+    alignItems: "center",
+  },
+  emptyText: {
     fontSize: 14,
   },
 });

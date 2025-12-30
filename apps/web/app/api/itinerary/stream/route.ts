@@ -8,6 +8,17 @@ import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const prefsStr = searchParams.get("prefs");
@@ -15,6 +26,11 @@ export async function GET(req: NextRequest) {
   if (!prefsStr) {
     return NextResponse.json({ error: "Missing prefs" }, { status: 400 });
   }
+
+  // 1. Pre-stream Auth & Credit Check
+  const { getCurrentUserId, deductCredit } = await import("@/lib/auth-actions");
+  const userId = await getCurrentUserId();
+  const hasCredits = await deductCredit();
 
   const prefs = JSON.parse(decodeURIComponent(prefsStr)) as UserPreferences;
 
@@ -26,13 +42,15 @@ export async function GET(req: NextRequest) {
       };
 
       try {
-        // 0. Check and Deduct Credit (Rate Limiting)
+        // 0. Initial Status
         sendEvent({ type: "progress", key: "checking_credits", step: "init" });
-        const { deductCredit } = await import("@/lib/auth-actions");
-        const hasCredits = await deductCredit();
 
         if (!hasCredits) {
-          sendEvent({ type: "error", key: "insufficient_credits" });
+          sendEvent({
+            type: "error",
+            key: "insufficient_credits",
+            message: "Insufficient credits. Please sign in or upgrade to continue.",
+          });
           controller.close();
           return;
         }
@@ -89,7 +107,7 @@ export async function GET(req: NextRequest) {
 
         // 4. Cache full itinerary
         sendEvent({ type: "progress", key: "finalizing", step: "finalize" });
-        await cacheItinerary(prefs.cityId, prefs, itinerary);
+        await cacheItinerary(prefs.cityId, prefs, itinerary, userId);
 
         sendEvent({ type: "result", data: itinerary });
         controller.close();
@@ -107,6 +125,7 @@ export async function GET(req: NextRequest) {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
+      "Access-Control-Allow-Origin": "*",
     },
   });
 }

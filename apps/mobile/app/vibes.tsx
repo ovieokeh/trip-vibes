@@ -15,7 +15,7 @@ const REQUIRED_LIKES = 6;
 export default function VibesScreen() {
   const router = useRouter();
   const { colors, theme } = useTheme();
-  const { cityId, likeVibe, dislikeVibe, likedVibes, dislikedVibes, vibeProfile } = useCreationFlow();
+  const { city, likeVibe, dislikeVibe, likedVibes, dislikedVibes, vibeProfile } = useCreationFlow();
 
   const [currentVibe, setCurrentVibe] = useState<Vibe | null>(null);
   const [nextVibe, setNextVibe] = useState<Vibe | null>(null);
@@ -40,7 +40,7 @@ export default function VibesScreen() {
 
   // Effect to load cards
   useEffect(() => {
-    if (!cityId) {
+    if (!city) {
       console.warn("No cityId found, cannot load vibes.");
       router.replace("/");
       return;
@@ -54,7 +54,7 @@ export default function VibesScreen() {
     if (!currentVibe) {
       const card = engine.getNextCard(vibeProfile);
       if (card) {
-        setCurrentVibe(archetypeToVibe(card, cityId));
+        setCurrentVibe(archetypeToVibe(card, city.id));
       } else {
         setComplete(true);
       }
@@ -63,10 +63,10 @@ export default function VibesScreen() {
     if (currentVibe && !nextVibe) {
       const nextCard = engine.getNextCard(vibeProfile, [currentVibe.id]);
       if (nextCard) {
-        setNextVibe(archetypeToVibe(nextCard, cityId));
+        setNextVibe(archetypeToVibe(nextCard, city.id));
       }
     }
-  }, [engine, vibeProfile, cityId, likedVibes, currentVibe, nextVibe, router]);
+  }, [engine, vibeProfile, city, likedVibes, currentVibe, nextVibe, router]);
 
   const handleSwipeRight = (vibe: Vibe) => {
     likeVibe(vibe.id);

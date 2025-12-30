@@ -225,6 +225,7 @@ export async function saveItineraryAction(id: string, name?: string, itineraryDa
 
 export async function getSavedItinerariesAction() {
   const userId = await getCurrentUserId();
+  console.log(`[getSavedItinerariesAction] User: ${userId || "None"}`);
 
   // Build query conditions
   const conditions = [eq(itineraries.isSaved, true)];
@@ -240,6 +241,7 @@ export async function getSavedItinerariesAction() {
       startDate: itineraries.startDate,
       endDate: itineraries.endDate,
       createdAt: itineraries.createdAt,
+      data: itineraries.data,
       city: cities.name,
       country: cities.country,
     })
@@ -248,7 +250,22 @@ export async function getSavedItinerariesAction() {
     .where(and(...conditions))
     .orderBy(desc(itineraries.createdAt));
 
-  return saved;
+  console.log(`[getSavedItinerariesAction] Found ${saved.length} itineraries`);
+
+  return saved.map((row) => {
+    try {
+      const parsedData = JSON.parse(row.data);
+      return {
+        ...parsedData,
+        ...row,
+        // Ensure name/dates from the top-level row override what's in 'data' if they exist
+        // although they should be in sync.
+      };
+    } catch (e) {
+      console.error(`Failed to parse itinerary data for ${row.id}:`, e);
+      return row;
+    }
+  });
 }
 
 export async function getItineraryByIdAction(id: string): Promise<Itinerary | null> {

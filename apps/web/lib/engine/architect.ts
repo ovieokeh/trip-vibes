@@ -88,7 +88,12 @@ export async function getVibeDescription(
   }
 }
 
-export async function cacheItinerary(cityId: string, prefs: UserPreferences, itinerary: Itinerary) {
+export async function cacheItinerary(
+  cityId: string,
+  prefs: UserPreferences,
+  itinerary: Itinerary,
+  userId?: string | null
+) {
   const prefsHash = crypto
     .createHash("sha256")
     .update(
@@ -102,6 +107,7 @@ export async function cacheItinerary(cityId: string, prefs: UserPreferences, iti
 
   await db.insert(itineraries).values({
     id: itinerary.id,
+    userId: userId || null,
     cityId,
     preferencesHash: prefsHash,
     data: JSON.stringify(itinerary),

@@ -16,19 +16,18 @@ export default function Home() {
   const { colors, theme } = useTheme();
 
   // Store
-  const { cityId, startDate, endDate, setCityId, setDates } = useCreationFlow();
+  const { city, startDate, endDate, setCity, setDates } = useCreationFlow();
 
   // Local UI state
   const [cityModalVisible, setCityModalVisible] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
 
-  const cityName = cityId ? cityId.charAt(0).toUpperCase() + cityId.slice(1) : null;
   const dateRangeText =
     startDate && endDate
       ? `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
       : null;
 
-  const isSetupComplete = !!cityId && !!startDate && !!endDate;
+  const isSetupComplete = !!city && !!startDate && !!endDate;
 
   if (loading) {
     return (
@@ -79,7 +78,7 @@ export default function Home() {
               </View>
               <View style={styles.setupCardText}>
                 <Text style={[styles.setupLabel, { color: colors.mutedForeground }]}>Destination</Text>
-                <Text style={[styles.setupValue, { color: colors.foreground }]}>{cityName || "Where to?"}</Text>
+                <Text style={[styles.setupValue, { color: colors.foreground }]}>{city?.name || "Where to?"}</Text>
               </View>
             </View>
             <ChevronRight size={20} color={colors.mutedForeground} />
@@ -155,8 +154,8 @@ export default function Home() {
       <CitySelect
         visible={cityModalVisible}
         onClose={() => setCityModalVisible(false)}
-        onSelect={(city) => setCityId(city.id)}
-        selectedCityId={cityId}
+        onSelect={(city) => setCity(city)}
+        selectedCityId={city?.id}
       />
 
       <DateRangePicker

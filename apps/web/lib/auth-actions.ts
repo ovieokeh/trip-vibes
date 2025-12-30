@@ -15,12 +15,12 @@ export async function syncUserToDatabase() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log("[syncUserToDatabase] Supabase user:", user?.id, "isAnonymous:", user?.is_anonymous);
-
   if (!user) {
     console.log("[syncUserToDatabase] No user found in Supabase session");
     return null;
   }
+
+  console.log(`[syncUserToDatabase] Syncing User: ${user.id}, Email: ${user.email}, Anonymous: ${user.is_anonymous}`);
 
   // Check if user exists in our DB
   const existingUser = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
@@ -44,12 +44,14 @@ export async function syncUserToDatabase() {
         .set({
           email: user.email,
           isAnonymous: false,
-          credits: (dbUser.credits ?? 0) < 5 ? 5 : dbUser.credits ?? 5, // Grant bonus credits if they have less than 5
+          credits: (dbUser.credits ?? 0) < 5 ? 5 : (dbUser.credits ?? 5), // Grant bonus credits if they have less than 5
           updatedAt: new Date(),
         })
         .where(eq(users.id, user.id));
     } else {
-      console.log("[syncUserToDatabase] User already exists and up to date:", user.id);
+      console.log(
+        `[syncUserToDatabase] User ${user.id} exists. Credits: ${dbUser.credits}, isAnonymous: ${dbUser.isAnonymous}`
+      );
     }
   }
 
@@ -102,16 +104,17 @@ export async function getUserCredits(): Promise<number> {
  * Deduct a credit from the user. Returns false if no credits available.
  */
 export async function deductCredit(): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await syncUserToDatabase();
 
-  if (!user) return false;
+  if (!user) {
+    console.log("[deductCredit] No user found after sync");
+    return false;
+  }
 
   const result = await db.select({ credits: users.credits }).from(users).where(eq(users.id, user.id)).limit(1);
-
   const currentCredits = result[0]?.credits ?? 0;
+
+  console.log(`[deductCredit] User: ${user.id}, Credits: ${currentCredits}`);
 
   if (currentCredits <= 0) {
     return false;

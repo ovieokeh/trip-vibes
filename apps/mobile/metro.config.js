@@ -1,4 +1,5 @@
 const { getDefaultConfig } = require("expo/metro-config");
+const { withNativeWind } = require("nativewind/metro");
 const path = require("path");
 
 const projectRoot = __dirname;
@@ -18,4 +19,14 @@ config.resolver.nodeModulesPaths = [
 // 3. Force Metro to resolve (sub)dependencies only from the `nodeModulesPaths`
 config.resolver.disableHierarchicalLookup = true;
 
-module.exports = config;
+// 4. PNPM Symlink Support and Aliases
+config.resolver.unstable_enableSymlinks = true;
+config.resolver.unstable_enablePackageExports = true;
+
+// 5. Fix for missing worklets plugin
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  "babel-plugin-module-resolver": path.resolve(workspaceRoot, "node_modules/babel-plugin-module-resolver"),
+};
+
+module.exports = withNativeWind(config, { input: "./global.css" });

@@ -16,6 +16,8 @@ export async function api<T = any>(endpoint: string, options: ApiOptions = {}): 
     data: { session },
   } = await supabase.auth.getSession();
 
+  console.log(`[MobileAPI] Calling ${endpoint}, Session: ${session ? "Active" : "None"}`);
+
   const config: RequestInit = {
     ...customConfig,
     headers: {

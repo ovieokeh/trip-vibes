@@ -9,8 +9,9 @@
     "clean": "turbo clean"
   },
   "devDependencies": {
-    "turbo": "latest",
-    "prettier": "latest"
+    "babel-plugin-module-resolver": "^5.0.2",
+    "prettier": "latest",
+    "turbo": "latest"
   },
   "packageManager": "pnpm@9.0.0"
 }

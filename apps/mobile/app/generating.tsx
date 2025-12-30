@@ -23,7 +23,7 @@ const STEP_MAPPING: Record<string, string> = {
 export default function GeneratingScreen() {
   const router = useRouter();
   const { colors, theme } = useTheme();
-  const { cityId, likedVibes, startDate, endDate, resetFlow } = useCreationFlow();
+  const { city, likedVibes, startDate, endDate, resetFlow } = useCreationFlow();
 
   const [currentStep, setCurrentStep] = useState("Initializing...");
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +54,11 @@ export default function GeneratingScreen() {
 
   useEffect(() => {
     if (startedRef.current) return;
+    if (!city) {
+      console.warn("No city found, cannot generate itinerary.");
+      router.replace("/");
+      return;
+    }
     startedRef.current = true;
 
     const start = startDate ? startDate.toISOString() : new Date().toISOString();
@@ -61,7 +66,7 @@ export default function GeneratingScreen() {
 
     const cancel = generateItineraryStream(
       {
-        cityId: cityId || "amsterdam",
+        cityId: city.id,
         vibes: likedVibes,
         startDate: start,
         endDate: end,
@@ -148,7 +153,7 @@ export default function GeneratingScreen() {
         {/* City Info */}
         <View style={[styles.cityBadge, { backgroundColor: colors.muted }]}>
           <Text style={[styles.cityText, { color: colors.mutedForeground }]}>
-            {cityId ? cityId.charAt(0).toUpperCase() + cityId.slice(1) : "Your destination"}
+            {city?.name ? city.name : "Your destination"}
           </Text>
         </View>
       </View>
