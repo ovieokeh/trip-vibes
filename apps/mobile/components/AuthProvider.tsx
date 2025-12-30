@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import { supabase } from "../lib/supabase";
+import { api } from "../lib/api";
 import type { User, Session, UserAttributes } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -8,6 +9,8 @@ interface AuthContextType {
   session: Session | null;
   isAnonymous: boolean;
   loading: boolean;
+  credits: number;
+  refreshCredits: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInAnonymously: () => Promise<{ error: Error | null }>;
@@ -20,6 +23,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   isAnonymous: true,
   loading: true,
+  credits: 0,
+  refreshCredits: async () => {},
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
   signInAnonymously: async () => ({ error: null }),
@@ -36,6 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [credits, setCredits] = useState(0);
+
+  const refreshCredits = useCallback(async () => {
+    try {
+      const response = await api<{ credits: number }>("/api/user/credits");
+      setCredits(response.credits ?? 0);
+    } catch (error) {
+      console.error("[AuthProvider] Error refreshing credits:", error);
+    }
+  }, []);
 
   // Handle app state changes to refresh session when app comes to foreground
   useEffect(() => {
@@ -163,6 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         isAnonymous,
         loading,
+        credits,
+        refreshCredits,
         signIn,
         signUp,
         signInAnonymously,

@@ -1,16 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../components/AuthProvider";
 import { useTheme } from "../../components/ThemeProvider";
 import { Button, Card, Badge, Screen, TabBarSpacer } from "../../components/ui";
-import { User, Mail, Calendar, ChevronRight, LogOut, FileText, Shield, Bookmark } from "lucide-react-native";
+import { User, ChevronRight, LogOut, FileText, Shield } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { getUserItineraries } from "../../lib/vibe-api";
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { user, isAnonymous, signOut } = useAuth();
+  const { user, isAnonymous, signOut, credits, refreshCredits } = useAuth();
   const { colors, colorScheme, setColorScheme } = useTheme();
+
+  useEffect(() => {
+    if (user && !isAnonymous) {
+      refreshCredits();
+    }
+  }, [user, isAnonymous, refreshCredits]);
+
+  const [tripCount, setTripCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (user && !isAnonymous) {
+      getUserItineraries().then((trips) => {
+        setTripCount(trips?.length ?? 0);
+      });
+    }
+  }, [user, isAnonymous]);
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -74,12 +91,12 @@ export default function AccountScreen() {
       <Card variant="outlined" padding="lg" className="mb-6">
         <View className="flex-row items-center">
           <View className="flex-1 items-center">
-            <Text className="text-[24px] font-bold mb-1 text-primary">3</Text>
+            <Text className="text-[24px] font-bold mb-1 text-primary">{credits}</Text>
             <Text className="text-[13px] text-muted-foreground">Credits</Text>
           </View>
           <View className="w-[1px] h-10 bg-border" />
           <TouchableOpacity className="flex-1 items-center" onPress={() => router.push("/saved-trips")}>
-            <Text className="text-[24px] font-bold mb-1 text-foreground">—</Text>
+            <Text className="text-[24px] font-bold mb-1 text-foreground">{tripCount ?? 0}</Text>
             <Text className="text-[13px] text-muted-foreground">Trips</Text>
           </TouchableOpacity>
         </View>
