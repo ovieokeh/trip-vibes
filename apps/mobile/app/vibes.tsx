@@ -9,12 +9,14 @@ import { useCreationFlow } from "../store/creation-flow";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { LinearGradient } from "expo-linear-gradient";
 import { Sparkles, ThumbsUp, ThumbsDown, RotateCcw } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const REQUIRED_LIKES = 6;
 
 export default function VibesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { city, likeVibe, dislikeVibe, likedVibes, dislikedVibes, vibeProfile } = useCreationFlow();
 
   const [currentVibe, setCurrentVibe] = useState<Vibe | null>(null);
@@ -172,7 +174,7 @@ export default function VibesScreen() {
           </View>
 
           {/* Action Hints */}
-          <View className="flex-row justify-around px-10 pb-10 pt-4">
+          <View className="flex-row justify-around px-10 pt-4" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
             <View className="items-center gap-2">
               <View className="w-12 h-12 rounded-full items-center justify-center bg-error/20">
                 <ThumbsDown size={20} color={colors.error} />

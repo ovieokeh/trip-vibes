@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Modal, TouchableOpacity, FlatList, TextInput, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { X, Search, Check } from "lucide-react-native";
 import { useTheme } from "../ThemeProvider";
 import { useDebounce } from "../../hooks/use-debounce";
@@ -57,8 +58,8 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View className="flex-1 bg-background">
-        <View className="flex-row justify-between items-center p-4 pt-6 border-b border-border">
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="flex-row justify-between items-center p-4 border-b border-border">
           <Text className="text-lg font-semibold text-foreground">Select Destination</Text>
           <TouchableOpacity onPress={onClose}>
             <X color={colors.foreground} size={24} />
@@ -111,7 +112,7 @@ export function CitySelect({ visible, onClose, onSelect, selectedCityId }: CityS
             ) : null
           }
         />
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

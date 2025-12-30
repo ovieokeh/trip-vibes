@@ -4,14 +4,16 @@ import { useRouter } from "expo-router";
 import { getUserItineraries } from "../../lib/vibe-api";
 import { Itinerary } from "@trip-vibes/shared";
 import { useTheme } from "../../components/ThemeProvider";
-import { Card, Badge, EmptyState } from "../../components/ui";
+import { Card, Badge, EmptyState, TAB_BAR_HEIGHT } from "../../components/ui";
 import { format } from "date-fns";
 import { MapPin, Calendar, ChevronRight, Compass } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SavedTripsScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [trips, setTrips] = useState<Itinerary[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,13 +52,10 @@ export default function SavedTripsScreen() {
           {/* Gradient Accent Bar */}
           <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} className="h-1" />
 
-          <View className="p-4">
-            <View className="flex-row justify-between items-center mb-3">
-              <Badge label={item.cityId.toUpperCase()} variant="muted" size="sm" />
-              <Text className="text-[12px] text-muted-foreground">
-                {item.startDate ? format(new Date(item.startDate), "MMM d, yyyy") : "Draft"}
-              </Text>
-            </View>
+          <View className="p-4 gap-2">
+            <Text className="text-[12px] text-muted-foreground">
+              {item.startDate ? format(new Date(item.startDate), "MMM d, yyyy") : "Draft"}
+            </Text>
 
             <Text className="text-[18px] font-bold mb-3 text-foreground">
               {item.name || `Trip to ${formatCity(item.cityId)}`}
@@ -106,7 +105,7 @@ export default function SavedTripsScreen() {
           data={trips}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerClassName="p-5 pb-[100px]"
+          contentContainerStyle={{ padding: 20, paddingBottom: TAB_BAR_HEIGHT + 20 }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         />

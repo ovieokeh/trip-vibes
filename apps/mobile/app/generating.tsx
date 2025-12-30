@@ -23,7 +23,7 @@ const STEP_MAPPING: Record<string, string> = {
 export default function GeneratingScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { city, likedVibes, startDate, endDate, resetFlow } = useCreationFlow();
+  const { city, likedVibes, startDate, endDate, budget, resetFlow } = useCreationFlow();
 
   const [currentStep, setCurrentStep] = useState("Initializing...");
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +70,7 @@ export default function GeneratingScreen() {
         vibes: likedVibes,
         startDate: start,
         endDate: end,
-        budget: "medium",
+        budget: budget || "medium",
       },
       {
         onProgress: (progress: StreamProgress) => {

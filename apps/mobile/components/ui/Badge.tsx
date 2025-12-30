@@ -70,7 +70,7 @@ export function Badge({
 
   return (
     <View
-      className={`self-start flex-row items-center justify-center rounded-full ${variants.container} ${sizes.container} ${className}`}
+      className={`w-full flex-row items-center justify-center rounded-full ${variants.container} ${sizes.container} ${className}`}
       style={style}
     >
       {children || (

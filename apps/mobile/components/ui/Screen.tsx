@@ -1,11 +1,14 @@
 import React from "react";
 import { View, ViewProps, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import type { Edge } from "react-native-safe-area-context";
 
 interface ScreenProps extends ViewProps {
   scrollable?: boolean;
   padded?: boolean;
   safeArea?: boolean;
+  /** Which edges to apply safe area insets to. Defaults to all edges. */
+  edges?: Edge[];
   centered?: boolean;
   refreshControl?: React.ReactElement;
   className?: string;
@@ -17,6 +20,7 @@ export function Screen({
   scrollable = false,
   padded = true,
   safeArea = true,
+  edges,
   centered = false,
   className = "",
   contentContainerClassName = "",
@@ -31,7 +35,7 @@ export function Screen({
 
   if (scrollable && safeArea) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
+      <SafeAreaView className="flex-1 bg-background" edges={edges}>
         <ScrollView
           contentContainerClassName={`${containerClasses} ${contentContainerClassName}`}
           showsVerticalScrollIndicator={false}
@@ -64,7 +68,7 @@ export function Screen({
 
   if (safeArea) {
     return (
-      <SafeAreaView className="flex-1 bg-background" {...props}>
+      <SafeAreaView className="flex-1 bg-background" edges={edges} {...props}>
         <View className={containerClasses} style={style}>
           {children}
         </View>

@@ -1,9 +1,9 @@
 import React from "react";
-import { View, Text, TouchableOpacity, Alert, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../components/AuthProvider";
 import { useTheme } from "../../components/ThemeProvider";
-import { Button, Card, Badge } from "../../components/ui";
+import { Button, Card, Badge, Screen, TabBarSpacer } from "../../components/ui";
 import { User, Mail, Calendar, ChevronRight, LogOut, FileText, Shield, Bookmark } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -61,11 +61,7 @@ export default function AccountScreen() {
     : "Unknown";
 
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerClassName="px-5 pt-5"
-      showsVerticalScrollIndicator={false}
-    >
+    <Screen scrollable safeArea={false} padded={false} contentContainerClassName="px-5 pt-5">
       {/* Profile Header */}
       <View className="items-center mb-6">
         <LinearGradient
@@ -77,7 +73,9 @@ export default function AccountScreen() {
           <Text className="text-[32px] font-bold text-white">{user.email?.charAt(0).toUpperCase() || "U"}</Text>
         </LinearGradient>
         <Text className="text-[18px] font-semibold mb-2 text-foreground">{user.email}</Text>
-        <Badge label={`Member since ${memberSince}`} variant="muted" size="sm" />
+        <View className="w-full flex-row justify-center items-center">
+          <Badge label={`Member since ${memberSince}`} variant="muted" size="sm" />
+        </View>
       </View>
 
       {/* Stats Card */}
@@ -155,8 +153,8 @@ export default function AccountScreen() {
       </View>
 
       {/* Bottom Padding */}
-      <View className="h-[100px]" />
-    </ScrollView>
+      <TabBarSpacer />
+    </Screen>
   );
 }
 

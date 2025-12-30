@@ -1,6 +1,7 @@
 import React from "react";
 import { TouchableOpacity, Text, ActivityIndicator, View, TouchableOpacityProps } from "react-native";
 import * as Haptics from "expo-haptics";
+import { useTheme } from "../ThemeProvider";
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
@@ -30,6 +31,8 @@ export function Button({
   onPress,
   ...props
 }: ButtonProps) {
+  const { colors } = useTheme();
+
   const handlePress = (e: any) => {
     if (haptic && !disabled && !loading) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -111,10 +114,10 @@ export function Button({
         <ActivityIndicator
           color={
             variant === "outline" || variant === "ghost"
-              ? "#6366f1" // primary color hardcoded or could use theme
+              ? colors.primary
               : variant === "secondary"
-                ? "#000"
-                : "#FFF"
+                ? colors.secondaryForeground
+                : colors.primaryForeground
           }
           size="small"
         />

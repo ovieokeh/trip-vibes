@@ -8,3 +8,4 @@ export { Header } from "./Header";
 export { EmptyState } from "./EmptyState";
 export { CitySelect } from "./CitySelect";
 export { DateRangePicker } from "./DateRangePicker";
+export { TabBarSpacer, TAB_BAR_HEIGHT } from "./TabBarSpacer";

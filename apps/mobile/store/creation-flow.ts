@@ -8,6 +8,7 @@ interface CreationFlowState {
   endDate: Date | null;
 
   // Vibe Selection
+  budget: "low" | "medium" | "high" | null;
   likedVibes: string[];
   dislikedVibes: string[];
   vibeProfile: VibeProfile;
@@ -15,6 +16,7 @@ interface CreationFlowState {
   // Actions
   setCity: (city: City) => void;
   setDates: (start: Date, end: Date) => void;
+  setBudget: (budget: "low" | "medium" | "high") => void;
   likeVibe: (vibeId: string) => void;
   dislikeVibe: (vibeId: string) => void;
   resetFlow: () => void;
@@ -24,12 +26,14 @@ export const useCreationFlow = create<CreationFlowState>((set) => ({
   city: null,
   startDate: null,
   endDate: null,
+  budget: "medium", // Default to medium like web
   likedVibes: [],
   dislikedVibes: [],
   vibeProfile: { weights: {}, swipes: 0 },
 
   setCity: (city) => set({ city }),
   setDates: (start, end) => set({ startDate: start, endDate: end }),
+  setBudget: (budget) => set({ budget }),
 
   likeVibe: (vibeId) =>
     set((state) => ({
@@ -48,6 +52,7 @@ export const useCreationFlow = create<CreationFlowState>((set) => ({
       city: null,
       startDate: null,
       endDate: null,
+      budget: "medium",
       likedVibes: [],
       dislikedVibes: [],
       vibeProfile: { weights: {}, swipes: 0 },

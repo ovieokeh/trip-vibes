@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { View, Text, Modal, TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { CalendarList, DateData } from "react-native-calendars";
 import { useTheme } from "../ThemeProvider";
 import { Button } from "./Button";
@@ -85,8 +86,8 @@ export function DateRangePicker({
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View className="flex-1 bg-background">
-        <View className="flex-row justify-between items-center p-4 pt-6 border-b border-border">
+      <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
+        <View className="flex-row justify-between items-center p-4 border-b border-border">
           <Text className="text-lg font-semibold text-foreground">Select Dates</Text>
           <TouchableOpacity onPress={onClose}>
             <X color={colors.foreground} size={24} />
@@ -128,7 +129,7 @@ export function DateRangePicker({
             textDayHeaderFontSize: 14,
           }}
         />
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }

@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, TouchableOpacity } from "react-native";
+import { useRouter, Stack } from "expo-router";
 import { useAuth } from "../../components/AuthProvider";
 import { useTheme } from "../../components/ThemeProvider";
-import { Button, Card, Badge } from "../../components/ui";
+import { Button, Card, Badge, Screen, TabBarSpacer } from "../../components/ui";
 import { CitySelect } from "../../components/ui/CitySelect";
 import { DateRangePicker } from "../../components/ui/DateRangePicker";
+import { BudgetSelect } from "../../components/ui/BudgetSelect";
 import { useCreationFlow } from "../../store/creation-flow";
 import { useState } from "react";
 import { MapPin, Calendar, Sparkles, ChevronRight } from "lucide-react-native";
@@ -16,18 +17,24 @@ export default function Home() {
   const { colors } = useTheme();
 
   // Store
-  const { city, startDate, endDate, setCity, setDates } = useCreationFlow();
+  const { city, startDate, endDate, budget, setCity, setDates, setBudget } = useCreationFlow();
 
   // Local UI state
   const [cityModalVisible, setCityModalVisible] = useState(false);
   const [dateModalVisible, setDateModalVisible] = useState(false);
+
+  // Import extra icons for decoration
+  // Note: We need to ensure these are imported at the top
+  // I will assume I can't easily change the imports here without a separate call or a very large replacement.
+  // Actually, I can just use the existing imports and add new ones if I replace the whole file content or a large chunk.
+  // Let's stick to the plan. I'll replace the return statement and state hooks.
 
   const dateRangeText =
     startDate && endDate
       ? `${startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
       : null;
 
-  const isSetupComplete = !!city && !!startDate && !!endDate;
+  const isSetupComplete = !!city && !!startDate && !!endDate && !!budget;
 
   if (loading) {
     return (
@@ -38,107 +45,109 @@ export default function Home() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="pb-5" showsVerticalScrollIndicator={false}>
-      {/* Hero Section */}
-      <LinearGradient
-        colors={[colors.primary, colors.accent]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        className="mx-5 mt-2 mb-6 rounded-3xl overflow-hidden"
-      >
-        <View className="p-6 flex-row justify-between items-center">
-          <View className="flex-1">
-            <Text className="text-[28px] font-bold text-white mb-2 leading-[34px]">Plan Your{"\n"}Perfect Trip</Text>
-            <Text className="text-sm text-white/80 leading-[20px]">
-              Swipe through vibes, get a personalized itinerary
-            </Text>
-          </View>
-          <Sparkles size={48} color="rgba(255,255,255,0.3)" className="ml-4" />
+    <Screen scrollable safeArea={false} padded={false} contentContainerClassName="pb-10">
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View className="px-6 pt-16 pb-8 z-10">
+        {/* Hero Section */}
+        <View className="items-center mb-10">
+          <Text className="text-4xl md:text-5xl font-black text-center text-foreground leading-[1.1] mb-2">
+            Don't Plan.
+          </Text>
+          <Text className="text-4xl md:text-5xl font-black text-center text-primary leading-[1.1]">Just Vibe.</Text>
+          <Text className="text-base text-center text-muted-foreground mt-4 max-w-[280px] leading-6">
+            Swipe through curated cards. We'll build a smart, location-aware itinerary based on your taste.
+          </Text>
         </View>
-      </LinearGradient>
 
-      {/* Setup Section */}
-      <View className="px-5 mb-6">
-        <Text className="text-xl font-bold mb-4 text-foreground">Start Planning</Text>
+        {/* Setup Form */}
+        <View className="gap-6">
+          {/* Destination */}
+          <View>
+            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1 opacity-80">
+              Destination
+            </Text>
+            <Card variant="outlined" padding="md" pressable onPress={() => setCityModalVisible(true)}>
+              <View className="flex-row items-center justify-between py-1">
+                <View className="flex-row items-center flex-1">
+                  {city ? (
+                    <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-primary/15">
+                      <MapPin size={18} color={colors.primary} />
+                    </View>
+                  ) : (
+                    <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-muted">
+                      <MapPin size={18} color={colors.mutedForeground} />
+                    </View>
+                  )}
 
-        {/* Destination Card */}
-        <Card variant="outlined" padding="lg" pressable onPress={() => setCityModalVisible(true)} className="mb-3">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <View className="w-11 h-11 rounded-full items-center justify-center mr-3.5 bg-primary/15">
-                <MapPin size={20} color={colors.primary} />
+                  <View className="flex-1">
+                    <Text className={`text-lg font-medium ${city ? "text-foreground" : "text-muted-foreground"}`}>
+                      {city?.name || "Select a city..."}
+                    </Text>
+                    {city && <Text className="text-xs text-muted-foreground">{city.country}</Text>}
+                  </View>
+                </View>
+                <ChevronRight size={20} color={colors.mutedForeground} />
               </View>
-              <View className="flex-1">
-                <Text className="text-[12px] font-semibold uppercase tracking-wider mb-1 text-muted-foreground">
-                  Destination
-                </Text>
-                <Text className="text-base font-medium text-foreground">{city?.name || "Where to?"}</Text>
-              </View>
-            </View>
-            <ChevronRight size={20} color={colors.mutedForeground} />
+            </Card>
           </View>
-        </Card>
 
-        {/* Dates Card */}
-        <Card variant="outlined" padding="lg" pressable onPress={() => setDateModalVisible(true)} className="mb-3">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <View className="w-11 h-11 rounded-full items-center justify-center mr-3.5 bg-secondary/15">
-                <Calendar size={20} color={colors.secondary} />
+          {/* Dates */}
+          <View>
+            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1 opacity-80">
+              Dates
+            </Text>
+            <Card variant="outlined" padding="md" pressable onPress={() => setDateModalVisible(true)}>
+              <View className="flex-row items-center justify-between py-1">
+                <View className="flex-row items-center flex-1">
+                  {startDate && endDate ? (
+                    <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-secondary/15">
+                      <Calendar size={18} color={colors.secondary} />
+                    </View>
+                  ) : (
+                    <View className="w-10 h-10 rounded-full items-center justify-center mr-3 bg-muted">
+                      <Calendar size={18} color={colors.mutedForeground} />
+                    </View>
+                  )}
+
+                  <View className="flex-1">
+                    <Text
+                      className={`text-lg font-medium ${dateRangeText ? "text-foreground" : "text-muted-foreground"}`}
+                    >
+                      {dateRangeText || "When are you going?"}
+                    </Text>
+                    {dateRangeText && <Text className="text-xs text-muted-foreground">Select dates</Text>}
+                  </View>
+                </View>
+                <ChevronRight size={20} color={colors.mutedForeground} />
               </View>
-              <View className="flex-1">
-                <Text className="text-[12px] font-semibold uppercase tracking-wider mb-1 text-muted-foreground">
-                  Travel Dates
-                </Text>
-                <Text className="text-base font-medium text-foreground">{dateRangeText || "When?"}</Text>
-              </View>
-            </View>
-            <ChevronRight size={20} color={colors.mutedForeground} />
+            </Card>
           </View>
-        </Card>
 
-        {/* CTA Button */}
-        <Button
-          title={isSetupComplete ? "Find Your Vibe" : "Select Destination & Dates"}
-          onPress={() => router.push("/vibes")}
-          fullWidth
-          disabled={!isSetupComplete}
-          size="lg"
-          leftIcon={isSetupComplete ? <Sparkles size={20} color={colors.primaryForeground} /> : undefined}
-          className={`mt-2 ${isSetupComplete ? "" : "opacity-50"}`}
-        />
+          {/* Budget */}
+          <View>
+            <Text className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2 ml-1 opacity-80">
+              Budget
+            </Text>
+            <BudgetSelect value={budget} onChange={setBudget} />
+          </View>
+
+          {/* CTA Button */}
+          <Button
+            title={isSetupComplete ? "Find Your Vibe" : "Start Vibe Check"}
+            onPress={() => router.push("/vibes")}
+            fullWidth
+            disabled={!isSetupComplete}
+            size="lg"
+            leftIcon={isSetupComplete ? <Sparkles size={20} color={colors.primaryForeground} /> : undefined}
+            className={`mt-4 shadow-lg ${isSetupComplete ? "shadow-primary/30" : "opacity-50"}`}
+            textClassName="text-lg font-bold tracking-tight"
+          />
+        </View>
       </View>
 
-      {/* User Section */}
-      {!user || isAnonymous ? (
-        <View className="px-5 mb-6">
-          <Card variant="filled" padding="lg">
-            <Text className="text-[18px] font-bold mb-2 text-foreground">Save Your Trips</Text>
-            <Text className="text-sm leading-5 text-muted-foreground">
-              Sign in to save your itineraries and access them anywhere
-            </Text>
-            <Button title="Sign In" variant="outline" onPress={() => router.push("/login")} className="mt-4" />
-          </Card>
-        </View>
-      ) : (
-        <View className="px-5">
-          <Text className="text-xl font-bold mb-4 text-foreground">Quick Actions</Text>
-          <TouchableOpacity
-            className="flex-row items-center justify-between py-4 border-b border-border"
-            onPress={() => router.push("/saved-trips")}
-            activeOpacity={0.7}
-          >
-            <View className="flex-row items-center gap-2">
-              <Text className="text-base font-medium text-foreground">View Saved Trips</Text>
-              <Badge label="New" variant="primary" size="sm" />
-            </View>
-            <ChevronRight size={20} color={colors.mutedForeground} />
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* Bottom Padding for Tab Bar */}
-      <View className="h-[100px]" />
+      <TabBarSpacer />
 
       {/* Modals */}
       <CitySelect
@@ -155,6 +164,6 @@ export default function Home() {
         initialStartDate={startDate}
         initialEndDate={endDate}
       />
-    </ScrollView>
+    </Screen>
   );
 }

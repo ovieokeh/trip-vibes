@@ -116,7 +116,7 @@ export default function ItineraryScreen() {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             className="pb-20 px-6 rounded-b-[32px]"
-            style={{ paddingTop: insets.top + 20 }}
+            style={{ paddingTop: insets.top + 60 }}
           >
             <View className="items-center">
               <View className="mb-4">
