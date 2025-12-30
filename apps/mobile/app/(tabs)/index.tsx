@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { useAuth } from "../../components/AuthProvider";
 import { useTheme } from "../../components/ThemeProvider";
-import { Button, Card, Badge, Screen, TabBarSpacer } from "../../components/ui";
+import { Card, Screen, TabBarSpacer, GradientButton } from "../../components/ui";
 import { CitySelect } from "../../components/ui/CitySelect";
 import { DateRangePicker } from "../../components/ui/DateRangePicker";
 import { BudgetSelect } from "../../components/ui/BudgetSelect";
@@ -45,7 +45,7 @@ export default function Home() {
   }
 
   return (
-    <Screen scrollable safeArea={false} padded={false} contentContainerClassName="pb-10">
+    <Screen scrollable safeArea={false} padded={false} contentContainerClassName="py-12">
       <Stack.Screen options={{ headerShown: false }} />
 
       <View className="px-6 pt-16 pb-8 z-10">
@@ -133,15 +133,15 @@ export default function Home() {
           </View>
 
           {/* CTA Button */}
-          <Button
-            title={isSetupComplete ? "Find Your Vibe" : "Start Vibe Check"}
+          <GradientButton
+            title={isSetupComplete ? "Find Your Vibe" : "Complete setup above"}
+            gradient="primary"
             onPress={() => router.push("/vibes")}
             fullWidth
             disabled={!isSetupComplete}
             size="lg"
-            leftIcon={isSetupComplete ? <Sparkles size={20} color={colors.primaryForeground} /> : undefined}
+            leftIcon={isSetupComplete ? <Sparkles size={20} color="#fff" /> : undefined}
             className={`mt-4 shadow-lg ${isSetupComplete ? "shadow-primary/30" : "opacity-50"}`}
-            textClassName="text-lg font-bold tracking-tight"
           />
         </View>
       </View>

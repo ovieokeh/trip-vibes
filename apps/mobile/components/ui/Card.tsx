@@ -1,12 +1,16 @@
 import React from "react";
-import { View, TouchableOpacity, TouchableOpacityProps } from "react-native";
-import { useTheme } from "../ThemeProvider";
+import { View, Pressable, PressableProps, ViewStyle } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import { springs, scales } from "../../constants/motion";
 
-interface CardProps extends TouchableOpacityProps {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+interface CardProps extends PressableProps {
   children: React.ReactNode;
   variant?: "elevated" | "outlined" | "filled";
   padding?: "none" | "sm" | "md" | "lg";
   pressable?: boolean;
+  animated?: boolean;
 }
 
 export function Card({
@@ -14,10 +18,29 @@ export function Card({
   variant = "elevated",
   padding = "md",
   pressable = false,
+  animated = true,
   className = "",
   style,
+  onPressIn,
+  onPressOut,
   ...props
 }: CardProps & { className?: string }) {
+  const pressed = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: withSpring(pressed.value ? scales.pressed : 1, springs.gentle) }],
+  }));
+
+  const handlePressIn = (e: any) => {
+    if (animated) pressed.value = 1;
+    onPressIn?.(e);
+  };
+
+  const handlePressOut = (e: any) => {
+    pressed.value = 0;
+    onPressOut?.(e);
+  };
+
   const getVariantClasses = () => {
     switch (variant) {
       case "outlined":
@@ -46,27 +69,33 @@ export function Card({
 
   if (pressable) {
     return (
-      <TouchableOpacity className={baseClasses} style={style} activeOpacity={0.7} {...props}>
+      <AnimatedPressable
+        className={baseClasses}
+        style={[animated ? animatedStyle : undefined, style]}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        {...props}
+      >
         {children}
-      </TouchableOpacity>
+      </AnimatedPressable>
     );
   }
 
   return (
-    <View className={baseClasses} style={style}>
+    <View className={baseClasses} style={style as ViewStyle}>
       {children}
     </View>
   );
 }
 
 // Sub-components for structured cards
-interface CardHeaderProps {
+interface CardSubProps {
   children: React.ReactNode;
   className?: string;
-  style?: any;
+  style?: ViewStyle;
 }
 
-export function CardHeader({ children, className = "", style }: CardHeaderProps) {
+export function CardHeader({ children, className = "", style }: CardSubProps) {
   return (
     <View className={`mb-3 ${className}`} style={style}>
       {children}
@@ -74,7 +103,7 @@ export function CardHeader({ children, className = "", style }: CardHeaderProps)
   );
 }
 
-export function CardContent({ children, className = "", style }: CardHeaderProps) {
+export function CardContent({ children, className = "", style }: CardSubProps) {
   return (
     <View className={className} style={style}>
       {children}
@@ -82,7 +111,7 @@ export function CardContent({ children, className = "", style }: CardHeaderProps
   );
 }
 
-export function CardFooter({ children, className = "", style }: CardHeaderProps) {
+export function CardFooter({ children, className = "", style }: CardSubProps) {
   return (
     <View className={`mt-3 ${className}`} style={style}>
       {children}

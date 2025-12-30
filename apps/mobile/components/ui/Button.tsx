@@ -1,9 +1,13 @@
 import React from "react";
-import { TouchableOpacity, Text, ActivityIndicator, View, TouchableOpacityProps } from "react-native";
+import { Text, ActivityIndicator, View, Pressable, PressableProps } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "../ThemeProvider";
+import { springs, scales } from "../../constants/motion";
 
-interface ButtonProps extends TouchableOpacityProps {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+interface ButtonProps extends PressableProps {
   title: string;
   variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive";
   size?: "sm" | "md" | "lg";
@@ -29,9 +33,26 @@ export function Button({
   rightIcon,
   haptic = true,
   onPress,
+  onPressIn,
+  onPressOut,
   ...props
 }: ButtonProps) {
   const { colors } = useTheme();
+  const pressed = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: withSpring(pressed.value ? scales.pressed : 1, springs.snappy) }],
+  }));
+
+  const handlePressIn = (e: any) => {
+    pressed.value = 1;
+    onPressIn?.(e);
+  };
+
+  const handlePressOut = (e: any) => {
+    pressed.value = 0;
+    onPressOut?.(e);
+  };
 
   const handlePress = (e: any) => {
     if (haptic && !disabled && !loading) {
@@ -103,11 +124,13 @@ export function Button({
   const iconGap = size === "sm" ? 6 : size === "lg" ? 10 : 8;
 
   return (
-    <TouchableOpacity
+    <AnimatedPressable
       className={`${baseStyles} ${getVariantStyles()} ${getSizeStyles()} ${widthStyles} ${disabledStyles} ${className}`}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={handlePress}
+      style={animatedStyle}
       {...props}
     >
       {loading ? (
@@ -128,6 +151,6 @@ export function Button({
           {rightIcon && <View style={{ marginLeft: iconGap }}>{rightIcon}</View>}
         </View>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 }

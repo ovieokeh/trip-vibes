@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, ScrollView, ActivityIndicator, RefreshControl, Share, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, RefreshControl, Share, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Itinerary } from "@trip-vibes/shared";
 import { getItinerary } from "../../lib/vibe-api";
-import { Screen, Button } from "../../components/ui";
+import { Screen, Button, SkeletonItineraryPage } from "../../components/ui";
 import { ItineraryDay } from "../../components/Itinerary/ItineraryDay";
 import { useTheme } from "../../components/ThemeProvider";
 import { LinearGradient } from "expo-linear-gradient";
@@ -62,12 +62,7 @@ export default function ItineraryScreen() {
   const headerTitle = itinerary ? itinerary.name : "Your Trip";
 
   if (loading) {
-    return (
-      <Screen centered>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text className="mt-4 text-base font-semibold text-muted-foreground">Loading Itinerary...</Text>
-      </Screen>
-    );
+    return <SkeletonItineraryPage />;
   }
 
   if (error || !itinerary) {

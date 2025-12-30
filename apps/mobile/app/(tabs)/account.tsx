@@ -64,14 +64,6 @@ export default function AccountScreen() {
     <Screen scrollable safeArea={false} padded={false} contentContainerClassName="px-5 pt-5">
       {/* Profile Header */}
       <View className="items-center mb-6">
-        <LinearGradient
-          colors={[colors.primary, colors.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          className="w-20 h-20 rounded-full items-center justify-center mb-4"
-        >
-          <Text className="text-[32px] font-bold text-white">{user.email?.charAt(0).toUpperCase() || "U"}</Text>
-        </LinearGradient>
         <Text className="text-[18px] font-semibold mb-2 text-foreground">{user.email}</Text>
         <View className="w-full flex-row justify-center items-center">
           <Badge label={`Member since ${memberSince}`} variant="muted" size="sm" />

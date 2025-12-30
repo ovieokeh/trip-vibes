@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { getUserItineraries } from "../../lib/vibe-api";
 import { Itinerary } from "@trip-vibes/shared";
 import { useTheme } from "../../components/ThemeProvider";
-import { Card, Badge, EmptyState, TAB_BAR_HEIGHT } from "../../components/ui";
+import { Card, Badge, EmptyState, TAB_BAR_HEIGHT, SkeletonTripsList } from "../../components/ui";
 import { format } from "date-fns";
 import { MapPin, Calendar, ChevronRight, Compass } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -82,8 +82,8 @@ export default function SavedTripsScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View className="flex-1 bg-background">
+        <SkeletonTripsList count={4} />
       </View>
     );
   }

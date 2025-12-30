@@ -1,11 +1,23 @@
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View, Text } from "react-native";
 import { AuthProvider } from "../components/AuthProvider";
 import { ThemeProvider, useTheme } from "../components/ThemeProvider";
 import { ChevronLeft, X, Share2 } from "lucide-react-native";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 import "../global.css";
+
+// Keep splash screen visible while fonts load
+SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   const { colors, isDark } = useTheme();
@@ -31,7 +43,7 @@ function RootLayoutNav() {
             backgroundColor: colors.background,
           },
           headerTitleStyle: {
-            fontWeight: "600",
+            fontFamily: "Inter_600SemiBold",
             fontSize: 17,
             color: colors.foreground,
           },
@@ -39,6 +51,7 @@ function RootLayoutNav() {
           headerShadowVisible: false,
           headerBackVisible: false,
           contentStyle: { backgroundColor: colors.background },
+          animation: "slide_from_right",
         }}
       >
         {/* Tab Navigator */}
@@ -50,6 +63,7 @@ function RootLayoutNav() {
           options={{
             headerShown: false,
             presentation: "modal",
+            animation: "slide_from_bottom",
           }}
         />
 
@@ -71,6 +85,7 @@ function RootLayoutNav() {
             headerShown: true,
             headerBackVisible: false,
             gestureEnabled: false,
+            animation: "fade",
           }}
         />
 
@@ -113,6 +128,24 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  // Show nothing while fonts are loading
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <ThemeProvider>
